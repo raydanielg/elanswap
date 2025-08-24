@@ -11,6 +11,7 @@ use App\Http\Controllers\NewsletterController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ApplicationController;
 use App\Http\Controllers\DestinationController;
+use App\Http\Controllers\ExchangeRequestController;
 use App\Http\Controllers\ProfileCompletionController;
 use App\Models\Feature;
 
@@ -31,7 +32,9 @@ Route::get('/home', function () {
 
 Route::get('/dashboard', function () {
     $applicationsCount = \App\Models\Application::where('user_id', auth()->id())->count();
-    return view('dashboard', compact('applicationsCount'));
+    // Destinations counter: total pending applications overall
+    $destinationsCount = \App\Models\Application::where('status', 'pending')->count();
+    return view('dashboard', compact('applicationsCount', 'destinationsCount'));
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
@@ -62,6 +65,13 @@ Route::middleware('auth')->group(function () {
     // Destinations
     Route::get('/destinations', [DestinationController::class, 'index'])->name('destinations.index');
     Route::get('/destinations/{region}', [DestinationController::class, 'show'])->name('destinations.show');
+
+    // Exchange Requests
+    Route::post('/exchange-requests', [ExchangeRequestController::class, 'store'])->name('exchange-requests.store');
+
+    // My Requests (sent by current user)
+    Route::get('/my-requests', [ExchangeRequestController::class, 'index'])->name('requests.index');
+    Route::get('/my-requests/{requestModel}', [ExchangeRequestController::class, 'show'])->name('requests.show');
 });
 
 // Admin area

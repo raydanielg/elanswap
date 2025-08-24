@@ -29,9 +29,15 @@ class DestinationController extends Controller
             ->paginate(10)
             ->withQueryString();
 
+        $myPendingApps = Application::query()
+            ->where('user_id', $request->user()->id)
+            ->where('status', 'pending')
+            ->get();
+
         return view('destinations.show', [
             'region' => $region,
             'apps' => $apps,
+            'myPendingApps' => $myPendingApps,
         ]);
     }
 }

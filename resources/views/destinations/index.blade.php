@@ -10,16 +10,23 @@
     @if($regions->isEmpty())
         <div class="bg-white border rounded p-6 text-gray-600">No regions found.</div>
     @else
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             @foreach($regions as $region)
-                <a href="{{ route('destinations.show', $region) }}" class="block bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow p-5">
+                <a href="{{ route('destinations.show', $region) }}" class="block rounded-xl border border-gray-200 bg-white p-4 hover:shadow-md hover:border-indigo-200 transition transform hover:-translate-y-0.5">
                     <div class="flex items-center justify-between">
-                        <div class="text-gray-900 font-semibold">{{ $region->name }}</div>
-                        <span class="inline-flex items-center justify-center text-xs font-medium px-2.5 py-1 rounded-full bg-blue-50 text-blue-700">
+                        <div class="flex items-center gap-3 min-w-0">
+                            <div class="w-8 h-8 rounded-full bg-indigo-500 text-white flex items-center justify-center text-xs font-bold">
+                                {{ strtoupper(mb_substr($region->name, 0, 1)) }}
+                            </div>
+                            <div class="truncate">
+                                <div class="text-sm font-semibold text-gray-900 truncate">{{ $region->name }}</div>
+                                <div class="text-xs text-gray-500">Destination region</div>
+                            </div>
+                        </div>
+                        <span class="inline-flex items-center justify-center text-xs font-semibold px-2.5 py-1 rounded-full bg-yellow-100 text-yellow-800">
                             {{ $region->applications_to_count }}
                         </span>
                     </div>
-                    <div class="mt-2 text-sm text-gray-500">Applications to this destination</div>
                 </a>
             @endforeach
         </div>

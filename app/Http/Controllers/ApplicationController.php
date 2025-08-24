@@ -64,6 +64,7 @@ class ApplicationController extends Controller
 
         $query = Application::query()
             ->with(['user','fromRegion','fromDistrict','toRegion','toDistrict'])
+            ->where('user_id', $request->user()->id)
             ->latest();
 
         if ($q !== '') {

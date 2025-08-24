@@ -160,7 +160,7 @@
                                 <p class="text-2xl font-bold text-gray-900">{{ $destinationsCount }}</p>
                             </div>
                         </div>
-                        <a href="#" class="text-sm text-indigo-600 hover:text-indigo-700 font-medium">Browse</a>
+                        <a href="{{ route('destinations.index') }}" class="text-sm text-indigo-600 hover:text-indigo-700 font-medium">Browse</a>
                     </div>
                 </div>
 

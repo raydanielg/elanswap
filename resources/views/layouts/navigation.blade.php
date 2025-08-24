@@ -22,7 +22,7 @@
                         </svg>
                         <span>{{ __('Dashboard') }}</span>
                     </x-nav-link>
-                    <x-nav-link href="#" class="flex items-center space-x-2">
+                    <x-nav-link :href="route('destinations.index')" :active="request()->routeIs('destinations.*')" class="flex items-center space-x-2">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
@@ -34,6 +34,12 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                         </svg>
                         <span>{{ __('Applications') }}</span>
+                    </x-nav-link>
+                    <x-nav-link :href="route('requests.index')" :active="request()->routeIs('requests.*')" class="flex items-center space-x-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h8M7 16h6"></path>
+                        </svg>
+                        <span>{{ __('My Requests') }}</span>
                     </x-nav-link>
                     <x-nav-link href="#" class="flex items-center space-x-2">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -171,7 +177,7 @@
                 </svg>
                 Dashboard
             </a>
-            <a href="#" class="text-blue-200 hover:bg-primary-700 hover:text-white flex items-center px-3 py-2 rounded-md text-base font-medium">
+            <a href="{{ route('destinations.index') }}" class="text-blue-200 hover:bg-primary-700 hover:text-white flex items-center px-3 py-2 rounded-md text-base font-medium">
                 <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
@@ -183,6 +189,12 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                 </svg>
                 Applications
+            </a>
+            <a href="{{ route('requests.index') }}" class="text-blue-200 hover:bg-primary-700 hover:text-white flex items-center px-3 py-2 rounded-md text-base font-medium">
+                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h8M7 16h6"></path>
+                </svg>
+                My Requests
             </a>
             <a href="#" class="text-blue-200 hover:bg-primary-700 hover:text-white flex items-center px-3 py-2 rounded-md text-base font-medium">
                 <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
