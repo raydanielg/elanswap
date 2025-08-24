@@ -35,10 +35,13 @@ class OtpVerification extends Model
         // Delete any existing OTPs for this user
         self::where('user_id', $user->id)->delete();
 
+        $otp = self::generateOtp();
+        
         return self::create([
             'user_id' => $user->id,
             'phone' => $phone,
-            'otp' => self::generateOtp(),
+            'otp' => bcrypt($otp), // Store hashed OTP
+            'otp_plain' => $otp, // Store plain OTP for debugging (remove in production)
             'expires_at' => now()->addMinutes(15), // OTP valid for 15 minutes
         ]);
     }
@@ -50,10 +53,20 @@ class OtpVerification extends Model
 
     public function verify($otp)
     {
-        if ($this->otp === $otp && !$this->isExpired()) {
+        // Check if OTP is expired first
+        if ($this->isExpired()) {
+            return false;
+        }
+
+        // Verify the OTP using hash comparison
+        $isValid = Hash::check($otp, $this->otp);
+        
+        // If valid, mark as verified
+        if ($isValid) {
             $this->update(['is_verified' => true]);
             return true;
         }
+        
         return false;
     }
 }
