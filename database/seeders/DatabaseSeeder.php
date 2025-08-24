@@ -47,6 +47,10 @@ class DatabaseSeeder extends Seeder
         // Seed Features and Super Admin
         $this->call([
             FeatureSeeder::class,
+            RegionDistrictSeeder::class,
+            CategorySeeder::class,
+            SampleCoreRegionsSeeder::class,
+            SampleMwanzaSeeder::class,
             SuperAdminSeeder::class,
         ]);
     }

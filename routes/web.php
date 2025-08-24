@@ -3,10 +3,12 @@
 use App\Http\Controllers\ProfileController;
 use App\Models\User;
 use App\Models\Log;
+use App\Models\OtpVerification;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\InstallController;
 use App\Http\Controllers\NewsletterController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\ProfileCompletionController;
 use App\Models\Feature;
 
 Route::get('/', function () {
@@ -32,6 +34,13 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    // Profile completion dependent data endpoints
+    Route::get('/profile/regions', [ProfileCompletionController::class, 'regions'])->name('profile.regions');
+    Route::get('/profile/districts', [ProfileCompletionController::class, 'districts'])->name('profile.districts');
+    Route::get('/profile/categories', [ProfileCompletionController::class, 'categories'])->name('profile.categories');
+    Route::get('/profile/stations', [ProfileCompletionController::class, 'stations'])->name('profile.stations');
+    Route::post('/profile/complete', [ProfileCompletionController::class, 'store'])->name('profile.complete.store');
 });
 
 // Admin area
@@ -52,8 +61,9 @@ Route::middleware(['auth', 'verified', \App\Http\Middleware\RoleMiddleware::clas
         $activeSessions = DB::table('sessions')->count();
         $reportsCount = Log::count();
         $recentLogs = Log::with('user')->latest('created_at')->limit(6)->get();
+        $otpRequests = OtpVerification::with('user')->latest('created_at')->limit(10)->get();
 
-        return view('super.dashboard', compact('userCount', 'activeSessions', 'reportsCount', 'recentLogs'));
+        return view('super.dashboard', compact('userCount', 'activeSessions', 'reportsCount', 'recentLogs', 'otpRequests'));
     })->name('superadmin.dashboard');
 });
 

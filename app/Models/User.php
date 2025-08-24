@@ -6,6 +6,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class User extends Authenticatable
 {
@@ -25,6 +26,10 @@ class User extends Authenticatable
         'phone',
         'is_verified',
         'phone_verified_at',
+        'region_id',
+        'district_id',
+        'category_id',
+        'station_id',
     ];
 
     protected $casts = [
@@ -119,6 +124,90 @@ class User extends Authenticatable
         'password',
         'remember_token',
     ];
+
+    /**
+     * Check if user has completed their profile
+     *
+     * @return bool
+     */
+    public function hasCompletedProfile()
+    {
+        return !empty($this->name) &&
+               !empty($this->phone) &&
+               !empty($this->email) &&
+               !empty($this->password) &&
+               !empty($this->region_id) &&
+               !empty($this->district_id) &&
+               !empty($this->category_id) &&
+               !empty($this->station_id);
+    }
+
+    /**
+     * Get profile completion percentage
+     *
+     * @return int
+     */
+    public function getProfileCompletionPercentage()
+    {
+        $fields = ['name', 'phone', 'email', 'password', 'region_id', 'district_id', 'category_id', 'station_id'];
+        $completed = 0;
+        
+        foreach ($fields as $field) {
+            if (!empty($this->$field)) {
+                $completed++;
+            }
+        }
+        
+        return round(($completed / count($fields)) * 100);
+    }
+
+    /**
+     * Get missing profile fields
+     *
+     * @return array
+     */
+    public function getMissingProfileFields()
+    {
+        $fields = [
+            'name' => 'Full Name',
+            'phone' => 'Phone Number',
+            'email' => 'Email Address',
+            'region_id' => 'Region (Mkoa)',
+            'district_id' => 'District (Wilaya)',
+            'category_id' => 'Category (Sekta)',
+            'station_id' => 'Work Station (Kituo cha Kazi)',
+        ];
+        
+        $missing = [];
+        
+        foreach ($fields as $field => $label) {
+            if (empty($this->$field)) {
+                $missing[] = $label;
+            }
+        }
+        
+        return $missing;
+    }
+
+    public function region(): BelongsTo
+    {
+        return $this->belongsTo(Region::class);
+    }
+
+    public function district(): BelongsTo
+    {
+        return $this->belongsTo(District::class);
+    }
+
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(Category::class);
+    }
+
+    public function station(): BelongsTo
+    {
+        return $this->belongsTo(Station::class);
+    }
 
     /**
      * Get the attributes that should be cast.
