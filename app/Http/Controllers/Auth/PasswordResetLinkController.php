@@ -49,9 +49,9 @@ class PasswordResetLinkController extends Controller
                 ->withErrors(['phone' => 'We could not find an account with that phone number.']);
         }
 
-        // Create and send OTP
+        // Create and send OTP (use plain OTP value in SMS)
         $otp = OtpVerification::createOtp($user, $normalized);
-        \sendsms($user->id, "Your ElanSwap password reset OTP is {$otp->otp}");
+        \sendsms($user->id, "Your ElanSwap password reset OTP is {$otp->otp_plain}");
 
         // Store session context for OTP flow
         $request->session()->put('otp_verification_user_id', $user->id);

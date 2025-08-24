@@ -110,8 +110,8 @@ class OtpVerificationController extends Controller
 
         // Create and send new OTP
         $otpVerification = OtpVerification::createOtp($user, $user->phone);
-        // Send OTP via SMS
-        \sendsms($user->id, "Your ElanSwap OTP is {$otpVerification->otp}");
+        // Send OTP via SMS (use plain OTP)
+        \sendsms($user->id, "Your ElanSwap OTP is {$otpVerification->otp_plain}");
 
         return back()->with('status', 'A new OTP has been sent to your phone number.');
     }
@@ -152,8 +152,8 @@ class OtpVerificationController extends Controller
         $user->otpVerification()->delete();
         $otpVerification = OtpVerification::createOtp($user, $user->phone);
 
-        // Resend OTP to the new number
-        \sendsms($user->id, "Your ElanSwap OTP is {$otpVerification->otp}");
+        // Resend OTP to the new number (use plain OTP)
+        \sendsms($user->id, "Your ElanSwap OTP is {$otpVerification->otp_plain}");
 
         // Keep session intact; just confirm we still have it
         $request->session()->put('otp_verification_user_id', $user->id);

@@ -102,8 +102,8 @@ class RegisteredUserController extends Controller
             // Create and send OTP
             $otpVerification = OtpVerification::createOtp($user, $normalizedPhone);
             
-            // Send OTP via SMS using global helper
-            \sendsms($user->id, "Your ElanSwap OTP is {$otpVerification->otp}");
+            // Send OTP via SMS using global helper (use plain OTP)
+            \sendsms($user->id, "Your ElanSwap OTP is {$otpVerification->otp_plain}");
             
             // Store the plain password in session for welcome message
             $request->session()->put('user_plain_password', $request->password);

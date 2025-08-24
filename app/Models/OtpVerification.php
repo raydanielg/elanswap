@@ -12,6 +12,7 @@ class OtpVerification extends Model
         'user_id',
         'phone',
         'otp',
+        'otp_plain',
         'expires_at',
         'is_verified'
     ];

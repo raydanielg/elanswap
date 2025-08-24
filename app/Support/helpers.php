@@ -1,7 +1,6 @@
 <?php
 
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use App\Models\User;
 
 if (!function_exists('userphone')) {
@@ -20,11 +19,22 @@ if (!function_exists('sendsms')) {
             return false;
         }
 
-        // Prepare log data
-        $data = [
+        // Light phone normalization (safety): keep digits and format to 255XXXXXXXXX
+        $digits = preg_replace('/\D+/', '', $phone);
+        if (str_starts_with($digits, '0') && strlen($digits) === 10) {
+            $digits = '255' . substr($digits, 1);
+        } elseif (strlen($digits) === 9) {
+            $digits = '255' . $digits;
+        } elseif (str_starts_with($digits, '255') && strlen($digits) >= 12) {
+            $digits = substr($digits, 0, 12);
+        }
+        $to = $digits;
+
+        // Prepare base log row
+        $log_id = DB::table('logs')->insertGetId([
             'user_id'    => $user_id,
             'record_date'=> now()->toDateString(),
-            'phone'      => $phone,
+            'phone'      => $to ?: $phone,
             'text'       => $text,
             'status'     => 'pending',
             'log_type'   => 'sms',
@@ -32,86 +42,95 @@ if (!function_exists('sendsms')) {
             'user_agent' => request()?->userAgent(),
             'created_at' => now(),
             'updated_at' => now(),
+        ]);
+
+        // ENV
+        $username = env('SMS_USERNAME', 'elanbrands');
+        $password = env('SMS_PASSWORD', 'Eliyaamos1@');
+        $from     = env('SMS_FROM', 'Elan Brands');
+        $baseUrl  = env('SMS_LINK_BASE', 'https://messaging-service.co.tz/link/sms/v1/text/single');
+        $sslVerify = filter_var(env('SMS_SSL_VERIFY', true), FILTER_VALIDATE_BOOLEAN);
+        $caFile    = env('SMS_CAFILE'); // optional absolute path to CA bundle
+
+        // Single attempt: API JSON POST with Basic Auth (as per provided function)
+        $apiUrl = 'https://messaging-service.co.tz/api/sms/v1/text/single';
+        $payloadArr = [
+            'from' => $from,
+            'to'   => [$to],
+            'text' => $text,
         ];
+        $payload = json_encode($payloadArr);
+        $auth    = 'Authorization: Basic ' . base64_encode($username . ':' . $password);
 
-        $log_id = DB::table('logs')->insertGetId($data);
-
-        // For testing with specific number
-        if ($phone === '255742710054') {
-            $text = 'Your OTP is: 123456';
-        }
-        
-        // SMS API details
-        $username = 'elanbrands';
-        $password = 'Eliyaamos1@';
-        $from = 'Elan+Brands'; // URL encoded space as +
-        $to = $phone === '255742710054' ? '255742710054' : $phone; // Force test number
-        $text = urlencode($text); // URL encode the message text
-        
-        // Build the URL with query parameters
-        $url = "https://messaging-service.co.tz/link/sms/v1/text/single" .
-               "?username=$username" .
-               "&password=$password" .
-               "&from=$from" .
-               "&to=$to" .
-               "&text=$text";
+        $attempts = [];
+        $finalStatus = 'pending';
 
         $ch = curl_init();
-        curl_setopt_array($ch, [
-            CURLOPT_URL => $url,
+        $curlOpts = [
+            CURLOPT_URL => $apiUrl,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_ENCODING => '',
             CURLOPT_MAXREDIRS => 10,
             CURLOPT_TIMEOUT => 30,
             CURLOPT_FOLLOWLOCATION => true,
             CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-            CURLOPT_CUSTOMREQUEST => 'GET', // Using GET instead of POST
-        ]);
-
-        $response = curl_exec($ch);
-        $err = curl_error($ch);
-        curl_close($ch);
-
-        $statusToSave = 'pending';
-        if ($err) {
-            $statusToSave = 'failed';
+            CURLOPT_CUSTOMREQUEST => 'POST',
+            CURLOPT_POSTFIELDS => $payload,
+            CURLOPT_HTTPHEADER => [
+                $auth,
+                'Content-Type: application/json',
+                'Accept: application/json',
+            ],
+        ];
+        if ($sslVerify) {
+            $curlOpts[CURLOPT_SSL_VERIFYPEER] = true;
+            $curlOpts[CURLOPT_SSL_VERIFYHOST] = 2;
+            if ($caFile) { $curlOpts[CURLOPT_CAINFO] = $caFile; }
         } else {
-            $res = json_decode($response, true);
-            // Check if the response contains success message
-            if (strpos($response, 'success') !== false || strpos($response, 'accepted') !== false) {
-                $statusToSave = 'sent';
-            } else {
-                $statusToSave = 'failed';
-                
-                // Log the failed attempt with response
-                $debug = [
-                    'request_url' => $url,
-                    'response' => $response,
-                    'error' => $err ?: 'Unknown error'
-                ];
-                
-                DB::table('logs')->where('id', $log_id)->update([
-                    'status' => $statusToSave,
-                    'user_agent' => json_encode($debug),
-                    'updated_at' => now(),
-                ]);
-                
-                return false;
+            $curlOpts[CURLOPT_SSL_VERIFYPEER] = false;
+            $curlOpts[CURLOPT_SSL_VERIFYHOST] = 0;
+        }
+        curl_setopt_array($ch, $curlOpts);
+        $response = curl_exec($ch);
+        $err      = curl_error($ch);
+        $info     = curl_getinfo($ch);
+        curl_close($ch);
+        $httpCode = $info['http_code'] ?? null;
+
+        // Parse response like the provided function
+        $groupName = null;
+        if (!$err && $response) {
+            $decoded = json_decode($response, true);
+            $groupName = $decoded['messages'][0]['status']['groupName'] ?? null;
+            if ($groupName === 'PENDING') {
+                $finalStatus = 'sent';
+            } elseif ($groupName !== null) {
+                $finalStatus = 'pending';
             }
         }
 
-        // Store debugging info in user_agent column (text) to avoid schema change
-        $debug = [
-            'request_url'  => $url,
-            'response' => $err ? ['curl_error' => $err] : $response,
+        $attempts[] = [
+            'channel'   => 'api_post',
+            'request'   => ['url' => $apiUrl, 'payload' => $payloadArr],
+            'http_code' => $httpCode,
+            'error'     => $err ?: null,
+            'response'  => $response,
+            'parsed'    => ['groupName' => $groupName],
         ];
 
         DB::table('logs')->where('id', $log_id)->update([
-            'status' => $statusToSave,
-            'user_agent' => json_encode($debug),
+            'status'     => $finalStatus,
+            'user_agent' => json_encode([
+                'attempts' => $attempts,
+                'final'    => $finalStatus,
+                'ssl'      => [
+                    'verify' => $sslVerify,
+                    'caFile' => $caFile,
+                ],
+            ]),
             'updated_at' => now(),
         ]);
 
-        return true;
+        return $finalStatus === 'sent';
     }
 }

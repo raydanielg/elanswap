@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\DB;
 
 Route::get('/', function () {
     return view('welcome');
@@ -22,3 +23,19 @@ Route::middleware('auth')->group(function () {
 });
 
 require __DIR__.'/auth.php';
+
+// TEMP: Debug latest SMS log (remove in production)
+Route::get('/debug/sms-log', function () {
+    $log = DB::table('logs')->where('log_type','sms')->orderByDesc('id')->first();
+    if (!$log) {
+        return response()->json(['message' => 'No SMS logs found'], 404);
+    }
+    return response()->json([
+        'id'        => $log->id,
+        'status'    => $log->status,
+        'phone'     => $log->phone,
+        'text'      => $log->text,
+        'user_agent'=> json_decode($log->user_agent ?? '{}', true),
+        'created_at'=> $log->created_at,
+    ]);
+});

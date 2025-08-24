@@ -38,29 +38,12 @@
                     :value="old('phone')" 
                     required 
                     autocomplete="tel"
+                    inputmode="numeric"
+                    maxlength="9"
                     placeholder="712345678"
-                    pattern="[0-9]{9}"
-                    title="Please enter your 9-digit phone number (without the leading 0)"
                 />
             </div>
             @error('phone')
-                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-            @enderror
-        </div>
-
-        <!-- Email (Optional) -->
-        <div>
-            <x-input-label for="email" :value="__('Email (Optional)')" />
-            <x-text-input 
-                id="email" 
-                class="block mt-1 w-full" 
-                type="email" 
-                name="email" 
-                :value="old('email')" 
-                autocomplete="email"
-                placeholder="you@example.com"
-            />
-            @error('email')
                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
             @enderror
         </div>
@@ -101,4 +84,17 @@
             </a>
         </div>
     </form>
+    <script>
+        // Keep only digits and limit to 9 for phone input
+        (function(){
+            const el = document.getElementById('phone');
+            if (el) {
+                el.addEventListener('input', function(e){
+                    let v = e.target.value.replace(/\D/g, '');
+                    if (v.length > 9) v = v.substring(0,9);
+                    e.target.value = v;
+                });
+            }
+        })();
+    </script>
 </x-guest-layout>

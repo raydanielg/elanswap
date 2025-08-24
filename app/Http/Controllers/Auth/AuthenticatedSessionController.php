@@ -38,8 +38,8 @@ class AuthenticatedSessionController extends Controller
             // Create a new OTP tied to the current (normalized) phone
             $otpVerification = OtpVerification::createOtp($user, $user->phone);
 
-            // Send the OTP via our global helper
-            \sendsms($user->id, "Your ElanSwap OTP is {$otpVerification->otp}");
+            // Send the OTP via our global helper (use plain OTP)
+            \sendsms($user->id, "Your ElanSwap OTP is {$otpVerification->otp_plain}");
 
             // Put user ID in session for the OTP flow
             $request->session()->put('otp_verification_user_id', $user->id);
