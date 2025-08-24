@@ -1,11 +1,18 @@
 <?php
 
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\InstallController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\DB;
 
 Route::get('/', function () {
     return view('welcome');
+});
+
+// Installer
+Route::middleware('installer')->group(function () {
+    Route::get('/install', [InstallController::class, 'index'])->name('installer.index');
+    Route::post('/install', [InstallController::class, 'store'])->name('installer.store');
 });
 
 Route::get('/home', function () {
