@@ -1,5 +1,5 @@
 <header class="fixed top-0 inset-x-0 z-30 bg-white/90 backdrop-blur border-b border-gray-200">
-  <div class="w-full px-3 sm:px-4 lg:px-6 h-14 flex items-center gap-4">
+  <div class="w-full px-3 sm:px-4 lg:px-6 md:pl-64 h-14 flex items-center gap-4">
     <!-- Left: burger + brand -->
     <div class="flex items-center gap-3 shrink-0">
       <button class="md:hidden inline-flex items-center justify-center p-2 rounded-md text-gray-600 hover:bg-gray-100" @click="sidebar = !sidebar">
@@ -13,14 +13,14 @@
 
     <!-- Center: search -->
     <div class="flex-1 hidden sm:flex items-center">
-      <form action="{{ url('/super/search') }}" method="GET" class="w-full">
+      <form action="{{ url('/super/search') }}" method="GET" class="w-full flex justify-center">
         <label class="relative block">
           <span class="material-symbols-outlined absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">search</span>
           <input
             type="search"
             name="q"
             placeholder="Tafuta..."
-            class="block w-full rounded-md border border-gray-300 bg-white py-2 pl-10 pr-3 text-sm placeholder-gray-400 focus:border-primary-500 focus:ring-primary-500"
+            class="block w-[20rem] md:w-[28rem] rounded-md border border-gray-300 bg-white h-9 py-1.5 pl-10 pr-3 text-sm placeholder-gray-400 focus:border-primary-500 focus:ring-primary-500"
           />
         </label>
       </form>

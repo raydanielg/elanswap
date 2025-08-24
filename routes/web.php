@@ -1,11 +1,13 @@
 <?php
 
 use App\Http\Controllers\ProfileController;
+use App\Models\User;
+use App\Models\Log;
+use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\InstallController;
 use App\Http\Controllers\NewsletterController;
 use Illuminate\Support\Facades\Route;
 use App\Models\Feature;
-use Illuminate\Support\Facades\DB;
 
 Route::get('/', function () {
     $features = Feature::active()->orderBy('sort_order')->orderBy('id')->get();
@@ -46,7 +48,12 @@ Route::middleware(['auth', 'verified', \App\Http\Middleware\RoleMiddleware::clas
         return redirect()->route('superadmin.dashboard');
     });
     Route::get('/dashboard', function () {
-        return view('super.dashboard');
+        $userCount = User::count();
+        $activeSessions = DB::table('sessions')->count();
+        $reportsCount = Log::count();
+        $recentLogs = Log::with('user')->latest('created_at')->limit(6)->get();
+
+        return view('super.dashboard', compact('userCount', 'activeSessions', 'reportsCount', 'recentLogs'));
     })->name('superadmin.dashboard');
 });
 
