@@ -50,15 +50,16 @@ class SmsService
                 CURLOPT_FOLLOWLOCATION => true,
                 CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
                 CURLOPT_CUSTOMREQUEST => 'POST',
-                CURLOPT_POSTFIELDS => json_encode([
+                // Use application/x-www-form-urlencoded to satisfy API expectations and avoid 415
+                CURLOPT_POSTFIELDS => http_build_query([
                     'from' => $from,
-                    'to' => [$to],
-                    'text' => $message
+                    'to'   => $to, // send as plain string, not array
+                    'text' => $message,
                 ]),
                 CURLOPT_HTTPHEADER => [
                     "Authorization: $auth",
-                    'Content-Type: application/json',
-                    'Accept: application/json'
+                    'Content-Type: application/x-www-form-urlencoded',
+                    'Accept: application/json',
                 ],
             ]);
 
