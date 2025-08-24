@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\InstallController;
+use App\Http\Controllers\NewsletterController;
 use Illuminate\Support\Facades\Route;
 use App\Models\Feature;
 use Illuminate\Support\Facades\DB;
@@ -46,6 +47,9 @@ Route::middleware(['auth', 'verified', 'role:superadmin'])->prefix('superadmin')
 });
 
 require __DIR__.'/auth.php';
+
+// Newsletter
+Route::post('/newsletter', [NewsletterController::class, 'store'])->name('newsletter.store');
 
 // TEMP: Debug latest SMS log (remove in production)
 Route::get('/debug/sms-log', function () {
