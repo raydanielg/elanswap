@@ -16,7 +16,7 @@
     @include('super.partials.navbar')
 
     @if (session('status'))
-        <div class="pt-16 px-4 sm:px-6 lg:px-8">
+        <div class="pt-14 px-4 sm:px-6 lg:px-8">
             <div class="max-w-7xl mx-auto">
                 <div class="mb-4 rounded-md bg-green-50 border border-green-200 p-4 text-green-800">
                     {{ session('status') }}
@@ -25,7 +25,7 @@
         </div>
     @endif
 
-    <div class="flex min-h-screen pt-16">
+    <div class="flex min-h-screen pt-14">
         @include('super.partials.sidebar')
 
         <main class="flex-1 p-4 md:p-6 lg:p-8">
