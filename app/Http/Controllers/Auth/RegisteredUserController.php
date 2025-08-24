@@ -40,11 +40,12 @@ class RegisteredUserController extends Controller
             'name' => ['required', 'string', 'max:255'],
             // Accept common TZ formats: 0712xxxxxxx, 712xxxxxx, +2557xxxxxxx, 2557xxxxxxx
             'phone' => ['required', 'string', 'min:9'],
-            'email' => ['nullable', 'string', 'email', 'max:255', 'unique:'.User::class],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:'.User::class],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ], [
             'name.required' => 'The name field is required.',
             'phone.required' => 'The phone number is required.',
+            'email.required' => 'The email field is required.',
             'email.email' => 'Please enter a valid email address.',
             'email.unique' => 'This email is already registered.',
             'password.required' => 'The password field is required.',
@@ -90,30 +91,25 @@ class RegisteredUserController extends Controller
         }
 
         try {
-            // Create the user but don't log them in yet
+            // Create the user and mark as verified (OTP not required)
             $user = User::create([
                 'name' => $request->name,
                 'phone' => $normalizedPhone,
                 'email' => $request->email,
                 'password' => Hash::make($request->password),
-                'is_verified' => false,
+                'is_verified' => true,
+                'email_verified_at' => now(),
             ]);
 
-            // Create and send OTP
-            $otpVerification = OtpVerification::createOtp($user, $normalizedPhone);
-            
-            // Send OTP via SMS using global helper (use plain OTP)
-            \sendsms($user->id, "Your ElanSwap OTP is {$otpVerification->otp_plain}");
-            
-            // Store the plain password in session for welcome message
-            $request->session()->put('user_plain_password', $request->password);
+            // Dispatch registered event
+            event(new Registered($user));
 
-            // Store user ID in session for verification
-            $request->session()->put('otp_verification_user_id', $user->id);
+            // Log the user in directly
+            Auth::login($user);
 
-            // Redirect to OTP verification page
-            return redirect()->route('otp.verify');
-            
+            // Redirect to dashboard
+            return redirect()->route('dashboard');
+
         } catch (\Exception $e) {
             return back()->withErrors([
                 'registration' => 'An error occurred during registration. Please try again.'

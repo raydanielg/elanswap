@@ -48,6 +48,24 @@
             @enderror
         </div>
 
+        <!-- Email -->
+        <div>
+            <x-input-label for="email" :value="__('Email')" />
+            <x-text-input
+                id="email"
+                class="block mt-1 w-full"
+                type="email"
+                name="email"
+                :value="old('email')"
+                required
+                autocomplete="email"
+                placeholder="you@example.com"
+            />
+            @error('email')
+                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+            @enderror
+        </div>
+
         <!-- Password -->
         <div class="mt-4">
             <x-input-label for="password" :value="__('Password')" />
