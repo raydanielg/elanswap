@@ -1,0 +1,22 @@
+# Laravel public/.htaccess
+# Standard rewrite rules to route all requests to public/index.php
+
+<IfModule mod_rewrite.c>
+    Options -Indexes
+    Options +FollowSymLinks
+    RewriteEngine On
+
+    # Handle Authorization Header for PHP when using FastCGI
+    RewriteCond %{HTTP:Authorization} .
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+    # If the requested resource doesn't exist, route to index.php
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^ index.php [L]
+</IfModule>
+
+# Security: prevent serving .env and other dotfiles from public
+<FilesMatch "(^\.|\.env)">
+    Require all denied
+</FilesMatch>
