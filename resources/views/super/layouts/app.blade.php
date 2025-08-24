@@ -12,11 +12,11 @@
     <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/collapse@3.x.x/dist/cdn.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
-<body class="bg-gray-50 text-gray-900" x-data="{ sidebar: true }">
+<body class="bg-gray-50 text-gray-900" x-data="{ sidebar: false }">
     @include('super.partials.navbar')
 
     @if (session('status'))
-        <div class="pt-14 px-4 sm:px-6 lg:px-8">
+        <div class="px-4 sm:px-6 lg:px-8">
             <div class="max-w-7xl mx-auto">
                 <div class="mb-4 rounded-md bg-green-50 border border-green-200 p-4 text-green-800">
                     {{ session('status') }}
@@ -25,7 +25,7 @@
         </div>
     @endif
 
-    <div class="flex min-h-screen pt-14">
+    <div class="flex min-h-screen">
         @include('super.partials.sidebar')
 
         <main class="flex-1 p-4 md:p-6 lg:p-8">

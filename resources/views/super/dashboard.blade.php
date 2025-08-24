@@ -1,35 +1,47 @@
 @extends('super.layouts.app')
 
 @section('content')
-<div class="max-w-7xl mx-auto">
-  <div class="mb-6">
+<div class="max-w-7xl w-full mx-auto">
+  <div class="mb-4 sm:mb-6">
     <h1 class="text-2xl font-bold">Dashboard</h1>
     <p class="text-gray-600">Welcome back, {{ auth()->user()->name }}.</p>
   </div>
 
   <!-- KPI Cards -->
-  <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-    <div class="rounded-lg border border-gray-200 bg-white p-4">
-      <div class="text-sm text-gray-500 flex items-center gap-2"><span class="material-symbols-outlined text-primary-600">group</span> Users</div>
+  <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
+    <div class="rounded-lg border border-gray-200 bg-white p-4 sm:p-5">
+      <div class="flex items-center justify-between">
+        <div class="text-sm text-gray-500">Users</div>
+        <span class="material-symbols-outlined text-primary-600">group</span>
+      </div>
       <div class="mt-1 text-2xl font-semibold">{{ number_format($userCount ?? 0) }}</div>
     </div>
-    <div class="rounded-lg border border-gray-200 bg-white p-4">
-      <div class="text-sm text-gray-500 flex items-center gap-2"><span class="material-symbols-outlined text-primary-600">schedule</span> Active Sessions</div>
+    <div class="rounded-lg border border-gray-200 bg-white p-4 sm:p-5">
+      <div class="flex items-center justify-between">
+        <div class="text-sm text-gray-500">Active Sessions</div>
+        <span class="material-symbols-outlined text-primary-600">schedule</span>
+      </div>
       <div class="mt-1 text-2xl font-semibold">{{ number_format($activeSessions ?? 0) }}</div>
     </div>
-    <div class="rounded-lg border border-gray-200 bg-white p-4">
-      <div class="text-sm text-gray-500 flex items-center gap-2"><span class="material-symbols-outlined text-primary-600">assignment</span> Reports</div>
+    <div class="rounded-lg border border-gray-200 bg-white p-4 sm:p-5">
+      <div class="flex items-center justify-between">
+        <div class="text-sm text-gray-500">Reports</div>
+        <span class="material-symbols-outlined text-primary-600">assignment</span>
+      </div>
       <div class="mt-1 text-2xl font-semibold">{{ number_format($reportsCount ?? 0) }}</div>
     </div>
-    <div class="rounded-lg border border-gray-200 bg-white p-4">
-      <div class="text-sm text-gray-500 flex items-center gap-2"><span class="material-symbols-outlined text-primary-600">monitoring</span> System Health</div>
+    <div class="rounded-lg border border-gray-200 bg-white p-4 sm:p-5">
+      <div class="flex items-center justify-between">
+        <div class="text-sm text-gray-500">System Health</div>
+        <span class="material-symbols-outlined text-primary-600">monitoring</span>
+      </div>
       <div class="mt-1 text-2xl font-semibold">—</div>
     </div>
   </div>
 
-  <div class="mt-6 grid lg:grid-cols-3 gap-4">
+  <div class="mt-4 sm:mt-6 grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4">
     <!-- Recent Activity -->
-    <div class="lg:col-span-2 rounded-lg border border-gray-200 bg-white p-4">
+    <div class="lg:col-span-2 rounded-lg border border-gray-200 bg-white p-4 sm:p-5">
       <h2 class="text-lg font-semibold">Recent Activity</h2>
       @if(($recentLogs ?? collect())->isEmpty())
         <div class="mt-3 text-sm text-gray-600">No activity yet.</div>
@@ -60,7 +72,7 @@
     </div>
 
     <!-- Quick Links -->
-    <div class="rounded-lg border border-gray-200 bg-white p-4">
+    <div class="rounded-lg border border-gray-200 bg-white p-4 sm:p-5">
       <h2 class="text-lg font-semibold">Quick Links</h2>
       <ul class="mt-3 space-y-2 text-sm">
         <li><a class="text-primary-600 hover:underline" href="{{ url('/super/users') }}">Manage Users</a></li>
