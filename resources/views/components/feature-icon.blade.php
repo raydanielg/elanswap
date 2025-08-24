@@ -4,7 +4,12 @@
     $name = strtolower($name ?? 'bolt');
 @endphp
 
-@if($name === 'bolt')
+@if(\Illuminate\Support\Str::startsWith($name, 'ms:'))
+    @php($ms = \Illuminate\Support\Str::after($name, 'ms:'))
+    <span class="material-symbols-rounded {{ $class }} leading-none select-none transition-transform duration-300 group-hover:scale-110" style="font-variation-settings: 'FILL' 1; font-size: {{ is_numeric($size) ? $size.'px' : $size }};">
+        {{ $ms }}
+    </span>
+@elseif($name === 'bolt')
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="{{ $class }}" width="{{ $size }}" height="{{ $size }}">
         <path d="M14.615 3.513A.75.75 0 0013.5 3h-3a.75.75 0 00-.712.513l-3 9A.75.75 0 007.5 13.5h2.694l-1.31 6.551a.75.75 0 001.318.63l7.5-9A.75.75 0 0017.25 10.5H13.5l1.115-6.987z"/>
     </svg>
