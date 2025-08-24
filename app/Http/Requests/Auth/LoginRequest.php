@@ -22,12 +22,12 @@ class LoginRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, \Illuminate\Contracts\Validation\Rule|array|string>
      */
     public function rules(): array
     {
         return [
-            'email' => ['required', 'string', 'email'],
+            'phone' => ['required', 'string', 'min:9'],
             'password' => ['required', 'string'],
         ];
     }
@@ -41,11 +41,29 @@ class LoginRequest extends FormRequest
     {
         $this->ensureIsNotRateLimited();
 
-        if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
+        // Normalize phone to international format without plus: 255XXXXXXXXX
+        $rawPhone = preg_replace('/\D+/', '', (string) $this->input('phone'));
+        if (str_starts_with($rawPhone, '0') && strlen($rawPhone) === 10) {
+            $normalizedPhone = '255' . substr($rawPhone, 1);
+        } elseif (strlen($rawPhone) === 9) {
+            $normalizedPhone = '255' . $rawPhone;
+        } elseif (str_starts_with($rawPhone, '255') && strlen($rawPhone) >= 12) {
+            $normalizedPhone = substr($rawPhone, 0, 12);
+        } else {
+            $normalizedPhone = $rawPhone; // will fail Auth::attempt and show error
+        }
+
+        // Get the credentials from the request
+        $credentials = [
+            'phone' => $normalizedPhone,
+            'password' => $this->input('password')
+        ];
+
+        if (! Auth::attempt($credentials, $this->boolean('remember'))) {
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([
-                'email' => trans('auth.failed'),
+                'phone' => trans('auth.failed'),
             ]);
         }
 
@@ -68,7 +86,7 @@ class LoginRequest extends FormRequest
         $seconds = RateLimiter::availableIn($this->throttleKey());
 
         throw ValidationException::withMessages([
-            'email' => trans('auth.throttle', [
+            'phone' => trans('auth.throttle', [
                 'seconds' => $seconds,
                 'minutes' => ceil($seconds / 60),
             ]),
@@ -76,10 +94,34 @@ class LoginRequest extends FormRequest
     }
 
     /**
+     * Get the error messages for the defined validation rules.
+     *
+     * @return array<string, string>
+     */
+    public function messages()
+    {
+        return [
+            'phone.required' => 'The phone number is required.',
+            'phone.regex' => 'Please enter a valid 9-digit phone number (without the leading 0).',
+            'password.required' => 'The password field is required.',
+        ];
+    }
+
+    /**
      * Get the rate limiting throttle key for the request.
      */
-    public function throttleKey(): string
+    protected function throttleKey(): string
     {
-        return Str::transliterate(Str::lower($this->string('email')).'|'.$this->ip());
+        $rawPhone = preg_replace('/\D+/', '', (string) $this->input('phone'));
+        if (str_starts_with($rawPhone, '0') && strlen($rawPhone) === 10) {
+            $normalizedPhone = '255' . substr($rawPhone, 1);
+        } elseif (strlen($rawPhone) === 9) {
+            $normalizedPhone = '255' . $rawPhone;
+        } elseif (str_starts_with($rawPhone, '255') && strlen($rawPhone) >= 12) {
+            $normalizedPhone = substr($rawPhone, 0, 12);
+        } else {
+            $normalizedPhone = $rawPhone;
+        }
+        return Str::transliterate(Str::lower($normalizedPhone).'|'.$this->ip());
     }
 }

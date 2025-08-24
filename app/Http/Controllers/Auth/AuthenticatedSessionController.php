@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
+use App\Models\OtpVerification;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -24,10 +25,30 @@ class AuthenticatedSessionController extends Controller
      */
     public function store(LoginRequest $request): RedirectResponse
     {
+        // This will attempt with normalized phone (handled in LoginRequest)
         $request->authenticate();
 
-        $request->session()->regenerate();
+        $user = Auth::user();
 
+        // If not verified, force OTP verification
+        if ($user && (int)($user->is_verified ?? 0) !== 1) {
+            // Immediately logout to prevent access
+            Auth::logout();
+
+            // Create a new OTP tied to the current (normalized) phone
+            $otpVerification = OtpVerification::createOtp($user, $user->phone);
+
+            // Send the OTP via our global helper
+            \sendsms($user->id, "Your ElanSwap OTP is {$otpVerification->otp}");
+
+            // Put user ID in session for the OTP flow
+            $request->session()->put('otp_verification_user_id', $user->id);
+
+            return redirect()->route('otp.verify')->with('status', 'We sent you a new OTP to verify your number.');
+        }
+
+        // Verified: proceed as normal
+        $request->session()->regenerate();
         return redirect()->intended(route('dashboard', absolute: false));
     }
 

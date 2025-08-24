@@ -1,3 +1,15 @@
-<button {{ $attributes->merge(['type' => 'submit', 'class' => 'inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700 focus:bg-gray-700 active:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150']) }}>
+@props(['type' => 'submit', 'size' => 'md'])
+
+@php
+    $baseClasses = 'inline-flex items-center justify-center font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors duration-150';
+    $sizeClasses = [
+        'sm' => 'px-3 py-1.5 text-xs',
+        'md' => 'px-4 py-2 text-sm',
+        'lg' => 'px-6 py-3 text-base',
+    ][$size];
+    $classes = "{$baseClasses} {$sizeClasses} bg-primary-600 text-white hover:bg-primary-700 focus:ring-primary-500 active:bg-primary-800";
+@endphp
+
+<button type="{{ $type }}" {{ $attributes->merge(['class' => $classes]) }}>
     {{ $slot }}
 </button>
