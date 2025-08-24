@@ -4,7 +4,9 @@
     "type": "module",
     "scripts": {
         "build": "vite build",
-        "dev": "vite"
+        "dev": "vite",
+        "tw:build": "tailwindcss -i ./resources/css/app.css -o ./public/assets/app.css --minify",
+        "tw:watch": "tailwindcss -i ./resources/css/app.css -o ./public/assets/app.css --watch"
     },
     "devDependencies": {
         "@tailwindcss/forms": "^0.5.2",

@@ -8,7 +8,10 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:FILL@0..1&display=swap" rel="stylesheet">
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <!-- Tailwind (built via CLI) -->
+    <link rel="stylesheet" href="{{ asset('assets/app.css') }}" />
+    <!-- Alpine.js (CDN) for x- directives -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
 <body x-data class="bg-gray-50 text-gray-900 dark:bg-primary-950 dark:text-white">
     <x-site-header />
