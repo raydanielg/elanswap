@@ -1,0 +1,32 @@
+# Laravel root .htaccess (outside /public)
+# Routes all requests to /public while protecting sensitive paths
+
+<IfModule mod_rewrite.c>
+  Options -Indexes
+  RewriteEngine On
+
+  # If the requested resource doesn't exist as a file or directory,
+  # forward the request to /public preserving the path
+  RewriteCond %{REQUEST_URI} !^/public/
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>
+
+# Security: block access to sensitive files from the web root
+<FilesMatch "^(\.env|artisan|composer\.(json|lock)|package\.(json|lock)|phpunit\.xml|README\.md|webpack\.mix\.js|vite\.config\.js|tailwind\.config\.js)$">
+  Require all denied
+</FilesMatch>
+
+# Deny direct access to these root-level directories (should be outside web root, but guard anyway)
+<IfModule mod_authz_core.c>
+  <Directory "${APACHE_DOCUMENT_ROOT}/vendor">
+    Require all denied
+  </Directory>
+  <Directory "${APACHE_DOCUMENT_ROOT}/storage">
+    Require all denied
+  </Directory>
+  <Directory "${APACHE_DOCUMENT_ROOT}/database">
+    Require all denied
+  </Directory>
+</IfModule>
