@@ -3,10 +3,12 @@
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\InstallController;
 use Illuminate\Support\Facades\Route;
+use App\Models\Feature;
 use Illuminate\Support\Facades\DB;
 
 Route::get('/', function () {
-    return view('home.index');
+    $features = Feature::active()->orderBy('sort_order')->orderBy('id')->get();
+    return view('home.index', compact('features'));
 })->name('home.public');
 
 // Installer

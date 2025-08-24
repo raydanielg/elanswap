@@ -72,6 +72,35 @@
         </div>
     </section>
 
+    <!-- Features (DB-driven) -->
+    <section id="features" class="py-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 class="text-2xl font-bold mb-8">Features of this system</h2>
+            <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                @forelse(($features ?? []) as $feature)
+                    <div x-data="{ visible: false }" x-init="setTimeout(() => visible = true, {{ $loop->index * 120 }})"
+                         x-show="visible"
+                         x-transition:enter="transition duration-500 ease-out"
+                         x-transition:enter-start="opacity-0 translate-y-3 scale-[0.98]"
+                         x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+                         class="group p-6 rounded-2xl bg-white dark:bg-primary-900/10 shadow-sm border border-gray-100 dark:border-primary-800 hover:shadow-lg hover:-translate-y-1 transition transform">
+                        <div class="flex items-start gap-4">
+                            <div class="shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br from-primary-500 to-red-500 text-white flex items-center justify-center ring-2 ring-white/60 dark:ring-white/10 shadow">
+                                <x-feature-icon :name="$feature->icon" />
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-lg text-gray-900 dark:text-white group-hover:text-primary-700 dark:group-hover:text-white/90 transition">{{ $feature->title }}</h3>
+                                <p class="mt-1 text-gray-600 dark:text-gray-300">{{ $feature->description }}</p>
+                            </div>
+                        </div>
+                    </div>
+                @empty
+                    <p class="text-gray-600">No features yet.</p>
+                @endforelse
+            </div>
+        </div>
+    </section>
+
     <!-- Regions -->
     <section id="regions" class="py-16 bg-white">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -107,26 +136,7 @@
         </div>
     </section>
 
-    <!-- Features -->
-    <section id="features" class="py-16">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 class="text-2xl font-bold mb-8" x-text="$store.ui.t('features_title')"></h2>
-            <div class="grid md:grid-cols-3 gap-6">
-                <div class="p-6 rounded-xl bg-white shadow-sm border">
-                    <h3 class="font-semibold text-lg" x-text="$store.ui.t('feature1_title')"></h3>
-                    <p class="mt-2 text-gray-600" x-text="$store.ui.t('feature1_desc')"></p>
-                </div>
-                <div class="p-6 rounded-xl bg-white shadow-sm border">
-                    <h3 class="font-semibold text-lg" x-text="$store.ui.t('feature2_title')"></h3>
-                    <p class="mt-2 text-gray-600" x-text="$store.ui.t('feature2_desc')"></p>
-                </div>
-                <div class="p-6 rounded-xl bg-white shadow-sm border">
-                    <h3 class="font-semibold text-lg" x-text="$store.ui.t('feature3_title')"></h3>
-                    <p class="mt-2 text-gray-600" x-text="$store.ui.t('feature3_desc')"></p>
-                </div>
-            </div>
-        </div>
-    </section>
+    
 
     <!-- CTA -->
     <section class="py-16 bg-white dark:bg-primary-900/20">

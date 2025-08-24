@@ -43,5 +43,10 @@ class DatabaseSeeder extends Seeder
                 $data
             );
         }
+
+        // Seed Features
+        $this->call([
+            FeatureSeeder::class,
+        ]);
     }
 }
