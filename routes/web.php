@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\Admin\FeatureController as AdminFeatureController;
 use App\Models\User;
 use App\Models\Log;
 use App\Models\OtpVerification;
@@ -8,6 +9,8 @@ use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\InstallController;
 use App\Http\Controllers\NewsletterController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\ApplicationController;
+use App\Http\Controllers\DestinationController;
 use App\Http\Controllers\ProfileCompletionController;
 use App\Models\Feature;
 
@@ -27,7 +30,8 @@ Route::get('/home', function () {
 })->middleware(['auth', 'verified'])->name('home');
 
 Route::get('/dashboard', function () {
-    return view('dashboard');
+    $applicationsCount = \App\Models\Application::where('user_id', auth()->id())->count();
+    return view('dashboard', compact('applicationsCount'));
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
@@ -41,6 +45,23 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile/categories', [ProfileCompletionController::class, 'categories'])->name('profile.categories');
     Route::get('/profile/stations', [ProfileCompletionController::class, 'stations'])->name('profile.stations');
     Route::post('/profile/complete', [ProfileCompletionController::class, 'store'])->name('profile.complete.store');
+
+    // Applications page + AJAX search
+    Route::get('/applications', [ApplicationController::class, 'index'])->name('applications.index');
+    Route::get('/applications/search', [ApplicationController::class, 'search'])->name('applications.search');
+    Route::get('/applications/create', [ApplicationController::class, 'create'])->name('applications.create');
+    Route::post('/applications', [ApplicationController::class, 'store'])->name('applications.store');
+    Route::get('/applications/{application}', [ApplicationController::class, 'show'])->name('applications.show');
+    // JSON + actions
+    Route::get('/applications/{application}/details', [ApplicationController::class, 'details'])->name('applications.details');
+    Route::post('/applications/{application}/approve', [ApplicationController::class, 'approve'])->name('applications.approve');
+    Route::post('/applications/{application}/approve-with/{match}', [ApplicationController::class, 'approveWithMatch'])->name('applications.approve.match');
+    Route::post('/applications/{application}/reject', [ApplicationController::class, 'reject'])->name('applications.reject');
+    Route::post('/applications/{application}/request-deletion', [ApplicationController::class, 'requestDeletion'])->name('applications.requestDeletion');
+
+    // Destinations
+    Route::get('/destinations', [DestinationController::class, 'index'])->name('destinations.index');
+    Route::get('/destinations/{region}', [DestinationController::class, 'show'])->name('destinations.show');
 });
 
 // Admin area
@@ -48,6 +69,10 @@ Route::middleware(['auth', 'verified', \App\Http\Middleware\RoleMiddleware::clas
     Route::get('/dashboard', function () {
         return view('admin.dashboard');
     })->name('admin.dashboard');
+
+    // Announcements (Features) management
+    Route::resource('features', AdminFeatureController::class)->names('admin.features');
+    Route::post('features/{feature}/toggle', [AdminFeatureController::class, 'toggle'])->name('admin.features.toggle');
 });
 
 // Superadmin area (URL prefix /super, route name unchanged)

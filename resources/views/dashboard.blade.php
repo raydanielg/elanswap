@@ -141,7 +141,7 @@
                                 <p class="text-2xl font-bold text-gray-900">{{ $applicationsCount }}</p>
                             </div>
                         </div>
-                        <a href="#" class="text-sm text-primary-600 hover:text-primary-700 font-medium">View</a>
+                        <a href="{{ route('applications.index') }}" class="text-sm text-primary-600 hover:text-primary-700 font-medium">View</a>
                     </div>
                 </div>
 
@@ -189,7 +189,10 @@
                 <div class="lg:col-span-2 bg-white rounded-lg shadow-sm border border-gray-200">
                     <div class="p-6 border-b border-gray-100 flex items-center justify-between">
                         <h3 class="text-lg font-semibold text-gray-900">Recent Activity</h3>
-                        <span class="text-xs text-gray-500">Your latest actions</span>
+                        <div class="flex items-center gap-2">
+                            <span class="loader text-blue-900" aria-label="Loading"></span>
+                            <span class="text-xs text-gray-500">Loading</span>
+                        </div>
                     </div>
                     <div class="p-6">
                         @php
@@ -227,11 +230,18 @@
                 <div class="bg-white rounded-lg shadow-sm border border-gray-200">
                     <div class="p-6 border-b border-gray-100 flex items-center justify-between">
                         <h3 class="text-lg font-semibold text-gray-900">Announcements</h3>
-                        <span class="text-xs text-gray-500">Latest news</span>
+                        <div class="flex items-center gap-2">
+                            <span class="loader text-blue-900" aria-label="Loading"></span>
+                            <span class="text-xs text-gray-500">Loading</span>
+                        </div>
                     </div>
                     <div class="p-6 space-y-4">
                         @php
                             $announcements = \App\Models\Feature::active()->orderBy('sort_order')->limit(5)->get();
+                            if ($announcements->isEmpty()) {
+                                // Fallback: show latest features if none are marked active
+                                $announcements = \App\Models\Feature::orderByDesc('id')->limit(5)->get();
+                            }
                         @endphp
                         @forelse($announcements as $item)
                             <div class="flex items-start">

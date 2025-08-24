@@ -52,6 +52,7 @@ class DatabaseSeeder extends Seeder
             SampleCoreRegionsSeeder::class,
             SampleMwanzaSeeder::class,
             SuperAdminSeeder::class,
+            LogSeeder::class,
         ]);
     }
 }

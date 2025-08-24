@@ -43,7 +43,11 @@
                             <h1 class="text-3xl font-bold text-gray-900">{{ $header }}</h1>
                         </div>
                     @endisset
-                    {{ $slot }}
+                    @hasSection('content')
+                        @yield('content')
+                    @else
+                        {{ $slot ?? '' }}
+                    @endif
                 </div>
             </main>
 

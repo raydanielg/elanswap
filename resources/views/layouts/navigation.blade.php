@@ -29,7 +29,7 @@
                         </svg>
                         <span>{{ __('Destinations') }}</span>
                     </x-nav-link>
-                    <x-nav-link href="#" class="flex items-center space-x-2">
+                    <x-nav-link :href="route('applications.index')" :active="request()->routeIs('applications.*')" class="flex items-center space-x-2">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                         </svg>
@@ -46,13 +46,42 @@
 
             <!-- Right Side Of Navbar -->
             <div class="hidden md:flex items-center space-x-4">
-                <!-- Notification Bell -->
-                <button class="p-2 rounded-full text-blue-200 hover:text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
-                    <span class="sr-only">View notifications</span>
-                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                    </svg>
-                </button>
+                <!-- Announcements Notification -->
+                @php
+                    $__announcements = \App\Models\Feature::active()->orderBy('sort_order')->orderBy('id')->get();
+                    $__ann_count = $__announcements->count();
+                    $__ann_latest = optional($__announcements->max('updated_at'))?->timestamp ?? 0;
+                    $__user_id = auth()->id();
+                @endphp
+                <div class="relative" x-data="annc({ count: {{ $__ann_count }}, latest: {{ $__ann_latest }}, userId: {{ $__user_id ?? '0' }} })">
+                    <button @click="toggle()" class="relative p-2 rounded-full text-blue-200 hover:text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                        <span class="sr-only">View announcements</span>
+                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                        </svg>
+                        <!-- Yellow badge -->
+                        <span x-show="unreadCount > 0" x-text="unreadCount"
+                              class="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 text-[11px] leading-[18px] text-black bg-yellow-400 rounded-full text-center font-semibold"></span>
+                    </button>
+                    <!-- Dropdown -->
+                    <div x-show="open" @click.away="markRead()" x-transition
+                         class="absolute right-0 mt-2 w-80 max-h-96 overflow-auto bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 z-50">
+                        <div class="px-4 py-2 border-b flex items-center justify-between">
+                            <span class="text-sm font-semibold text-gray-800">Announcements</span>
+                            <button @click="markRead()" class="text-xs text-primary-600 hover:underline">Mark as read</button>
+                        </div>
+                        <div class="py-1">
+                            @forelse($__announcements as $item)
+                                <div class="px-4 py-3 hover:bg-gray-50">
+                                    <div class="text-sm font-medium text-gray-900">{{ $item->title }}</div>
+                                    <div class="text-sm text-gray-600">{{ $item->description }}</div>
+                                </div>
+                            @empty
+                                <div class="px-4 py-6 text-center text-sm text-gray-500">No announcements</div>
+                            @endforelse
+                        </div>
+                    </div>
+                </div>
 
                 <!-- Profile dropdown -->
                 <div class="ml-3 relative" x-data="{ open: false }">
@@ -149,7 +178,7 @@
                 </svg>
                 Destinations
             </a>
-            <a href="#" class="text-blue-200 hover:bg-primary-700 hover:text-white flex items-center px-3 py-2 rounded-md text-base font-medium">
+            <a href="{{ route('applications.index') }}" class="text-blue-200 hover:bg-primary-700 hover:text-white flex items-center px-3 py-2 rounded-md text-base font-medium">
                 <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                 </svg>
@@ -211,3 +240,34 @@
         </div>
     </div>
 </nav>
+
+<script>
+    // Alpine component for announcements notification
+    function annc({ count = 0, latest = 0, userId = 0 }) {
+        const key = `ann_read_${userId || 'guest'}`;
+        const stored = Number(localStorage.getItem(key) || 0);
+        const hasUnread = latest > stored;
+        return {
+            open: false,
+            unreadCount: hasUnread ? count : 0,
+            toggle() {
+                this.open = !this.open;
+                if (!this.open) this.markRead();
+            },
+            markRead() {
+                if (this.unreadCount > 0) {
+                    localStorage.setItem(key, String(latest || Date.now()));
+                    this.unreadCount = 0;
+                }
+                this.open = false;
+            }
+        }
+    }
+    window.annc = annc;
+    document.addEventListener('alpine:init', () => {
+        // In case using Alpine.data pattern in future
+        if (window.Alpine && !Alpine.data('annc')) {
+            Alpine.data('annc', annc);
+        }
+    });
+;</script>
