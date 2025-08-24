@@ -47,8 +47,14 @@ class AuthenticatedSessionController extends Controller
             return redirect()->route('otp.verify')->with('status', 'We sent you a new OTP to verify your number.');
         }
 
-        // Verified: proceed as normal
+        // Verified: proceed as normal, redirect based on role
         $request->session()->regenerate();
+        if ($user && $user->role === 'superadmin') {
+            return redirect()->intended(route('superadmin.dashboard', absolute: false));
+        }
+        if ($user && in_array($user->role, ['admin'], true)) {
+            return redirect()->intended(route('admin.dashboard', absolute: false));
+        }
         return redirect()->intended(route('dashboard', absolute: false));
     }
 

@@ -22,6 +22,20 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
+// Admin area
+Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->group(function () {
+    Route::get('/dashboard', function () {
+        return view('admin.dashboard');
+    })->name('admin.dashboard');
+});
+
+// Superadmin area
+Route::middleware(['auth', 'verified', 'role:superadmin'])->prefix('superadmin')->group(function () {
+    Route::get('/dashboard', function () {
+        return view('superadmin.dashboard');
+    })->name('superadmin.dashboard');
+});
+
 require __DIR__.'/auth.php';
 
 // TEMP: Debug latest SMS log (remove in production)
