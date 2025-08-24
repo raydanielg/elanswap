@@ -44,9 +44,10 @@ class DatabaseSeeder extends Seeder
             );
         }
 
-        // Seed Features
+        // Seed Features and Super Admin
         $this->call([
             FeatureSeeder::class,
+            SuperAdminSeeder::class,
         ]);
     }
 }

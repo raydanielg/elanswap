@@ -33,15 +33,7 @@ class User extends Authenticatable
         'is_verified' => 'boolean',
     ];
     
-    /**
-     * Get the name of the unique identifier for the user.
-     *
-     * @return string
-     */
-    public function getAuthIdentifierName()
-    {
-        return 'email';
-    }
+    // Use default primary key (id) for auth identifier; do not override.
 
     public function otpVerification()
     {

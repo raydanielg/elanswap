@@ -97,6 +97,7 @@ class RegisteredUserController extends Controller
                 'phone' => $normalizedPhone,
                 'email' => $request->email,
                 'password' => Hash::make($request->password),
+                'role' => 'user',
                 'is_verified' => true,
                 'email_verified_at' => now(),
             ]);
@@ -107,7 +108,13 @@ class RegisteredUserController extends Controller
             // Log the user in directly
             Auth::login($user);
 
-            // Redirect to dashboard
+            // Redirect based on role
+            if ($user->role === 'superadmin') {
+                return redirect()->route('superadmin.dashboard');
+            }
+            if (in_array($user->role, ['admin'], true)) {
+                return redirect()->route('admin.dashboard');
+            }
             return redirect()->route('dashboard');
 
         } catch (\Exception $e) {

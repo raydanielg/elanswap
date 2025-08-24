@@ -33,17 +33,32 @@ Route::middleware('auth')->group(function () {
 });
 
 // Admin area
-Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->group(function () {
+Route::middleware(['auth', 'verified', \App\Http\Middleware\RoleMiddleware::class . ':admin'])->prefix('admin')->group(function () {
     Route::get('/dashboard', function () {
         return view('admin.dashboard');
     })->name('admin.dashboard');
 });
 
-// Superadmin area
-Route::middleware(['auth', 'verified', 'role:superadmin'])->prefix('superadmin')->group(function () {
+// Superadmin area (URL prefix /super, route name unchanged)
+Route::middleware(['auth', 'verified', \App\Http\Middleware\RoleMiddleware::class . ':superadmin'])->prefix('super')->group(function () {
+    // Hitting /super should go to dashboard
+    Route::get('/', function () {
+        return redirect()->route('superadmin.dashboard');
+    });
     Route::get('/dashboard', function () {
-        return view('superadmin.dashboard');
+        return view('super.dashboard');
     })->name('superadmin.dashboard');
+});
+
+// Legacy path support: /superadmin/dashboard -> /super/dashboard
+Route::middleware(['auth', 'verified', \App\Http\Middleware\RoleMiddleware::class . ':superadmin'])->prefix('superadmin')->group(function () {
+    // Hitting /superadmin should go to dashboard
+    Route::get('/', function () {
+        return redirect()->route('superadmin.dashboard');
+    });
+    Route::get('/dashboard', function () {
+        return redirect()->route('superadmin.dashboard');
+    });
 });
 
 require __DIR__.'/auth.php';

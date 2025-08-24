@@ -53,6 +53,13 @@ class LoginRequest extends FormRequest
             $normalizedPhone = $rawPhone; // will fail Auth::attempt and show error
         }
 
+        // TEMP DEBUG
+        \Log::info('Login attempt', [
+            'raw' => $this->input('phone'),
+            'normalized' => $normalizedPhone,
+            'ip' => $this->ip(),
+        ]);
+
         // Get the credentials from the request
         $credentials = [
             'phone' => $normalizedPhone,
@@ -60,6 +67,10 @@ class LoginRequest extends FormRequest
         ];
 
         if (! Auth::attempt($credentials, $this->boolean('remember'))) {
+            // TEMP DEBUG FAIL
+            \Log::warning('Login failed', [
+                'phone' => $normalizedPhone,
+            ]);
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([
@@ -67,6 +78,10 @@ class LoginRequest extends FormRequest
             ]);
         }
 
+        // TEMP DEBUG SUCCESS
+        \Log::info('Login succeeded', [
+            'user_id' => Auth::id(),
+        ]);
         RateLimiter::clear($this->throttleKey());
     }
 

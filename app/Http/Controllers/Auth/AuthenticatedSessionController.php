@@ -49,13 +49,16 @@ class AuthenticatedSessionController extends Controller
 
         // Verified: proceed as normal, redirect based on role
         $request->session()->regenerate();
+
+        $welcome = 'Successfully logged in. Welcome back, '.($user?->name ?? '');
+
         if ($user && $user->role === 'superadmin') {
-            return redirect()->intended(route('superadmin.dashboard', absolute: false));
+            return to_route('superadmin.dashboard')->with('status', $welcome);
         }
         if ($user && in_array($user->role, ['admin'], true)) {
-            return redirect()->intended(route('admin.dashboard', absolute: false));
+            return to_route('admin.dashboard')->with('status', $welcome);
         }
-        return redirect()->intended(route('dashboard', absolute: false));
+        return to_route('dashboard')->with('status', $welcome);
     }
 
     /**
