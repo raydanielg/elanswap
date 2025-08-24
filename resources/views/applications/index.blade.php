@@ -134,7 +134,18 @@
         tbody.innerHTML = '<tr><td colspan="7" class="px-4 py-6 text-center text-sm text-gray-500">Loading...</td></tr>';
         try{
             const params = new URLSearchParams({ q, page, per_page: 10 });
-            const res = await fetch(`{{ route('applications.search') }}?${params.toString()}`, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+            const res = await fetch(`{{ route('applications.search') }}?${params.toString()}`, {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json',
+                },
+                credentials: 'same-origin',
+            });
+            if (!res.ok) {
+                const text = await res.text();
+                throw new Error(`Request failed (${res.status}) ${res.statusText}: ${text?.slice(0, 200)}`);
+            }
             const json = await res.json();
             renderRows(json.data || []);
             const meta = json.meta || {};
