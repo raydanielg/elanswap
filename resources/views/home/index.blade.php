@@ -10,10 +10,16 @@
     <x-site-header />
 
     <!-- Hero with background slider -->
-    <section id="home" class="relative overflow-hidden text-white" 
+    <section id="home" class="relative overflow-hidden text-white min-h-[70vh] md:min-h-[80vh]" 
+             style="clip-path: polygon(0 0, 100% 0, 100% 93%, 0 100%);" 
              x-data="{
                 i: 0,
                 delay: 5000,
+                fadeRed: true,
+                captions: {
+                  en: ['Fast transfers', 'Secure and transparent', 'Smart matching'],
+                  sw: ['Uhamisho wa haraka', 'Salama na wazi', 'Uwazi na usalama']
+                },
                 imgs: [
                   '{{ asset('african-woman-teaching-children-class_23-2148892563 (1).jpg') }}',
                   '{{ asset('black-cheerful-woman-smiling-sitting-table-stock-photo_195114-64871.jpg') }}',
@@ -27,36 +33,31 @@
                   '{{ asset('woman-teaching-kids-class_23-2148892553.jpg') }}'
                 ],
                 start(){
-                  setInterval(()=>{ this.i = (this.i+1) % this.imgs.length }, this.delay)
+                  setInterval(()=>{ this.i = (this.i+1) % this.imgs.length }, this.delay);
+                  setInterval(()=>{ this.fadeRed = !this.fadeRed }, 4000);
                 }
              }" x-init="start()">
 
         <!-- Slider images -->
         <div class="absolute inset-0">
             <template x-for="(src, idx) in imgs" :key="idx">
-                <img :src="src" :alt="'slide-'+idx" class="absolute inset-0 w-full h-full object-cover transform scale-105"
+                <img :src="src" :alt="'slide-'+idx" class="absolute inset-0 w-full h-full object-cover object-center"
                      x-show="i===idx" x-transition.opacity.duration.800ms>
             </template>
-            <!-- Gradient overlay: deep navy to dark blue for readability -->
-            <div class="absolute inset-0 bg-gradient-to-br from-primary-950/90 via-primary-900/85 to-primary-800/80"></div>
+            <!-- Gradient overlay: start dark blue and end red for the requested vibe -->
+            <div class="absolute inset-0 bg-gradient-to-br from-primary-950/90 via-primary-900/80 to-red-800/70"></div>
+            <!-- Animated red overlay fading in/out on top -->
+            <div x-show="fadeRed" x-transition.opacity.duration.1000ms class="absolute inset-0 bg-gradient-to-tr from-red-800/35 via-red-700/25 to-red-900/35 mix-blend-multiply"></div>
         </div>
 
         <div class="relative z-10">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
-                <div class="grid md:grid-cols-2 gap-10 items-center">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24 min-h-[70vh] md:min-h-[80vh] flex items-center">
+                <div class="grid md:grid-cols-1 gap-10 items-center">
                     <div>
-                        <h1 class="text-4xl md:text-5xl font-extrabold leading-tight">
-                            Badili namna ya uhamisho wa watumishi — haraka, salama na wazi.
-                        </h1>
-                        <p class="mt-4 text-blue-100/90">
-                            ElanSwap inakuunganisha na vituo vinavyolingana kwa akili ya kiotomatiki,
-                            ikirahisisha maamuzi na kuokoa muda wa usimamizi.
+                        <h1 class="text-4xl md:text-5xl font-extrabold leading-tight">ElanSwap</h1>
+                        <p class="mt-4 text-blue-100/90 text-base md:text-lg">
+                            ElanSwap ni mfumo wa kidijitali unaolenga kurahisisha mchakato wa kubadilishana vituo vya kazi kwa wafanyakazi wa sekta mbalimbali. Mfumo huu unawawezesha wafanyakazi kuunda akaunti zao, kuonyesha mahitaji yao ya kubadilisha kituo, na kupata mechi zinazofaa kulingana na vigezo vyao vya kijiografia, cheo, na sehemu wanayotaka kwenda.
                         </p>
-                        <ul class="mt-6 space-y-2 text-blue-100/90">
-                            <li class="flex items-start gap-3"><span class="mt-1 h-2 w-2 rounded-full bg-emerald-400"></span> Ulinganifu wa nafasi kwa kutumia vigezo vyako (mkoa, taaluma, muda).</li>
-                            <li class="flex items-start gap-3"><span class="mt-1 h-2 w-2 rounded-full bg-emerald-400"></span> Uwazi wa mchakato na taarifa za wakati halisi.</li>
-                            <li class="flex items-start gap-3"><span class="mt-1 h-2 w-2 rounded-full bg-emerald-400"></span> Usalama wa taarifa na ufuatiliaji wa hatua.</li>
-                        </ul>
                         <div class="mt-8 flex items-center gap-4">
                             <a href="{{ route('register') }}" class="px-6 py-3 rounded-lg bg-white text-primary-900 font-semibold shadow hover:shadow-md transition">
                                 <span x-text="$store.ui.t('get_started')">Get Started</span>
@@ -64,28 +65,6 @@
                             <a href="#features" class="px-6 py-3 rounded-lg border border-white/40 text-white/90 hover:bg-white/10 transition">
                                 <span x-text="$store.ui.t('learn_more')">Learn More</span>
                             </a>
-                        </div>
-                    </div>
-                    <div class="relative">
-                        <div class="bg-white/10 border border-white/10 rounded-2xl p-6 shadow-2xl">
-                            <div class="grid grid-cols-2 gap-4 text-center">
-                                <div class="p-4 rounded-lg bg-white/10">
-                                    <div class="text-3xl font-bold">10x</div>
-                                    <div class="text-blue-200 text-sm">Kasi ya mchakato</div>
-                                </div>
-                                <div class="p-4 rounded-lg bg-white/10">
-                                    <div class="text-3xl font-bold">24/7</div>
-                                    <div class="text-blue-200 text-sm">Upatikanaji</div>
-                                </div>
-                                <div class="p-4 rounded-lg bg-white/10">
-                                    <div class="text-3xl font-bold">99.9%</div>
-                                    <div class="text-blue-200 text-sm">Uhakika</div>
-                                </div>
-                                <div class="p-4 rounded-lg bg-white/10">
-                                    <div class="text-3xl font-bold">Secure</div>
-                                    <div class="text-blue-200 text-sm">Ulinzi wa data</div>
-                                </div>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -96,34 +75,34 @@
     <!-- Regions -->
     <section id="regions" class="py-16 bg-white">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 class="text-2xl font-bold mb-8">Regions</h2>
-            <p class="text-gray-600">Orodha ya mikoa na vituo vitapatikana hapa (tutaunganisha na `region.json`).</p>
+            <h2 class="text-2xl font-bold mb-8" x-text="$store.ui.t('regions_title')"></h2>
+            <p class="text-gray-600" x-text="$store.ui.t('regions_desc')"></p>
         </div>
     </section>
 
     <!-- About -->
     <section id="about" class="py-16">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 class="text-2xl font-bold mb-4">Kuhusu ElanSwap</h2>
-            <p class="text-gray-700">ElanSwap inaleta urahisi katika uhamisho wa watumishi kwa kutumia teknolojia rahisi na salama.</p>
+            <h2 class="text-2xl font-bold mb-4" x-text="$store.ui.t('about_title')"></h2>
+            <p class="text-gray-700" x-text="$store.ui.t('about_desc')"></p>
         </div>
     </section>
 
     <!-- Contact -->
     <section id="contact" class="py-16 bg-white">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 class="text-2xl font-bold mb-6">Mawasiliano</h2>
-            <p class="text-gray-700">Wasiliana nasi kupitia barua pepe: support@elanswap.com</p>
+            <h2 class="text-2xl font-bold mb-6" x-text="$store.ui.t('contact_title')"></h2>
+            <p class="text-gray-700" x-text="$store.ui.t('contact_desc')"></p>
         </div>
     </section>
 
     <!-- FAQ -->
     <section id="faq" class="py-16">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 class="text-2xl font-bold mb-6">Maswali ya Mara kwa Mara (FAQ)</h2>
+            <h2 class="text-2xl font-bold mb-6" x-text="$store.ui.t('faq_title')"></h2>
             <ul class="space-y-4 text-gray-700">
-                <li><strong>Je, nawezaje kuanza?</strong> Bofya Get Started na ujisajili.</li>
-                <li><strong>Je, namba ya simu inatakiwa kwenye muundo gani?</strong> Tumia muundo 2557XXXXXXXX.</li>
+                <li><strong x-text="$store.ui.t('faq_q1')"></strong> <span x-text="$store.ui.t('faq_a1')"></span></li>
+                <li><strong x-text="$store.ui.t('faq_q2')"></strong> <span x-text="$store.ui.t('faq_a2')"></span></li>
             </ul>
         </div>
     </section>
@@ -131,19 +110,19 @@
     <!-- Features -->
     <section id="features" class="py-16">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 class="text-2xl font-bold mb-8">Vipengele Muhimu</h2>
+            <h2 class="text-2xl font-bold mb-8" x-text="$store.ui.t('features_title')"></h2>
             <div class="grid md:grid-cols-3 gap-6">
                 <div class="p-6 rounded-xl bg-white shadow-sm border">
-                    <h3 class="font-semibold text-lg">Uhamisho Rahisi</h3>
-                    <p class="mt-2 text-gray-600">Dhibiti mchakato wa uhamisho kwa hatua chache.</p>
+                    <h3 class="font-semibold text-lg" x-text="$store.ui.t('feature1_title')"></h3>
+                    <p class="mt-2 text-gray-600" x-text="$store.ui.t('feature1_desc')"></p>
                 </div>
                 <div class="p-6 rounded-xl bg-white shadow-sm border">
-                    <h3 class="font-semibold text-lg">Ulinzi wa Taarifa</h3>
-                    <p class="mt-2 text-gray-600">Usalama wa kiwango cha juu kulinda taarifa zako.</p>
+                    <h3 class="font-semibold text-lg" x-text="$store.ui.t('feature2_title')"></h3>
+                    <p class="mt-2 text-gray-600" x-text="$store.ui.t('feature2_desc')"></p>
                 </div>
                 <div class="p-6 rounded-xl bg-white shadow-sm border">
-                    <h3 class="font-semibold text-lg">Ripoti za Haraka</h3>
-                    <p class="mt-2 text-gray-600">Pata takwimu na ripoti kwa wakati.</p>
+                    <h3 class="font-semibold text-lg" x-text="$store.ui.t('feature3_title')"></h3>
+                    <p class="mt-2 text-gray-600" x-text="$store.ui.t('feature3_desc')"></p>
                 </div>
             </div>
         </div>
@@ -153,7 +132,7 @@
     <section class="py-16 bg-white dark:bg-primary-900/20">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <h3 class="text-2xl font-bold" x-text="$store.ui.t('ready_start')">Ready to start?</h3>
-            <p class="mt-2 text-gray-600">Jisajili leo na uanze kutumia ElanSwap.</p>
+            <p class="mt-2 text-gray-600" x-text="$store.ui.t('cta_desc')"></p>
             <div class="mt-6">
                 <a href="{{ route('register') }}" class="px-6 py-3 rounded-lg bg-white text-primary-900 font-semibold shadow hover:shadow-md transition">
                     <span x-text="$store.ui.t('register')">Register</span>
