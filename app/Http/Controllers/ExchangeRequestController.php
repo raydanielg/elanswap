@@ -99,8 +99,35 @@ class ExchangeRequestController extends Controller
         if ($requestModel->status !== 'pending') {
             return back()->with('error', 'This request is already processed.');
         }
-        $requestModel->status = 'accepted';
-        $requestModel->save();
+        // Cascade updates: mark request accepted, mark applications accepted, and pair if both sides provided
+        \DB::transaction(function () use ($requestModel) {
+            $requestModel->status = 'accepted';
+            $requestModel->save();
+
+            // Target application (owned by current user)
+            $target = Application::find($requestModel->application_id);
+            if ($target) {
+                $target->status = 'accepted';
+            }
+
+            // Requester's application (if provided)
+            $reqApp = null;
+            if ($requestModel->requester_application_id) {
+                $reqApp = Application::find($requestModel->requester_application_id);
+                if ($reqApp) {
+                    $reqApp->status = 'accepted';
+                }
+            }
+
+            // Pair both applications if both exist
+            if ($target && $reqApp) {
+                $target->paired_application_id = $reqApp->id;
+                $reqApp->paired_application_id = $target->id;
+            }
+
+            if ($target) { $target->save(); }
+            if ($reqApp) { $reqApp->save(); }
+        });
 
         // Log simple notifications
         try {

@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use App\Models\Log;
 
 class LoginRequest extends FormRequest
 {
@@ -78,10 +79,21 @@ class LoginRequest extends FormRequest
             ]);
         }
 
-        // TEMP DEBUG SUCCESS
-        \Log::info('Login succeeded', [
-            'user_id' => Auth::id(),
-        ]);
+        // Record login event in logs table
+        try {
+            Log::create([
+                'user_id' => Auth::id(),
+                'record_date' => now()->toDateString(),
+                'phone' => $normalizedPhone,
+                'text' => 'User logged in',
+                'status' => 'sent',
+                'log_type' => 'login',
+                'ip_address' => $this->ip(),
+                'user_agent' => substr((string)($this->header('User-Agent') ?? ''), 0, 1000),
+            ]);
+        } catch (\Throwable $e) {
+            \Log::warning('Failed to record login log: '.$e->getMessage());
+        }
         RateLimiter::clear($this->throttleKey());
     }
 

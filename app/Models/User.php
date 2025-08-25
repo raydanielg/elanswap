@@ -21,6 +21,7 @@ class User extends Authenticatable
     protected $fillable = [
         'name',
         'email',
+        'avatar_path',
         'password',
         'role',
         'phone',
@@ -30,12 +31,17 @@ class User extends Authenticatable
         'district_id',
         'category_id',
         'station_id',
+        'is_banned',
+        'banned_at',
+        'ban_reason',
     ];
 
     protected $casts = [
         'email_verified_at' => 'datetime',
         'phone_verified_at' => 'datetime',
         'is_verified' => 'boolean',
+        'is_banned' => 'boolean',
+        'banned_at' => 'datetime',
     ];
     
     // Use default primary key (id) for auth identifier; do not override.

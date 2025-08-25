@@ -15,8 +15,15 @@ class AuthenticatedSessionController extends Controller
     /**
      * Display the login view.
      */
-    public function create(): View
+    public function create(): View|RedirectResponse
     {
+        if (Auth::check()) {
+            $user = Auth::user();
+            if ($user && in_array($user->role ?? 'user', ['admin','superadmin'], true)) {
+                return to_route('admin.dashboard');
+            }
+            return to_route('dashboard');
+        }
         return view('auth.login');
     }
 
@@ -52,11 +59,8 @@ class AuthenticatedSessionController extends Controller
 
         $welcome = 'Successfully logged in. Welcome back, '.($user?->name ?? '');
 
-        if ($user && $user->role === 'superadmin') {
-            return to_route('superadmin.dashboard')->with('status', $welcome);
-        }
-        if ($user && in_array($user->role, ['admin'], true)) {
-            return to_route('admin.dashboard')->with('status', $welcome);
+        if ($user && in_array($user->role, ['admin','superadmin'], true)) {
+            return redirect('/admin')->with('status', $welcome);
         }
         return to_route('dashboard')->with('status', $welcome);
     }

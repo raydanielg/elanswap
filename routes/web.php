@@ -14,6 +14,7 @@ use App\Http\Controllers\DestinationController;
 use App\Http\Controllers\ExchangeRequestController;
 use App\Http\Controllers\BlogController;
 use App\Http\Controllers\Admin\BlogPostController as AdminBlogPostController;
+use App\Http\Controllers\Admin\ExchangeRequestController as AdminExchangeRequestController;
 use App\Http\Controllers\ProfileCompletionController;
 use App\Models\Feature;
 
@@ -29,6 +30,10 @@ Route::middleware('installer')->group(function () {
 });
 
 Route::get('/home', function () {
+    $user = auth()->user();
+    if ($user && in_array($user->role ?? 'user', ['admin','superadmin'], true)) {
+        return redirect()->route('admin.dashboard');
+    }
     return redirect()->route('dashboard');
 })->middleware(['auth', 'verified'])->name('home');
 
@@ -57,6 +62,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/applications/create', [ApplicationController::class, 'create'])->name('applications.create');
     Route::post('/applications', [ApplicationController::class, 'store'])->name('applications.store');
     Route::get('/applications/{application}', [ApplicationController::class, 'show'])->name('applications.show');
+    Route::get('/applications/{application}/peek', [ApplicationController::class, 'peek'])->name('applications.peek');
     // JSON + actions
     Route::get('/applications/{application}/details', [ApplicationController::class, 'details'])->name('applications.details');
     Route::post('/applications/{application}/approve', [ApplicationController::class, 'approve'])->name('applications.approve');
@@ -84,6 +90,10 @@ Route::middleware('auth')->group(function () {
 
 // Admin area
 Route::middleware(['auth', 'verified', \App\Http\Middleware\RoleMiddleware::class . ':admin'])->prefix('admin')->group(function () {
+    // Hitting /admin should go to admin dashboard
+    Route::get('/', function () {
+        return redirect()->route('admin.dashboard');
+    });
     Route::get('/dashboard', function () {
         return view('admin.dashboard');
     })->name('admin.dashboard');
@@ -94,6 +104,74 @@ Route::middleware(['auth', 'verified', \App\Http\Middleware\RoleMiddleware::clas
 
     // Blog posts CRUD
     Route::resource('blog-posts', AdminBlogPostController::class)->names('admin.blog');
+
+    // Exchange Requests (admin overview)
+    Route::get('/requests', [AdminExchangeRequestController::class, 'index'])->name('admin.requests.index');
+    Route::get('/requests/{exchangeRequest}', [AdminExchangeRequestController::class, 'show'])->name('admin.requests.show');
+    Route::post('/requests/{exchangeRequest}/approve', [AdminExchangeRequestController::class, 'approve'])->name('admin.requests.approve');
+    Route::post('/requests/{exchangeRequest}/reject', [AdminExchangeRequestController::class, 'reject'])->name('admin.requests.reject');
+
+    // Applications (admin overview)
+    Route::get('/applications', [\App\Http\Controllers\Admin\ApplicationController::class, 'index'])->name('admin.applications.index');
+    Route::get('/applications/{application}/peek', [\App\Http\Controllers\Admin\ApplicationController::class, 'peek'])->name('admin.applications.peek');
+    Route::delete('/applications/{application}', [\App\Http\Controllers\Admin\ApplicationController::class, 'destroy'])->name('admin.applications.destroy');
+
+    // Admin user profile view/edit
+    Route::get('/users/{user}/profile', [\App\Http\Controllers\Admin\UserProfileController::class, 'show'])->name('admin.users.profile');
+    Route::put('/users/{user}/profile', [\App\Http\Controllers\Admin\UserProfileController::class, 'update'])->name('admin.users.profile.update');
+
+    // Admin self profile (no user id)
+    Route::get('/profile', [\App\Http\Controllers\Admin\UserProfileController::class, 'profile'])->name('admin.profile');
+    Route::put('/profile', [\App\Http\Controllers\Admin\UserProfileController::class, 'profileUpdate'])->name('admin.profile.update');
+
+    // Admin change password
+    Route::get('/profile/password', [\App\Http\Controllers\Admin\UserProfileController::class, 'password'])->name('admin.profile.password');
+    Route::put('/profile/password', [\App\Http\Controllers\Admin\UserProfileController::class, 'passwordUpdate'])->name('admin.profile.password.update');
+
+    // Admin Settings
+    Route::get('/settings', [\App\Http\Controllers\Admin\SettingsController::class, 'general'])->name('admin.settings.general');
+    Route::put('/settings', [\App\Http\Controllers\Admin\SettingsController::class, 'updateGeneral'])->name('admin.settings.general.update');
+    Route::get('/settings/branding', [\App\Http\Controllers\Admin\SettingsController::class, 'branding'])->name('admin.settings.branding');
+    Route::get('/settings/email', [\App\Http\Controllers\Admin\SettingsController::class, 'email'])->name('admin.settings.email');
+    Route::put('/settings/email', [\App\Http\Controllers\Admin\SettingsController::class, 'updateEmail'])->name('admin.settings.email.update');
+    // Placeholder routes for existing menu items
+    Route::view('/settings/site-management', 'admin.settings.site-management')->name('admin.settings.site');
+    Route::view('/settings/other', 'admin.settings.other')->name('admin.settings.other');
+
+    // Blog (admin)
+    Route::get('/blog', [\App\Http\Controllers\Admin\PostController::class, 'index'])->name('admin.blog.index');
+    Route::get('/blog/create', [\App\Http\Controllers\Admin\PostController::class, 'create'])->name('admin.blog.create');
+    Route::post('/blog', [\App\Http\Controllers\Admin\PostController::class, 'store'])->name('admin.blog.store');
+    Route::get('/blog/{post}/edit', [\App\Http\Controllers\Admin\PostController::class, 'edit'])->name('admin.blog.edit');
+    Route::put('/blog/{post}', [\App\Http\Controllers\Admin\PostController::class, 'update'])->name('admin.blog.update');
+    Route::delete('/blog/{post}', [\App\Http\Controllers\Admin\PostController::class, 'destroy'])->name('admin.blog.destroy');
+    // Convenience manage path
+    Route::get('/blog/manage', function () { return redirect()->route('admin.blog.create'); });
+
+    // Locations (admin overview)
+    Route::get('/locations', [\App\Http\Controllers\Admin\LocationController::class, 'index'])->name('admin.locations.index');
+    // Regions
+    Route::get('/locations/regions', [\App\Http\Controllers\Admin\RegionController::class, 'index'])->name('admin.locations.regions');
+    Route::post('/locations/regions', [\App\Http\Controllers\Admin\RegionController::class, 'store'])->name('admin.locations.regions.store');
+    Route::put('/locations/regions/{region}', [\App\Http\Controllers\Admin\RegionController::class, 'update'])->name('admin.locations.regions.update');
+    Route::delete('/locations/regions/{region}', [\App\Http\Controllers\Admin\RegionController::class, 'destroy'])->name('admin.locations.regions.destroy');
+    // Districts
+    Route::get('/locations/districts', [\App\Http\Controllers\Admin\DistrictController::class, 'index'])->name('admin.locations.districts');
+    Route::post('/locations/districts', [\App\Http\Controllers\Admin\DistrictController::class, 'store'])->name('admin.locations.districts.store');
+    Route::put('/locations/districts/{district}', [\App\Http\Controllers\Admin\DistrictController::class, 'update'])->name('admin.locations.districts.update');
+    Route::delete('/locations/districts/{district}', [\App\Http\Controllers\Admin\DistrictController::class, 'destroy'])->name('admin.locations.districts.destroy');
+
+    // Users (admin management)
+    Route::get('/users', [\App\Http\Controllers\Admin\UserController::class, 'index'])->name('admin.users.index');
+    // Convenience filter path for banned users (must be before users/{user})
+    Route::get('/users/banned', function () {
+        return redirect()->route('admin.users.index', ['banned' => 'yes']);
+    });
+    Route::get('/users/{user}/peek', [\App\Http\Controllers\Admin\UserController::class, 'peek'])->name('admin.users.peek');
+    Route::post('/users/{user}/ban', [\App\Http\Controllers\Admin\UserController::class, 'ban'])->name('admin.users.ban');
+    Route::post('/users/{user}/unban', [\App\Http\Controllers\Admin\UserController::class, 'unban'])->name('admin.users.unban');
+    Route::post('/users/{user}/reset-password', [\App\Http\Controllers\Admin\UserController::class, 'resetPassword'])->name('admin.users.reset');
+    Route::delete('/users/{user}', [\App\Http\Controllers\Admin\UserController::class, 'destroy'])->name('admin.users.destroy');
 });
 
 // Superadmin area (URL prefix /super, route name unchanged)

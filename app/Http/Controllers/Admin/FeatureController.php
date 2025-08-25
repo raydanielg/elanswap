@@ -8,9 +8,22 @@ use Illuminate\Http\Request;
 
 class FeatureController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $features = Feature::orderBy('sort_order')->orderBy('id')->paginate(15);
+        $q = trim($request->get('q', ''));
+        $query = Feature::query();
+        if ($q !== '') {
+            $query->where(function($sub) use ($q) {
+                $sub->where('title', 'like', "%{$q}%")
+                    ->orWhere('description', 'like', "%{$q}%");
+            });
+        }
+        $features = $query->orderBy('sort_order')->orderBy('id')->paginate(15);
+
+        if ($request->ajax()) {
+            return response()->view('admin.features._list', compact('features'));
+        }
+
         return view('admin.features.index', compact('features'));
     }
 

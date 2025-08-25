@@ -114,13 +114,18 @@ class ApplicationController extends Controller
         // Access control: owner can view; otherwise only a requester with an accepted exchange
         $user = auth()->user();
         if ($user) {
-            $isOwner = ($application->user_id === $user->id);
-            if (!$isOwner) {
-                $hasAcceptedExchange = ExchangeRequest::where('application_id', $application->id)
-                    ->where('requester_id', $user->id)
-                    ->where('status', 'accepted')
-                    ->exists();
-                abort_unless($hasAcceptedExchange, 403);
+            // Admin roles can view any application
+            if (in_array($user->role ?? 'user', ['admin','superadmin'], true)) {
+                // allow
+            } else {
+                $isOwner = ($application->user_id === $user->id);
+                if (!$isOwner) {
+                    $hasAcceptedExchange = ExchangeRequest::where('application_id', $application->id)
+                        ->where('requester_id', $user->id)
+                        ->where('status', 'accepted')
+                        ->exists();
+                    abort_unless($hasAcceptedExchange, 403);
+                }
             }
         } else {
             abort(403);
@@ -152,6 +157,34 @@ class ApplicationController extends Controller
             'application' => $application,
             'matches' => $matches,
             'incoming' => $incoming,
+        ]);
+    }
+
+    // Admin/owner/requester compact preview for modal
+    public function peek(Application $application)
+    {
+        // Load minimal relations
+        $application->load(['user','fromRegion','fromDistrict','fromStation','toRegion','toDistrict']);
+
+        // Same access rules as show(): allow admins universally
+        $user = auth()->user();
+        if ($user) {
+            if (!in_array($user->role ?? 'user', ['admin','superadmin'], true)) {
+                $isOwner = ($application->user_id === $user->id);
+                if (!$isOwner) {
+                    $hasAcceptedExchange = ExchangeRequest::where('application_id', $application->id)
+                        ->where('requester_id', $user->id)
+                        ->where('status', 'accepted')
+                        ->exists();
+                    abort_unless($hasAcceptedExchange, 403);
+                }
+            }
+        } else {
+            abort(403);
+        }
+
+        return view('admin.requests._application_peek', [
+            'application' => $application,
         ]);
     }
 
