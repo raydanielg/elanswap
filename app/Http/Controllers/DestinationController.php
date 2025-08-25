@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Application;
 use App\Models\Region;
+use App\Models\ExchangeRequest;
 use Illuminate\Http\Request;
 
 class DestinationController extends Controller
@@ -34,10 +35,28 @@ class DestinationController extends Controller
             ->where('status', 'pending')
             ->get();
 
+        // Map of app_id => ['status' => ..., 'id' => ...] for user's requests on these apps
+        $requestedMap = [];
+        if ($request->user()) {
+            $ids = $apps->getCollection()->pluck('id');
+            if ($ids->isNotEmpty()) {
+                $existing = ExchangeRequest::query()
+                    ->select(['id','application_id','status'])
+                    ->whereIn('application_id', $ids)
+                    ->where('requester_id', $request->user()->id)
+                    ->latest('id')
+                    ->get();
+                foreach ($existing as $er) {
+                    $requestedMap[$er->application_id] = ['status' => $er->status, 'id' => $er->id];
+                }
+            }
+        }
+
         return view('destinations.show', [
             'region' => $region,
             'apps' => $apps,
             'myPendingApps' => $myPendingApps,
+            'requestedMap' => $requestedMap,
         ]);
     }
 }

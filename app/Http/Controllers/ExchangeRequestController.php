@@ -91,4 +91,51 @@ class ExchangeRequestController extends Controller
 
         return back()->with('status', 'Exchange request sent.');
     }
+
+    public function accept(Request $request, ExchangeRequest $requestModel)
+    {
+        // Only the owner of the target application can accept
+        abort_unless($requestModel->owner_id === $request->user()->id, 403);
+        if ($requestModel->status !== 'pending') {
+            return back()->with('error', 'This request is already processed.');
+        }
+        $requestModel->status = 'accepted';
+        $requestModel->save();
+
+        // Log simple notifications
+        try {
+            Log::create([
+                'user_id' => $requestModel->requester_id,
+                'log_type' => 'notification',
+                'status' => 'new',
+                'text' => 'Your exchange request for application #' . $requestModel->application_id . ' was accepted.',
+                'user_agent' => json_encode(['type' => 'exchange_request_accept', 'id' => $requestModel->id]),
+            ]);
+        } catch (\Throwable $e) {}
+
+        return back()->with('status', 'Request accepted. You can now view full details.');
+    }
+
+    public function reject(Request $request, ExchangeRequest $requestModel)
+    {
+        // Only the owner of the target application can reject
+        abort_unless($requestModel->owner_id === $request->user()->id, 403);
+        if ($requestModel->status !== 'pending') {
+            return back()->with('error', 'This request is already processed.');
+        }
+        $requestModel->status = 'rejected';
+        $requestModel->save();
+
+        try {
+            Log::create([
+                'user_id' => $requestModel->requester_id,
+                'log_type' => 'notification',
+                'status' => 'new',
+                'text' => 'Your exchange request for application #' . $requestModel->application_id . ' was rejected.',
+                'user_agent' => json_encode(['type' => 'exchange_request_reject', 'id' => $requestModel->id]),
+            ]);
+        } catch (\Throwable $e) {}
+
+        return back()->with('status', 'Request rejected.');
+    }
 }

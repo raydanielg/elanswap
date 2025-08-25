@@ -41,11 +41,11 @@
                         </svg>
                         <span>{{ __('My Requests') }}</span>
                     </x-nav-link>
-                    <x-nav-link href="#" class="flex items-center space-x-2">
+                    <x-nav-link :href="route('blog.index')" :active="request()->routeIs('blog.*')" class="flex items-center space-x-2">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
                         </svg>
-                        <span>{{ __('Messages') }}</span>
+                        <span>{{ __('Blog') }}</span>
                     </x-nav-link>
                 </div>
             </div>
@@ -65,26 +65,28 @@
                         <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                         </svg>
-                        <!-- Yellow badge -->
+                        <!-- Yellow badge (positioned above icon) -->
                         <span x-show="unreadCount > 0" x-text="unreadCount"
-                              class="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 text-[11px] leading-[18px] text-black bg-yellow-400 rounded-full text-center font-semibold"></span>
+                              class="absolute -top-1 -right-1 sm:-top-2 sm:-right-2 min-w-[14px] h-[14px] sm:min-w-[18px] sm:h-[18px] px-1 text-[10px] sm:text-[11px] leading-[14px] sm:leading-[18px] text-black bg-yellow-400 rounded-full text-center font-semibold"></span>
                     </button>
-                    <!-- Dropdown -->
-                    <div x-show="open" @click.away="markRead()" x-transition
-                         class="absolute right-0 mt-2 w-80 max-h-96 overflow-auto bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 z-50">
-                        <div class="px-4 py-2 border-b flex items-center justify-between">
-                            <span class="text-sm font-semibold text-gray-800">Announcements</span>
-                            <button @click="markRead()" class="text-xs text-primary-600 hover:underline">Mark as read</button>
-                        </div>
-                        <div class="py-1">
-                            @forelse($__announcements as $item)
-                                <div class="px-4 py-3 hover:bg-gray-50">
-                                    <div class="text-sm font-medium text-gray-900">{{ $item->title }}</div>
-                                    <div class="text-sm text-gray-600">{{ $item->description }}</div>
-                                </div>
-                            @empty
-                                <div class="px-4 py-6 text-center text-sm text-gray-500">No announcements</div>
-                            @endforelse
+                    <!-- Mobile Modal Overlay (centered) -->
+                    <div x-show="open" x-transition.opacity class="fixed inset-0 bg-black/50 z-40 md:hidden" @click="markRead()"></div>
+                    <div x-show="open" x-transition class="fixed inset-0 z-50 flex items-center justify-center md:hidden">
+                        <div class="w-[92vw] max-w-sm max-h-[80vh] overflow-auto bg-white rounded-lg shadow-xl ring-1 ring-black/10" @click.stop>
+                            <div class="px-4 py-3 border-b flex items-center justify-between sticky top-0 bg-white">
+                                <span class="text-sm font-semibold text-gray-800">Announcements</span>
+                                <button @click="markRead()" class="text-xs text-primary-600 hover:underline">Close & mark read</button>
+                            </div>
+                            <div class="py-1">
+                                @forelse($__announcements as $item)
+                                    <div class="px-4 py-3 hover:bg-gray-50">
+                                        <div class="text-sm font-medium text-gray-900">{{ $item->title }}</div>
+                                        <div class="text-sm text-gray-600">{{ $item->description }}</div>
+                                    </div>
+                                @empty
+                                    <div class="px-4 py-6 text-center text-sm text-gray-500">No announcements</div>
+                                @endforelse
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -150,8 +152,47 @@
                 </div>
             </div>
 
-            <!-- Mobile menu button -->
-            <div class="-mr-2 flex items-center md:hidden">
+            <!-- Mobile actions: notifications + menu button -->
+            <div class="pr-2 flex items-center md:hidden space-x-2">
+                @php
+                    $__announcements = \App\Models\Feature::active()->orderBy('sort_order')->orderBy('id')->get();
+                    $__ann_count = $__announcements->count();
+                    $__ann_latest = optional($__announcements->max('updated_at'))?->timestamp ?? 0;
+                    $__user_id = auth()->id();
+                @endphp
+                <!-- Mobile Announcements Bell -->
+                <div class="relative" x-data="annc({ count: {{ $__ann_count }}, latest: {{ $__ann_latest }}, userId: {{ $__user_id ?? '0' }} })">
+                    <button @click="toggle()" class="relative p-2 rounded-full text-blue-200 hover:text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                        <span class="sr-only">View announcements</span>
+                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                        </svg>
+                        <span x-show="unreadCount > 0" x-text="unreadCount"
+                              class="absolute -top-2 -right-2 min-w-[14px] h-[14px] sm:min-w-[18px] sm:h-[18px] px-1 text-[10px] sm:text-[11px] leading-[14px] sm:leading-[18px] text-black bg-yellow-400 rounded-full text-center font-semibold"></span>
+                    </button>
+                    <!-- Mobile Modal Overlay (centered) -->
+                    <div x-show="open" x-transition.opacity class="fixed inset-0 bg-black/50 z-40 md:hidden" @click="markRead()"></div>
+                    <div x-show="open" x-transition class="fixed inset-0 z-50 flex items-center justify-center md:hidden">
+                        <div class="w-[92vw] max-w-sm max-h-[80vh] overflow-auto bg-white rounded-lg shadow-xl ring-1 ring-black/10" @click.stop>
+                            <div class="px-4 py-3 border-b flex items-center justify-between sticky top-0 bg-white">
+                                <span class="text-sm font-semibold text-gray-800">Announcements</span>
+                                <button @click="markRead()" class="text-xs text-primary-600 hover:underline">Close & mark read</button>
+                            </div>
+                            <div class="py-1">
+                                @forelse($__announcements as $item)
+                                    <div class="px-4 py-3 hover:bg-gray-50">
+                                        <div class="text-sm font-medium text-gray-900">{{ $item->title }}</div>
+                                        <div class="text-sm text-gray-600">{{ $item->description }}</div>
+                                    </div>
+                                @empty
+                                    <div class="px-4 py-6 text-center text-sm text-gray-500">No announcements</div>
+                                @endforelse
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Mobile menu button -->
                 <button @click="open = !open" type="button" class="inline-flex items-center justify-center p-2 rounded-md text-blue-200 hover:text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white" aria-controls="mobile-menu" aria-expanded="false">
                     <span class="sr-only">Open main menu</span>
                     <!-- Icon when menu is closed -->
@@ -196,11 +237,11 @@
                 </svg>
                 My Requests
             </a>
-            <a href="#" class="text-blue-200 hover:bg-primary-700 hover:text-white flex items-center px-3 py-2 rounded-md text-base font-medium">
+            <a href="{{ route('blog.index') }}" class="text-blue-200 hover:bg-primary-700 hover:text-white flex items-center px-3 py-2 rounded-md text-base font-medium">
                 <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
                 </svg>
-                Messages
+                Blog
             </a>
         </div>
         <div class="pt-4 pb-3 border-t border-primary-700">

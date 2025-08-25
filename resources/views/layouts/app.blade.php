@@ -53,5 +53,6 @@
 
             @include('layouts.partials.footer-front')
         </div>
+        @stack('scripts')
     </body>
 </html>

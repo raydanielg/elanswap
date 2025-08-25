@@ -12,6 +12,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ApplicationController;
 use App\Http\Controllers\DestinationController;
 use App\Http\Controllers\ExchangeRequestController;
+use App\Http\Controllers\BlogController;
+use App\Http\Controllers\Admin\BlogPostController as AdminBlogPostController;
 use App\Http\Controllers\ProfileCompletionController;
 use App\Models\Feature;
 
@@ -68,10 +70,16 @@ Route::middleware('auth')->group(function () {
 
     // Exchange Requests
     Route::post('/exchange-requests', [ExchangeRequestController::class, 'store'])->name('exchange-requests.store');
+    Route::post('/exchange-requests/{requestModel}/accept', [ExchangeRequestController::class, 'accept'])->name('exchange-requests.accept');
+    Route::post('/exchange-requests/{requestModel}/reject', [ExchangeRequestController::class, 'reject'])->name('exchange-requests.reject');
 
     // My Requests (sent by current user)
     Route::get('/my-requests', [ExchangeRequestController::class, 'index'])->name('requests.index');
     Route::get('/my-requests/{requestModel}', [ExchangeRequestController::class, 'show'])->name('requests.show');
+
+    // Blog (public pages under auth for now)
+    Route::get('/blog', [BlogController::class, 'index'])->name('blog.index');
+    Route::get('/blog/{slug}', [BlogController::class, 'show'])->name('blog.show');
 });
 
 // Admin area
@@ -83,6 +91,9 @@ Route::middleware(['auth', 'verified', \App\Http\Middleware\RoleMiddleware::clas
     // Announcements (Features) management
     Route::resource('features', AdminFeatureController::class)->names('admin.features');
     Route::post('features/{feature}/toggle', [AdminFeatureController::class, 'toggle'])->name('admin.features.toggle');
+
+    // Blog posts CRUD
+    Route::resource('blog-posts', AdminBlogPostController::class)->names('admin.blog');
 });
 
 // Superadmin area (URL prefix /super, route name unchanged)

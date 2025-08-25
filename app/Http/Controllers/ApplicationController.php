@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Application;
 use App\Models\Region;
 use App\Models\District;
+use App\Models\ExchangeRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -110,6 +111,21 @@ class ApplicationController extends Controller
     {
         $application->load(['user','fromRegion','fromDistrict','fromStation','toRegion','toDistrict']);
 
+        // Access control: owner can view; otherwise only a requester with an accepted exchange
+        $user = auth()->user();
+        if ($user) {
+            $isOwner = ($application->user_id === $user->id);
+            if (!$isOwner) {
+                $hasAcceptedExchange = ExchangeRequest::where('application_id', $application->id)
+                    ->where('requester_id', $user->id)
+                    ->where('status', 'accepted')
+                    ->exists();
+                abort_unless($hasAcceptedExchange, 403);
+            }
+        } else {
+            abort(403);
+        }
+
         // Simple matches for display
         $matches = Application::query()
             ->with(['user','fromRegion','toRegion'])
@@ -120,9 +136,22 @@ class ApplicationController extends Controller
             ->limit(5)
             ->get();
 
+        $incoming = collect();
+        if (auth()->check() && auth()->id() === $application->user_id) {
+            $incoming = ExchangeRequest::with([
+                'requester',
+                'requesterApplication.fromRegion',
+                'requesterApplication.toRegion',
+            ])
+            ->where('application_id', $application->id)
+            ->latest('id')
+            ->get();
+        }
+
         return view('applications.show', [
             'application' => $application,
             'matches' => $matches,
+            'incoming' => $incoming,
         ]);
     }
 

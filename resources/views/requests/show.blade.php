@@ -5,6 +5,20 @@
     <div class="mb-4">
         <h1 class="text-2xl font-bold text-gray-900">Request Details</h1>
         <div class="border-t border-dashed border-gray-300 mt-2"></div>
+        @if($req->status === 'accepted')
+        @php
+            $isRequester = auth()->id() === optional($req->requester)->id;
+            $counter = $isRequester ? $req->owner : $req->requester;
+        @endphp
+        <div class="p-4 border-t bg-blue-50">
+            <h3 class="text-sm font-semibold text-gray-800 mb-1">Contact details (Counterparty)</h3>
+            <div class="text-sm text-gray-900">
+                <div>Name: {{ $counter->name ?? '—' }}</div>
+                <div>Phone: {{ $counter->phone ?? '—' }}</div>
+                <div>Email: {{ $counter->email ?? '—' }}</div>
+            </div>
+        </div>
+        @endif
     </div>
 
     @if($req->status === 'accepted')
@@ -43,9 +57,11 @@
                     <div>Ref: #{{ $req->application->tracking_code ?? $req->application_id }}</div>
                     <div>Owner: {{ $req->owner->name ?? '—' }}</div>
                     <div>Route: {{ $req->application->fromRegion->name ?? '—' }} → {{ $req->application->toRegion->name ?? '—' }}</div>
-                    <div class="mt-2">
-                        <a href="{{ route('applications.show', $req->application) }}" class="text-blue-600 hover:underline">Open application</a>
-                    </div>
+                    @if($req->status === 'accepted')
+                        <div class="mt-2">
+                            <a href="{{ route('applications.show', $req->application) }}" class="text-blue-600 hover:underline">Open application</a>
+                        </div>
+                    @endif
                 </div>
             </div>
             <div>
@@ -56,9 +72,11 @@
                         <div class="mt-2">Your offered application:</div>
                         <div>Ref: #{{ $req->requesterApplication->tracking_code ?? $req->requester_application_id }}</div>
                         <div>Route: {{ $req->requesterApplication->fromRegion->name ?? '—' }} → {{ $req->requesterApplication->toRegion->name ?? '—' }}</div>
-                        <div class="mt-2">
-                            <a href="{{ route('applications.show', $req->requesterApplication) }}" class="text-blue-600 hover:underline">Open your application</a>
-                        </div>
+                        @if($req->status === 'accepted')
+                            <div class="mt-2">
+                                <a href="{{ route('applications.show', $req->requesterApplication) }}" class="text-blue-600 hover:underline">Open your application</a>
+                            </div>
+                        @endif
                     @endif
                 </div>
             </div>
