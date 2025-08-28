@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\FeatureController as AdminFeatureController;
 use App\Models\User;
 use App\Models\Log;
 use App\Models\OtpVerification;
+use App\Models\Application;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\InstallController;
 use App\Http\Controllers\NewsletterController;
@@ -17,11 +18,56 @@ use App\Http\Controllers\Admin\BlogPostController as AdminBlogPostController;
 use App\Http\Controllers\Admin\ExchangeRequestController as AdminExchangeRequestController;
 use App\Http\Controllers\ProfileCompletionController;
 use App\Models\Feature;
+use Illuminate\Http\Request;
 
 Route::get('/', function () {
     $features = Feature::active()->orderBy('sort_order')->orderBy('id')->get();
     return view('home.index', compact('features'));
 })->name('home.public');
+
+// Public tracking endpoint: GET /track?tracking_id=ELS0001
+Route::get('/track', function (Request $request) {
+    $code = trim((string) $request->query('tracking_id', ''));
+    if ($code === '') {
+        return response()->json([
+            'ok' => false,
+            'status' => 'invalid',
+            'message' => 'Tracking ID is required.',
+        ], 400);
+    }
+
+    $app = Application::with(['toRegion','toDistrict','fromRegion','fromDistrict','pairedApplication'])
+        ->where('code', $code)
+        ->first();
+
+    if (!$app) {
+        return response()->json([
+            'ok' => false,
+            'status' => 'not_found',
+            'message' => 'Hakuna ombi lenye ID hiyo.',
+        ], 404);
+    }
+
+    $matched = (bool) $app->paired_application_id;
+    return response()->json([
+        'ok' => true,
+        'status' => $app->status,
+        'matched' => $matched,
+        'code' => $app->code,
+        'data' => [
+            'from' => [
+                'region' => optional($app->fromRegion)->name,
+                'district' => optional($app->fromDistrict)->name,
+            ],
+            'to' => [
+                'region' => optional($app->toRegion)->name,
+                'district' => optional($app->toDistrict)->name,
+            ],
+            'paired_code' => optional($app->pairedApplication)->code,
+        ],
+        'message' => $matched ? 'Ombi limepata mechi.' : 'Bado halijapata mechi.',
+    ]);
+})->name('track');
 
 // Installer
 Route::middleware('installer')->group(function () {
@@ -34,7 +80,10 @@ Route::get('/home', function () {
     if ($user && in_array($user->role ?? 'user', ['admin','superadmin'], true)) {
         return redirect()->route('admin.dashboard');
     }
-    return redirect()->route('dashboard');
+    $completed = $user && ($user->region_id && $user->district_id && $user->category_id && $user->station_id);
+    return $completed
+        ? redirect()->route('dashboard')
+        : redirect()->route('profile.edit');
 })->middleware(['auth', 'verified'])->name('home');
 
 Route::get('/dashboard', function () {
@@ -42,9 +91,9 @@ Route::get('/dashboard', function () {
     // Destinations counter: total pending applications overall
     $destinationsCount = \App\Models\Application::where('status', 'pending')->count();
     return view('dashboard', compact('applicationsCount', 'destinationsCount'));
-})->middleware(['auth', 'verified'])->name('dashboard');
+})->middleware(['auth', 'verified', \App\Http\Middleware\EnsureProfileCompleted::class])->name('dashboard');
 
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', \App\Http\Middleware\EnsureProfileCompleted::class])->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');

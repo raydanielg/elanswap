@@ -14,20 +14,20 @@
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Mkoa (Region)</label>
                     <input type="hidden" name="region_id" :value="region_id || ''">
-                    <select x-model="region_name" @change="onRegionChange()" class="w-full border rounded-lg px-3 py-2">
+                    <select x-model.number="region_id" @change="onRegionChange()" class="w-full border rounded-lg px-3 py-2">
                         <option value="">-- Chagua Mkoa --</option>
-                        <template x-for="r in regionsDisplay" :key="r.name">
-                            <option :value="r.name" x-text="r.name"></option>
+                        <template x-for="r in regionsDisplay" :key="r.id">
+                            <option :value="r.id" x-text="r.name"></option>
                         </template>
                     </select>
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Wilaya (District)</label>
                     <input type="hidden" name="district_id" :value="district_id || ''">
-                    <select x-model="district_name" class="w-full border rounded-lg px-3 py-2" :disabled="!region_name">
+                    <select x-model.number="district_id" class="w-full border rounded-lg px-3 py-2" :disabled="!region_id">
                         <option value="">-- Chagua Wilaya --</option>
-                        <template x-for="d in districtsDisplay" :key="d.name">
-                            <option :value="d.name" x-text="d.name"></option>
+                        <template x-for="d in districtsDisplay" :key="d.id">
+                            <option :value="d.id" x-text="d.name"></option>
                         </template>
                     </select>
                 </div>
@@ -66,8 +66,6 @@
             regionsDisplay: [],
             districtsDisplay: [],
             categories: [],
-            region_name: '',
-            district_name: '',
             region_id: null,
             district_id: null,
             category_id: null,
@@ -84,55 +82,24 @@
             init() {
                 this.loadRegions();
                 this.loadCategories();
-                this.$watch('district_name', (value) => {
-                    if (this._districtIdByName && value) {
-                        this.district_id = this._districtIdByName[value] || null;
-                    }
-                });
-                this.$watch('region_name', () => {
-                    if (this._regionIdByName) {
-                        this.region_id = this._regionIdByName[this.region_name] || null;
-                    }
-                });
+                this.$watch('region_id', () => this.onRegionChange());
             },
-            loadRegions() {
-                const predefined = {
-                    'Mwanza': ['Ilemela','Kwimba','Sengerema','Nyamagana','Magu','Ukerewe','Misungwi'],
-                    'Dar es Salaam': ['Ilala','Kinondoni','Temeke','Ubungo','Kigamboni'],
-                    'Arusha': ['Arusha City','Arusha','Karatu','Longido','Meru','Monduli','Ngorongoro'],
-                };
-                this.regionsDisplay = Object.keys(predefined).map(n => ({ name: n }));
-                this._predefined = predefined;
-                this.resolveRegionIds();
-            },
-            onRegionChange() {
-                this.district_name = '';
-                this.district_id = null;
-                const list = this._predefined?.[this.region_name] || [];
-                this.districtsDisplay = list.map(n => ({ name: n }));
-                this.resolveDistrictIds();
-            },
-            async resolveRegionIds() {
+            async loadRegions() {
                 try {
                     const res = await fetch('{{ route('profile.regions') }}', { headers: { 'Accept': 'application/json' } });
-                    if (!res.ok) return;
-                    const apiRegions = await res.json();
-                    const found = apiRegions.find(r => r.name === this.region_name);
-                    this.region_id = found ? found.id : null;
-                    this._regionIdByName = Object.fromEntries(apiRegions.map(r => [r.name, r.id]));
-                } catch (_) { }
+                    if (!res.ok) throw new Error('Failed to load regions');
+                    this.regionsDisplay = await res.json();
+                } catch (_) { this.regionsDisplay = []; }
             },
-            async resolveDistrictIds() {
+            async onRegionChange() {
+                this.district_id = null;
+                this.districtsDisplay = [];
+                if (!this.region_id) return;
                 try {
-                    const regionId = this._regionIdByName?.[this.region_name] || this.region_id;
-                    if (!regionId) return;
-                    const res = await fetch(`{{ route('profile.districts') }}?region_id=${regionId}`, { headers: { 'Accept': 'application/json' } });
-                    if (!res.ok) return;
-                    const apiDistricts = await res.json();
-                    this._districtIdByName = Object.fromEntries(apiDistricts.map(d => [d.name, d.id]));
-                    const did = this._districtIdByName[this.district_name];
-                    this.district_id = did ?? null;
-                } catch (_) { }
+                    const res = await fetch(`{{ route('profile.districts') }}?region_id=${this.region_id}`, { headers: { 'Accept': 'application/json' } });
+                    if (!res.ok) throw new Error('Failed to load districts');
+                    this.districtsDisplay = await res.json();
+                } catch (_) { this.districtsDisplay = []; }
             },
             async loadCategories() {
                 try {

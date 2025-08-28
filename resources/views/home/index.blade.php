@@ -62,16 +62,115 @@
         <div class="relative z-10">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24 min-h-[70vh] md:min-h-[80vh] flex items-center">
                 <div class="grid md:grid-cols-1 gap-10 items-center">
-                    <div>
-                        <h1 class="text-4xl md:text-5xl font-extrabold leading-tight">ElanSwap</h1>
-                        <p class="mt-4 text-blue-100/90 text-base md:text-lg">
-                            ElanSwap ni mfumo wa kidijitali unaolenga kurahisisha mchakato wa kubadilishana vituo vya kazi kwa wafanyakazi wa sekta mbalimbali. Mfumo huu unawawezesha wafanyakazi kuunda akaunti zao, kuonyesha mahitaji yao ya kubadilisha kituo, na kupata mechi zinazofaa kulingana na vigezo vyao vya kijiografia, cheo, na sehemu wanayotaka kwenda.
+                    <div x-data="{
+                            tid: '',
+                            loading: false,
+                            show: false,
+                            error: '',
+                            result: null,
+                            async track() {
+                                this.error = '';
+                                this.result = null;
+                                const code = (this.tid || '').trim();
+                                if (!code) {
+                                    this.error = 'Tafadhali weka Tracking ID.';
+                                    this.show = true;
+                                    return;
+                                }
+                                this.loading = true;
+                                try {
+                                    const url = `/track?tracking_id=${encodeURIComponent(code)}`;
+                                    const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
+                                    const data = await res.json();
+                                    if (!res.ok || !data.ok) {
+                                        this.error = data.message || 'Hakuna ombi lenye ID hiyo.';
+                                        this.show = true;
+                                    } else {
+                                        this.result = data;
+                                        this.show = true;
+                                    }
+                                } catch (e) {
+                                    this.error = 'Hitilafu imetokea. Jaribu tena.';
+                                    this.show = true;
+                                } finally {
+                                    this.loading = false;
+                                }
+                            }
+                        }">
+                        <h1 class="text-4xl md:text-5xl font-extrabold leading-tight tracking-tighter">Seamless Employee Transfers</h1>
+                        <p class="mt-4 text-blue-100/90 text-base md:text-lg max-w-2xl">
+                            A digital platform designed to simplify the station transfer process for employees across various sectors. Create your account, specify your needs, and find suitable matches based on your criteria.
                         </p>
+
+                        <!-- Tracking Form -->
+                        <div class="mt-8 max-w-lg">
+                            <form @submit.prevent="track" action="{{ route('home.public') }}" method="GET" class="relative">
+                                <div class="p-2 bg-white/95 dark:bg-primary-900/50 backdrop-blur-sm rounded-xl shadow-lg flex items-center gap-2 ring-1 ring-white/20">
+                                    <div class="relative flex-grow">
+                                        <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                                            <svg class="h-5 w-5 text-gray-400 dark:text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M21.707 20.293L16.314 14.9C17.403 13.504 18 11.804 18 10C18 5.589 14.411 2 10 2C5.589 2 2 5.589 2 10C2 14.411 5.589 18 10 18C11.804 18 13.504 17.403 14.9 16.314L20.293 21.707C20.488 21.902 20.744 22 21 22C21.256 22 21.512 21.902 21.707 21.707C22.098 21.316 22.098 20.684 21.707 20.293ZM10 16C6.691 16 4 13.309 4 10C4 6.691 6.691 4 10 4C13.309 4 16 6.691 16 10C16 13.309 13.309 16 10 16Z"></path></svg>
+                                        </span>
+                                        <input type="text" name="tracking_id" id="tracking_id" x-model="tid"
+                                               class="w-full pl-10 pr-4 py-3 border-none rounded-lg bg-transparent text-gray-800 dark:text-white focus:ring-0 placeholder:text-gray-500"
+                                               placeholder="Enter your tracking ID">
+                                    </div>
+                                    <button type="submit" :disabled="loading"
+                                            class="px-6 py-3 rounded-lg bg-green-600 text-white font-semibold shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition">
+                                        <span x-show="!loading">Track</span>
+                                        <span x-show="loading">Inatafuta...</span>
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- Tracking Result Modal -->
+                        <div x-show="show" x-transition.opacity class="fixed inset-0 z-50" style="display:none;">
+                            <div class="absolute inset-0 bg-black/50" @click="show=false"></div>
+                            <div class="relative z-10 min-h-full flex items-center justify-center p-4">
+                                <div class="w-11/12 sm:w-full max-w-md sm:max-w-lg md:max-w-xl rounded-2xl bg-white dark:bg-primary-900 text-gray-800 dark:text-white shadow-xl ring-1 ring-black/10 p-4 sm:p-6 max-h-[85vh] overflow-y-auto">
+                                    <div class="flex items-start justify-between">
+                                        <h3 class="text-lg font-semibold">Hali ya Ufuatiliaji</h3>
+                                        <button class="text-gray-500 hover:text-gray-700" @click="show=false">✕</button>
+                                    </div>
+
+                                    <template x-if="error">
+                                        <div class="mt-4 p-3 rounded-md bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-200" x-text="error"></div>
+                                    </template>
+
+                                    <template x-if="!error && result">
+                                        <div class="mt-4 space-y-3">
+                                            <p class="text-sm text-gray-700 dark:text-gray-200">
+                                                <span class="font-medium">ID:</span> <span x-text="result.code"></span>
+                                            </p>
+                                            <p class="text-sm"><span class="font-medium">Hali:</span> <span x-text="result.status"></span></p>
+                                            <div class="text-sm">
+                                                <p class="font-medium">Kutoka:</p>
+                                                <p class="text-gray-700 dark:text-gray-200" x-text="(result.data?.from?.region || '-') + ', ' + (result.data?.from?.district || '-')"></p>
+                                            </div>
+                                            <div class="text-sm">
+                                                <p class="font-medium">Kwenda:</p>
+                                                <p class="text-gray-700 dark:text-gray-200" x-text="(result.data?.to?.region || '-') + ', ' + (result.data?.to?.district || '-')"></p>
+                                            </div>
+                                            <div class="mt-2">
+                                                <p class="text-sm" :class="result.matched ? 'text-green-600' : 'text-amber-600'" x-text="result.matched ? 'Ombi limepata mechi.' : 'Bado halijapata mechi.'"></p>
+                                                <p class="text-xs text-gray-500 dark:text-gray-400" x-show="result.data?.paired_code">Mechi na: <span class="font-mono" x-text="result.data?.paired_code"></span></p>
+                                            </div>
+
+                                            <div class="pt-4 flex items-center justify-end gap-3">
+                                                <a href="{{ route('login') }}" x-show="result.matched" class="inline-flex items-center px-4 py-2 rounded-lg bg-primary-600 text-white hover:bg-primary-700">Login to apply changes</a>
+                                                <button @click="show=false" class="inline-flex items-center px-4 py-2 rounded-lg border border-gray-300 dark:border-primary-700 hover:bg-gray-50 dark:hover:bg-primary-800">Funga</button>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="mt-8 flex items-center gap-4">
                             <a href="{{ route('register') }}" class="px-6 py-3 rounded-lg bg-white text-primary-900 font-semibold shadow-lg hover:shadow-xl transition ring-1 ring-white/60">
                                 <span>Get Started</span>
                             </a>
-                            <a href="#features" class="px-6 py-3 rounded-lg border border-white text-white hover:bg-white/10 transition backdrop-blur-sm">
+                            <a href="#features" class="px-6 py-3 rounded-lg border border-white/50 text-white hover:bg-white/10 transition backdrop-blur-sm">
                                 <span>Learn More</span>
                             </a>
                         </div>

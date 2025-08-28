@@ -19,8 +19,14 @@ class AuthenticatedSessionController extends Controller
     {
         if (Auth::check()) {
             $user = Auth::user();
-            if ($user && in_array($user->role ?? 'user', ['admin','superadmin'], true)) {
-                return to_route('admin.dashboard');
+            if ($user) {
+                if (($user->role ?? 'user') === 'superadmin') {
+                    return to_route('superadmin.dashboard');
+                }
+                if (($user->role ?? 'user') === 'admin') {
+                    return to_route('admin.dashboard');
+                }
+                return to_route('dashboard');
             }
             return to_route('dashboard');
         }
@@ -59,8 +65,13 @@ class AuthenticatedSessionController extends Controller
 
         $welcome = 'Successfully logged in. Welcome back, '.($user?->name ?? '');
 
-        if ($user && in_array($user->role, ['admin','superadmin'], true)) {
-            return redirect('/admin')->with('status', $welcome);
+        if ($user) {
+            if ($user->role === 'superadmin') {
+                return to_route('superadmin.dashboard')->with('status', $welcome);
+            }
+            if ($user->role === 'admin') {
+                return to_route('admin.dashboard')->with('status', $welcome);
+            }
         }
         return to_route('dashboard')->with('status', $welcome);
     }

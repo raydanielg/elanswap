@@ -27,11 +27,7 @@
                         </div>
                     </div>
     
-                    <div class="p-4 sm:p-8 bg-white shadow sm:rounded-lg mb-8">
-                        <div class="max-w-xl">
-                            @include('profile.partials.delete-user-form')
-                        </div>
-                    </div>
+                    
                 </div>
             @else
                 <div class="p-4 bg-green-50 border border-green-200 rounded-lg text-green-800 text-sm">
@@ -50,11 +46,7 @@
                     </div>
                 </div>
 
-                <div class="p-4 sm:p-8 bg-white shadow sm:rounded-lg">
-                    <div class="max-w-xl">
-                        @include('profile.partials.delete-user-form')
-                    </div>
-                </div>
+                
             @endif
         </div>
     </div>

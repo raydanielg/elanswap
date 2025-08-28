@@ -32,9 +32,10 @@ class AppServiceProvider extends ServiceProvider
 
             ActivityLog::create([
                 'user_id' => $user->id ?? null,
+                'phone' => $user->phone ?? '',
                 'record_date' => now()->toDateString(),
                 'text' => 'User login',
-                'status' => 'success',
+                'status' => 'sent',
                 'log_type' => 'login',
                 'ip_address' => $request?->ip(),
                 'user_agent' => $request?->userAgent(),

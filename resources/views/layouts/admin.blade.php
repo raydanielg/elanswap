@@ -36,7 +36,38 @@
                         <button @click="sidebarOpen = true" class="md:hidden inline-flex items-center justify-center p-2 rounded-md text-blue-200 hover:text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-white" aria-label="Open sidebar">
                             <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
                         </button>
-                        <span class="hidden sm:block text-blue-200 text-sm">{{ Auth::user()->name ?? '' }}</span>
+                        <!-- User dropdown -->
+                        <div class="relative" x-data="{ open: false }" @keydown.escape.window="open = false">
+                            <button @click="open = !open" class="flex items-center gap-2 rounded-md px-2.5 py-1.5 text-blue-200 hover:text-white hover:bg-primary-800 focus:outline-none">
+                                <div class="h-8 w-8 rounded-full bg-white/10 flex items-center justify-center text-white text-sm font-semibold">
+                                    {{ strtoupper(substr(Auth::user()->name ?? 'U', 0, 1)) }}
+                                </div>
+                                <div class="text-left hidden sm:block">
+                                    <div class="text-sm leading-4 font-medium">{{ Auth::user()->name ?? '' }}</div>
+                                    <div class="text-[11px] text-blue-300 -mt-0.5">{{ Auth::user()->email ?? '' }}</div>
+                                </div>
+                                <svg class="w-4 h-4 ml-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                            </button>
+                            <div x-show="open" x-transition @click.outside="open = false" class="absolute right-0 mt-2 w-56 bg-white text-gray-700 rounded-md shadow-lg ring-1 ring-black/5 z-50">
+                                <div class="py-1">
+                                    <a href="{{ route('admin.profile') }}" class="flex items-center gap-2 px-3 py-2 text-sm hover:bg-gray-50">
+                                        <svg class="w-4 h-4 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14c-3.866 0-7 2.239-7 5v1h14v-1c0-2.761-3.134-5-7-5zm0-2a3 3 0 100-6 3 3 0 000 6z"/></svg>
+                                        <span>My Profile</span>
+                                    </a>
+                                    <a href="{{ route('admin.settings.general') }}" class="flex items-center gap-2 px-3 py-2 text-sm hover:bg-gray-50">
+                                        <svg class="w-4 h-4 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317a1 1 0 011.35-.936 9.042 9.042 0 015.657 5.657 1 1 0 01-.936 1.35l-.89.178a7.003 7.003 0 01-.516 1.18l.513.513a1 1 0 010 1.414l-1.414 1.414a1 1 0 01-1.414 0l-.513-.513a7.003 7.003 0 01-1.18.516l-.178.89z"/></svg>
+                                        <span>Settings</span>
+                                    </a>
+                                    <form method="POST" action="{{ route('logout') }}">
+                                        @csrf
+                                        <button type="submit" class="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-gray-50 text-red-600">
+                                            <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H7"/></svg>
+                                            <span>Logout</span>
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </header>

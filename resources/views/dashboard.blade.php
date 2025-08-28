@@ -20,7 +20,7 @@
                                     </svg>
                                 </div>
                                 <div>
-                                    <h1 class="text-2xl font-bold text-white">
+                                    <h1 class="text-2xl font-bold text-black">
                                         Welcome back, {{ Auth::user()->name }}! 👋
                                     </h1>
                                     <p class="text-primary-100 mt-1">
@@ -104,6 +104,16 @@
                 </div>
             @endif
 
+            <!-- Quick Actions (CTA) -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                <a href="{{ route('applications.index') }}" class="block rounded-xl bg-primary-600 text-white shadow hover:bg-primary-700 transition p-5 text-center">
+                    <span class="inline-block text-lg font-bold">My Application</span>
+                </a>
+                <a href="{{ route('destinations.index') }}" class="block rounded-xl bg-green-600 text-black shadow hover:bg-green-700/90 transition p-5 text-center">
+                    <span class="inline-block text-lg font-bold">Requests</span>
+                </a>
+            </div>
+
             <!-- Top Stats -->
             @php
                 // Attempt to compute total regions from region.json
@@ -183,16 +193,44 @@
                 </div>
             </div>
 
-            <!-- Recent Activity + Announcements -->
+            <!-- Regions List Card -->
+            <div id="regions" class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
+                <div class="p-6 border-b border-gray-100 flex items-center justify-between">
+                    <h3 class="text-lg font-semibold text-gray-900">Mikoa (Regions)</h3>
+                    <a href="#regions" class="text-sm text-primary-600 hover:text-primary-700 font-medium">Browse</a>
+                </div>
+                <div class="p-6">
+                    @php
+                        $regions = \App\Models\Region::orderBy('name')->get();
+                    @endphp
+                    @if($regions->isEmpty())
+                        <p class="text-gray-500 text-sm">Hakuna Mikoa kupatikana kwa sasa.</p>
+                    @else
+                        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                            @foreach($regions as $r)
+                                <div class="flex items-center gap-2 p-3 rounded-lg border border-gray-100 hover:border-primary-200 hover:bg-primary-50/40 transition">
+                                    <svg class="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 6 0z" /></svg>
+                                    <span class="text-sm text-gray-800">{{ $r->name }}</span>
+                                </div>
+                            @endforeach
+                        </div>
+                    @endif
+                </div>
+            </div>
+
+            <!-- Recent Activity + Announcements + Last Login in one row -->
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <!-- Recent Activity (User only) -->
-                <div class="lg:col-span-2 bg-white rounded-lg shadow-sm border border-gray-200">
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200">
                     <div class="p-6 border-b border-gray-100 flex items-center justify-between">
-                        <h3 class="text-lg font-semibold text-gray-900">Recent Activity</h3>
-                        <div class="flex items-center gap-2">
-                            <span class="loader text-blue-900" aria-label="Loading"></span>
-                            <span class="text-xs text-gray-500">Loading</span>
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-900">Recent Activity</h3>
+                            <p class="text-xs text-gray-500">Your actions only</p>
                         </div>
+                        @php
+                            $recentCount = \App\Models\Log::where('user_id', Auth::id())->count();
+                        @endphp
+                        <span class="text-xs text-gray-500">{{ $recentCount }} total</span>
                     </div>
                     <div class="p-6">
                         @php
@@ -200,24 +238,38 @@
                                 ->orderByDesc('created_at')
                                 ->limit(6)
                                 ->get();
+                            $typeMeta = [
+                                'login' => ['bg' => 'bg-blue-50', 'text' => 'text-blue-600', 'icon' => 'M12 11c1.657 0 3-1.343 3-3S13.657 5 12 5 9 6.343 9 8s1.343 3 3 3zm0 2c-2.761 0-5 2.239-5 5h10c0-2.761-2.239-5-5-5z'],
+                                'application' => ['bg' => 'bg-emerald-50', 'text' => 'text-emerald-600', 'icon' => 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z'],
+                                'profile' => ['bg' => 'bg-violet-50', 'text' => 'text-violet-600', 'icon' => 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z'],
+                                'activity' => ['bg' => 'bg-gray-50', 'text' => 'text-gray-600', 'icon' => 'M12 8v4l3 3'],
+                            ];
                         @endphp
                         @if($recentLogs->isEmpty())
-                            <p class="text-gray-500 text-sm">No recent activity found.</p>
+                            <div class="flex items-center gap-3 text-gray-500 text-sm">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3" /></svg>
+                                <span>No recent activity found.</span>
+                            </div>
                         @else
                             <ul class="divide-y divide-gray-100">
                                 @foreach($recentLogs as $log)
+                                    @php
+                                        $meta = $typeMeta[$log->log_type ?? 'activity'] ?? $typeMeta['activity'];
+                                        $when = $log->created_at ? $log->created_at->diffForHumans() : (optional($log->record_date)?->diffForHumans() ?? '-');
+                                        $title = $log->text ?? ucfirst($log->log_type ?? 'Activity');
+                                    @endphp
                                     <li class="py-3 flex items-start">
-                                        <div class="mr-3 mt-0.5 text-gray-400">
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3" />
+                                        <div class="mr-3 mt-0.5 {{ $meta['bg'] }} {{ $meta['text'] }} p-1.5 rounded">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $meta['icon'] }}" />
                                             </svg>
                                         </div>
                                         <div class="flex-1">
-                                            <p class="text-sm text-gray-800">{{ $log->text ?? ucfirst($log->log_type ?? 'activity') }}</p>
-                                            <p class="text-xs text-gray-500">{{ optional($log->created_at)->format('M d, Y H:i') ?? optional($log->record_date)->format('M d, Y') }}</p>
+                                            <p class="text-sm text-gray-800">{{ $title }}</p>
+                                            <p class="text-xs text-gray-500">{{ $when }}</p>
                                         </div>
                                         @if(!empty($log->status))
-                                            <span class="ml-3 text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-600">{{ $log->status }}</span>
+                                            <span class="ml-3 text-[11px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">{{ $log->status }}</span>
                                         @endif
                                     </li>
                                 @endforeach
@@ -226,7 +278,7 @@
                     </div>
                 </div>
 
-                <!-- Announcements (moved up) -->
+                <!-- Announcements -->
                 <div class="bg-white rounded-lg shadow-sm border border-gray-200">
                     <div class="p-6 border-b border-gray-100 flex items-center justify-between">
                         <h3 class="text-lg font-semibold text-gray-900">Announcements</h3>
@@ -260,11 +312,8 @@
                         @endforelse
                     </div>
                 </div>
-            </div>
-
-            <!-- Last Login History -->
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
-                <div class="lg:col-span-3 bg-white rounded-lg shadow-sm border border-gray-200">
+                <!-- Last Login History -->
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200">
                     <div class="p-6 border-b border-gray-100 flex items-center justify-between">
                         <h3 class="text-lg font-semibold text-gray-900">Last Login History</h3>
                         <span class="text-xs text-gray-500">Security overview</span>
