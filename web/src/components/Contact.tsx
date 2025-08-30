@@ -63,7 +63,7 @@ export default function Contact() {
   return (
     <section id="contact" className="py-16 lg:py-24 border-t border-black/10 page-dark-bg">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-start justify-between gap-10">
+        <div className="grid lg:grid-cols-2 items-start gap-8 lg:gap-10">
           {/* Left: Details & Services */}
           <div className="flex-1 min-w-0">
             <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">Wasiliana Nasi</h2>
@@ -101,7 +101,7 @@ export default function Contact() {
           </div>
 
           {/* Right: Forms */}
-          <div className="w-full max-w-xl">
+          <div className="w-full lg:max-w-xl lg:justify-self-end">
             <div className="rounded-2xl border border-white/15 bg-white/10 backdrop-blur p-6 shadow">
               <h3 className="text-white font-semibold text-lg">Tutumie ujumbe</h3>
               <form onSubmit={onSubmit} className="mt-4 grid gap-3">
@@ -120,9 +120,9 @@ export default function Contact() {
 
             <div className="mt-4 rounded-2xl border border-white/15 bg-white/10 backdrop-blur p-6 shadow">
               <h3 className="text-white font-semibold text-lg">Jiunge na jarida letu</h3>
-              <form onSubmit={onSubscribe} className="mt-3 flex gap-2">
+              <form onSubmit={onSubscribe} className="mt-3 flex flex-col sm:flex-row gap-2">
                 <input className="flex-1 border border-white/15 bg-white/5 text-white placeholder-white/60 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--color-secondary)]/50" placeholder="Anwani ya barua pepe" type="email" value={nlEmail} onChange={(e) => setNlEmail(e.target.value)} required />
-                <button disabled={nlBusy} type="submit" className="inline-flex items-center justify-center rounded-md bg-white/20 px-4 py-2 text-white text-sm font-medium hover:bg-white/30 disabled:opacity-60">{nlBusy ? "Inajiunga..." : "Jiunge"}</button>
+                <button disabled={nlBusy} type="submit" className="w-full sm:w-auto inline-flex items-center justify-center rounded-md bg-white/20 px-4 py-2 text-white text-sm font-medium hover:bg-white/30 disabled:opacity-60">{nlBusy ? "Inajiunga..." : "Jiunge"}</button>
               </form>
               {nlDone === "ok" && <p className="mt-2 text-emerald-300 text-sm">Umejiunga! Tutakutumia taarifa mpya.</p>}
               {nlDone === "err" && <p className="mt-2 text-red-300 text-sm">Imeshindikana. Tafadhali jaribu tena.</p>}
