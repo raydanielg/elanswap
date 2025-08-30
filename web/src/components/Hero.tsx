@@ -35,23 +35,23 @@ export default function Hero() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-24 grid lg:grid-cols-2 gap-10 items-center">
           <div className="backdrop-blur-[1px]">
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-white drop-shadow">
-              Seamless Employee Transfers
+              Uhamisho wa Wafanyakazi Usio na Usumbufu
             </h1>
             <p className="mt-4 text-white/90 max-w-prose">
-              A digital platform designed to simplify the station transfer process for employees across various sectors. Create your account, specify your needs, and find suitable matches based on your criteria.
+              Jukwaa la kidijitali linalorahisisha mchakato wa kubadilishana vituo kwa wafanyakazi sekta mbalimbali. Unda akaunti, taja mahitaji yako, na pata mechi zinazofaa kulingana na vigezo vyako.
             </p>
             <div className="mt-8 flex gap-3">
               <a
                 href="#features"
                 className="inline-flex items-center rounded-lg px-5 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-secondary)] shadow-lg hover:shadow-xl hover:brightness-105 active:brightness-95 transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--color-primary)]"
               >
-                Explore Features
+                Tazama Vipengele
               </a>
               <a
                 href="#contact"
                 className="inline-flex items-center rounded-lg px-5 py-2.5 text-sm font-medium text-white/90 border border-white/40 bg-white/10 hover:bg-white/20 hover:text-white shadow-md transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--color-secondary)]"
               >
-                Contact Us
+                Wasiliana Nasi
               </a>
             </div>
           </div>
@@ -79,7 +79,7 @@ export default function Hero() {
                     <input
                       name="trackingId"
                       type="text"
-                      placeholder="Enter your tracking ID"
+                      placeholder="Weka nambari ya ufuatiliaji"
                       className="w-full rounded-xl border border-gray-200 bg-white/90 pl-10 pr-4 py-3 text-gray-800 placeholder-gray-400 shadow-inner focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                     />
                   </div>
@@ -87,7 +87,7 @@ export default function Hero() {
                     type="submit"
                     className="shrink-0 inline-flex items-center rounded-xl px-4 py-3 text-sm font-semibold text-white bg-[var(--color-secondary)] hover:brightness-110 active:brightness-95 shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--color-secondary)]"
                   >
-                    Track
+                    Fuatilia
                   </button>
                 </div>
               </div>

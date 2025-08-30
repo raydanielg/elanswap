@@ -66,12 +66,12 @@ export default function Contact() {
         <div className="flex items-start justify-between gap-10">
           {/* Left: Details & Services */}
           <div className="flex-1 min-w-0">
-            <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">Contact Us</h2>
+            <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">Wasiliana Nasi</h2>
             <p className="mt-2 text-white/85">Tuna-jibu haraka. Tuma ujumbe au pigia simu.</p>
 
             <div className="mt-6 grid sm:grid-cols-2 gap-4">
               <div className="rounded-xl border border-white/15 bg-white/5 backdrop-blur p-4">
-                <div className="text-white font-semibold">Contact Details</div>
+                <div className="text-white font-semibold">Maelezo ya Mawasiliano</div>
                 <ul className="mt-3 space-y-2 text-white/85 text-sm">
                   <li className="flex items-center gap-2">
                     <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92V21a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2 4.18 2 2 0 0 1 4 2h4.09a2 2 0 0 1 2 1.72c.12.9.3 1.77.54 2.6a2 2 0 0 1-.45 2L9 9a16 16 0 0 0 6 6l.66-1.18a2 2 0 0 1 2-1c.83.24 1.7.42 2.6.54A2 2 0 0 1 22 16.92z"/></svg>
@@ -89,12 +89,12 @@ export default function Contact() {
               </div>
 
               <div className="rounded-xl border border-white/15 bg-white/5 backdrop-blur p-4">
-                <div className="text-white font-semibold">More Services</div>
+                <div className="text-white font-semibold">Huduma Nyingine</div>
                 <ul className="mt-3 grid grid-cols-2 gap-2 text-white/85 text-sm">
-                  <li className="rounded-lg border border-white/10 bg-white/5 px-3 py-2">Consultation</li>
-                  <li className="rounded-lg border border-white/10 bg-white/5 px-3 py-2">Custom Integrations</li>
-                  <li className="rounded-lg border border-white/10 bg-white/5 px-3 py-2">Support & Training</li>
-                  <li className="rounded-lg border border-white/10 bg-white/5 px-3 py-2">API Access</li>
+                  <li className="rounded-lg border border-white/10 bg-white/5 px-3 py-2">Ushauri</li>
+                  <li className="rounded-lg border border-white/10 bg-white/5 px-3 py-2">Ujumuishaji Maalum</li>
+                  <li className="rounded-lg border border-white/10 bg-white/5 px-3 py-2">Usaidizi na Mafunzo</li>
+                  <li className="rounded-lg border border-white/10 bg-white/5 px-3 py-2">Ufikiaji wa API</li>
                 </ul>
               </div>
             </div>
@@ -103,15 +103,15 @@ export default function Contact() {
           {/* Right: Forms */}
           <div className="w-full max-w-xl">
             <div className="rounded-2xl border border-white/15 bg-white/10 backdrop-blur p-6 shadow">
-              <h3 className="text-white font-semibold text-lg">Send us a message</h3>
+              <h3 className="text-white font-semibold text-lg">Tutumie ujumbe</h3>
               <form onSubmit={onSubmit} className="mt-4 grid gap-3">
                 <div className="grid sm:grid-cols-2 gap-3">
-                  <input className="w-full border border-white/15 bg-white/5 text-white placeholder-white/60 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--color-secondary)]/50" placeholder="Your name" value={name} onChange={(e) => setName(e.target.value)} required />
-                  <input className="w-full border border-white/15 bg-white/5 text-white placeholder-white/60 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--color-secondary)]/50" placeholder="Your email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+                  <input className="w-full border border-white/15 bg-white/5 text-white placeholder-white/60 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--color-secondary)]/50" placeholder="Jina lako" value={name} onChange={(e) => setName(e.target.value)} required />
+                  <input className="w-full border border-white/15 bg-white/5 text-white placeholder-white/60 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--color-secondary)]/50" placeholder="Barua pepe yako" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
                 </div>
-                <textarea className="w-full border border-white/15 bg-white/5 text-white placeholder-white/60 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--color-secondary)]/50" placeholder="Message" rows={4} value={message} onChange={(e) => setMessage(e.target.value)} required />
+                <textarea className="w-full border border-white/15 bg-white/5 text-white placeholder-white/60 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--color-secondary)]/50" placeholder="Ujumbe" rows={4} value={message} onChange={(e) => setMessage(e.target.value)} required />
                 <button disabled={busy} type="submit" className="inline-flex items-center justify-center rounded-md bg-[var(--color-primary)] px-4 py-2 text-[var(--color-primary-foreground)] text-sm font-medium hover:opacity-90 disabled:opacity-60">
-                  {busy ? "Sending..." : "Send Message"}
+                  {busy ? "Inatuma..." : "Tuma Ujumbe"}
                 </button>
                 {sent === "ok" && <p className="text-emerald-300 text-sm">Asante! Tumepokea ujumbe wako.</p>}
                 {sent === "err" && <p className="text-red-300 text-sm">Imeshindikana kutuma: {errText}</p>}
@@ -119,10 +119,10 @@ export default function Contact() {
             </div>
 
             <div className="mt-4 rounded-2xl border border-white/15 bg-white/10 backdrop-blur p-6 shadow">
-              <h3 className="text-white font-semibold text-lg">Subscribe to our newsletter</h3>
+              <h3 className="text-white font-semibold text-lg">Jiunge na jarida letu</h3>
               <form onSubmit={onSubscribe} className="mt-3 flex gap-2">
-                <input className="flex-1 border border-white/15 bg-white/5 text-white placeholder-white/60 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--color-secondary)]/50" placeholder="Email address" type="email" value={nlEmail} onChange={(e) => setNlEmail(e.target.value)} required />
-                <button disabled={nlBusy} type="submit" className="inline-flex items-center justify-center rounded-md bg-white/20 px-4 py-2 text-white text-sm font-medium hover:bg-white/30 disabled:opacity-60">{nlBusy ? "Subscribing..." : "Subscribe"}</button>
+                <input className="flex-1 border border-white/15 bg-white/5 text-white placeholder-white/60 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--color-secondary)]/50" placeholder="Anwani ya barua pepe" type="email" value={nlEmail} onChange={(e) => setNlEmail(e.target.value)} required />
+                <button disabled={nlBusy} type="submit" className="inline-flex items-center justify-center rounded-md bg-white/20 px-4 py-2 text-white text-sm font-medium hover:bg-white/30 disabled:opacity-60">{nlBusy ? "Inajiunga..." : "Jiunge"}</button>
               </form>
               {nlDone === "ok" && <p className="mt-2 text-emerald-300 text-sm">Umejiunga! Tutakutumia taarifa mpya.</p>}
               {nlDone === "err" && <p className="mt-2 text-red-300 text-sm">Imeshindikana. Tafadhali jaribu tena.</p>}

@@ -1,10 +1,10 @@
 export const features = [
-  { title: "Fast Search", description: "Quickly find opportunities by category and region." },
-  { title: "Secure", description: "Your data is protected with best practices." },
-  { title: "Responsive", description: "Looks great on mobile and desktop." },
-  { title: "Real-time Tracking", description: "Track requests and status updates instantly." },
-  { title: "Smart Matching", description: "Get suggested matches based on preferences and region." },
-  { title: "Notifications", description: "Email and in-app alerts for important events." },
+  { title: "Utafutaji wa Haraka", description: "Tafuta fursa kwa haraka kulingana na jamii na mkoa." },
+  { title: "Usalama", description: "Taarifa zako zinalindwa kwa mbinu bora za kiusalama." },
+  { title: "Inayojibika (Responsive)", description: "Inaonekana vizuri kwenye simu na kompyuta." },
+  { title: "Ufuatiliaji wa Muda Halisi", description: "Fuatilia maombi na masasisho papo hapo." },
+  { title: "Ulinganishi Mahiri", description: "Pata mapendekezo kulingana na vipaumbele na mkoa." },
+  { title: "Arifa", description: "Arifa kupitia barua pepe na ndani ya mfumo kwa matukio muhimu." },
 ];
 
 export const categories = [

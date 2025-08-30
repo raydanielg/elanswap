@@ -2,7 +2,7 @@ export default function Footer() {
   const year = new Date().getFullYear();
   return (
     <footer className="mt-16 border-t border-white/10 page-dark-bg" aria-labelledby="footer-heading">
-      <h2 id="footer-heading" className="sr-only">Footer</h2>
+      <h2 id="footer-heading" className="sr-only">Kijachini</h2>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Brand */}
@@ -29,29 +29,29 @@ export default function Footer() {
 
           {/* Quick Links */}
           <div>
-            <div className="text-white font-semibold">Quick Links</div>
+            <div className="text-white font-semibold">Viungo vya Haraka</div>
             <ul className="mt-3 space-y-2 text-sm">
-              <li><a className="text-white/80 hover:text-white transition" href="/">Home</a></li>
-              <li><a className="text-white/80 hover:text-white transition" href="/about">About Us</a></li>
-              <li><a className="text-white/80 hover:text-white transition" href="/regions">Destinations</a></li>
-              <li><a className="text-white/80 hover:text-white transition" href="/features">Features</a></li>
-              <li><a className="text-white/80 hover:text-white transition" href="/contact">Contact</a></li>
+              <li><a className="text-white/80 hover:text-white transition" href="/">Nyumbani</a></li>
+              <li><a className="text-white/80 hover:text-white transition" href="/about">Kuhusu Sisi</a></li>
+              <li><a className="text-white/80 hover:text-white transition" href="/regions">Mikoa</a></li>
+              <li><a className="text-white/80 hover:text-white transition" href="/features">Vipengele</a></li>
+              <li><a className="text-white/80 hover:text-white transition" href="/contact">Mawasiliano</a></li>
             </ul>
           </div>
 
           {/* Resources */}
           <div>
-            <div className="text-white font-semibold">Resources</div>
+            <div className="text-white font-semibold">Rasilimali</div>
             <ul className="mt-3 space-y-2 text-sm">
-              <li><a className="text-white/80 hover:text-white transition" href="/privacy">Privacy Policy</a></li>
-              <li><a className="text-white/80 hover:text-white transition" href="/terms">Terms of Service</a></li>
-              <li><a className="text-white/80 hover:text-white transition" href="/help">Help Center</a></li>
+              <li><a className="text-white/80 hover:text-white transition" href="/privacy">Sera ya Faragha</a></li>
+              <li><a className="text-white/80 hover:text-white transition" href="/terms">Masharti ya Huduma</a></li>
+              <li><a className="text-white/80 hover:text-white transition" href="/help">Kituo cha Msaada</a></li>
             </ul>
           </div>
 
           {/* Contact */}
           <div>
-            <div className="text-white font-semibold">Get in touch</div>
+            <div className="text-white font-semibold">Wasiliana nasi</div>
             <ul className="mt-3 space-y-2 text-sm text-white/85">
               <li className="flex items-center gap-2">
                 <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92V21a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2 4.18 2 2 0 0 1 4 2h4.09a2 2 0 0 1 2 1.72c.12.9.3 1.77.54 2.6a2 2 0 0 1-.45 2L9 9a16 16 0 0 0 6 6l.66-1.18a2 2 0 0 1 2-1c.83.24 1.7.42 2.6.54A2 2 0 0 1 22 16.92z"/></svg>
@@ -70,8 +70,8 @@ export default function Footer() {
         </div>
 
         <div className="mt-10 pt-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-white/70">
-          <p>© {year} Elan Swap. All rights reserved.</p>
-          <p>Built with care — Hakimiliki.</p>
+          <p>© {year} Elan Swap. Haki zote zimehifadhiwa.</p>
+          <p>Imetengenezwa kwa umakini — Hakimiliki.</p>
         </div>
       </div>
     </footer>

@@ -11,17 +11,17 @@ export default function Header() {
           <div className="flex items-center gap-3">
             {/* Login: ghost button with bold hover */}
             <a
-              href="../public/login"
+              href="/login"
               className="inline-flex items-center rounded-full px-4 py-2 text-sm font-medium text-gray-700 border border-gray-200 bg-white/60 hover:bg-gray-100 hover:text-gray-900 shadow-sm transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--color-primary)]"
             >
-              Login
+              Ingia
             </a>
             {/* Get Started: gradient, shadow, subtle scale on hover */}
             <a
-              href="../public/register"
+              href="/register"
               className="inline-flex items-center rounded-full px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-secondary)] shadow-md hover:shadow-lg hover:brightness-105 active:brightness-95 transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--color-primary)]"
             >
-              Get Started
+              Jisajili
             </a>
           </div>
         </div>
@@ -37,7 +37,7 @@ export default function Header() {
                   href="/"
                   className="relative inline-flex items-center rounded-md px-3 py-2 text-gray-700 hover:text-gray-900 hover:bg-white shadow-sm/0 hover:shadow-sm transition-all duration-200 group"
                 >
-                  Home
+                  Nyumbani
                   <span className="pointer-events-none absolute left-3 right-3 -bottom-0.5 h-0.5 bg-[var(--color-primary)] scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-200" />
                 </a>
               </li>
@@ -46,7 +46,7 @@ export default function Header() {
                   href="/about"
                   className="relative inline-flex items-center rounded-md px-3 py-2 text-gray-700 hover:text-gray-900 hover:bg-white shadow-sm/0 hover:shadow-sm transition-all duration-200 group"
                 >
-                  About Us
+                  Kuhusu Sisi
                   <span className="pointer-events-none absolute left-3 right-3 -bottom-0.5 h-0.5 bg-[var(--color-primary)] scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-200" />
                 </a>
               </li>
@@ -55,7 +55,7 @@ export default function Header() {
                   href="/regions"
                   className="relative inline-flex items-center rounded-md px-3 py-2 text-gray-700 hover:text-gray-900 hover:bg-white shadow-sm/0 hover:shadow-sm transition-all duration-200 group"
                 >
-                  Destinations
+                  Mikoa
                   <span className="pointer-events-none absolute left-3 right-3 -bottom-0.5 h-0.5 bg-[var(--color-primary)] scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-200" />
                 </a>
               </li>
@@ -64,7 +64,7 @@ export default function Header() {
                   href="/features"
                   className="relative inline-flex items-center rounded-md px-3 py-2 text-gray-700 hover:text-gray-900 hover:bg-white shadow-sm/0 hover:shadow-sm transition-all duration-200 group"
                 >
-                  Features
+                  Vipengele
                   <span className="pointer-events-none absolute left-3 right-3 -bottom-0.5 h-0.5 bg-[var(--color-primary)] scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-200" />
                 </a>
               </li>
@@ -73,7 +73,7 @@ export default function Header() {
                   href="/contact"
                   className="relative inline-flex items-center rounded-md px-3 py-2 text-gray-700 hover:text-gray-900 hover:bg-white shadow-sm/0 hover:shadow-sm transition-all duration-200 group"
                 >
-                  Contact
+                  Mawasiliano
                   <span className="pointer-events-none absolute left-3 right-3 -bottom-0.5 h-0.5 bg-[var(--color-primary)] scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-200" />
                 </a>
               </li>

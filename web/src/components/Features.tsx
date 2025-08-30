@@ -77,12 +77,12 @@ export default function Features() {
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Heading area: keep accessible label, show View all on the right */}
         <div className="flex items-center justify-between gap-4">
-          <h2 className="sr-only">Features</h2>
+          <h2 className="sr-only">Vipengele</h2>
           <a
             href="/features"
             className="inline-flex items-center rounded-full px-4 py-2 text-sm font-semibold text-white bg-white/10 hover:bg-white/15 border border-white/20 shadow-sm transition"
           >
-            View all
+            Tazama zote
           </a>
         </div>
 
