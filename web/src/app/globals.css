@@ -1,0 +1,52 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+  /* Brand colors */
+  --primary: #dc2626; /* red-600 */
+  --primary-foreground: #ffffff;
+  --secondary: #1e3a8a; /* blue-900 */
+  --secondary-foreground: #ffffff;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Reusable page background (dark subtle purple gradient) */
+.page-dark-bg {
+  background-color: #0c0913;
+  background-image:
+    radial-gradient(120% 100% at 0% 0%, rgba(22, 10, 36, 0.8) 0%, rgba(12, 9, 19, 0.8) 60%, rgba(10, 7, 16, 0.9) 100%),
+    linear-gradient(110deg, #0b0712 0%, #10091b 60%, #140d22 100%);
+  background-blend-mode: normal, normal;
+}
+
+/* Animations */
+@keyframes fade-in-up {
+  0% { opacity: 0; transform: translateY(12px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+.anim-fade-in-up { animation: fade-in-up 600ms cubic-bezier(.2,.7,.3,1) both; }

@@ -6,7 +6,11 @@ use App\Models\User;
 use App\Models\Log;
 use App\Models\OtpVerification;
 use App\Models\Application;
+use App\Models\Category;
+use App\Models\Region;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 use App\Http\Controllers\InstallController;
 use App\Http\Controllers\NewsletterController;
 use Illuminate\Support\Facades\Route;
@@ -73,6 +77,122 @@ Route::get('/track', function (Request $request) {
 Route::middleware('installer')->group(function () {
     Route::get('/install', [InstallController::class, 'index'])->name('installer.index');
     Route::post('/install', [InstallController::class, 'store'])->name('installer.store');
+});
+
+// Stations within a region that have applications (from_station)
+Route::get('/api/regions/{region}/stations-with-apps', function (Region $region) {
+    $stations = DB::table('stations')
+        ->join('districts', 'stations.district_id', '=', 'districts.id')
+        ->leftJoin('applications', 'applications.from_station_id', '=', 'stations.id')
+        ->where('districts.region_id', $region->id)
+        ->groupBy('stations.id', 'stations.name', 'stations.district_id', 'stations.category_id')
+        ->select(
+            'stations.id',
+            'stations.name',
+            'stations.district_id',
+            DB::raw('COUNT(applications.id) as applications_count')
+        )
+        ->havingRaw('COUNT(applications.id) > 0')
+        ->orderByDesc('applications_count')
+        ->orderBy('stations.name')
+        ->get();
+
+    // Attach district name for display
+    $districtNames = \App\Models\District::whereIn('id', $stations->pluck('district_id'))->pluck('name', 'id');
+
+    $data = $stations->map(function ($s) use ($districtNames) {
+        return [
+            'id' => (int) $s->id,
+            'name' => $s->name,
+            'district' => (string) ($districtNames[$s->district_id] ?? ''),
+            'applications_count' => (int) $s->applications_count,
+        ];
+    });
+
+    return response()->json([
+        'ok' => true,
+        'region' => [ 'id' => $region->id, 'name' => $region->name ],
+        'data' => $data,
+    ]);
+});
+
+// Applications for a specific station (from_station)
+Route::get('/api/stations/{station}/applications', function (\App\Models\Station $station) {
+    $apps = \App\Models\Application::query()
+        ->where('from_station_id', $station->id)
+        ->orderByDesc('submitted_at')
+        ->limit(50)
+        ->get()
+        ->map(function ($a) {
+            return [
+                'id' => $a->id,
+                'code' => $a->code,
+                'status' => $a->status,
+                'submitted_at' => optional($a->submitted_at)->toIso8601String(),
+                'from_district_id' => $a->from_district_id,
+                'to_region_id' => $a->to_region_id,
+                'to_district_id' => $a->to_district_id,
+            ];
+        });
+
+    return response()->json([
+        'ok' => true,
+        'station' => [ 'id' => $station->id, 'name' => $station->name ],
+        'data' => $apps,
+    ]);
+});
+
+// Districts under a specific region
+Route::get('/api/regions/{region}/districts', function (Region $region) {
+    $districts = \App\Models\District::query()
+        ->where('region_id', $region->id)
+        ->withCount('stations')
+        ->orderBy('name')
+        ->get()
+        ->map(fn($d) => [
+            'id' => $d->id,
+            'name' => $d->name,
+            'slug' => Str::slug($d->name),
+            'stations_count' => (int) $d->stations_count,
+        ]);
+
+    return response()->json([
+        'ok' => true,
+        'region' => [
+            'id' => $region->id,
+            'name' => $region->name,
+            'slug' => Str::slug($region->name),
+        ],
+        'data' => $districts,
+    ]);
+});
+
+// Public regions JSON for the Next.js frontend
+Route::get('/api/regions', function () {
+    $regions = Region::query()
+        ->select('regions.*')
+        ->withCount('districts')
+        ->selectSub(
+            DB::table('stations')
+                ->join('districts', 'stations.district_id', '=', 'districts.id')
+                ->whereColumn('districts.region_id', 'regions.id')
+                ->selectRaw('COUNT(*)'),
+            'stations_count'
+        )
+        ->orderBy('name')
+        ->get()
+        ->map(fn($r) => [
+            'id' => $r->id,
+            'name' => $r->name,
+            'slug' => Str::slug($r->name),
+            'districts_count' => (int) ($r->districts_count ?? 0),
+            'stations_count' => (int) ($r->stations_count ?? 0),
+        ]);
+
+    return response()->json([
+        'ok' => true,
+        'data' => $regions,
+    ]);
 });
 
 Route::get('/home', function () {
@@ -269,5 +389,25 @@ Route::get('/debug/sms-log', function () {
         'text'      => $log->text,
         'user_agent'=> json_decode($log->user_agent ?? '{}', true),
         'created_at'=> $log->created_at,
+    ]);
+});
+
+// Public categories JSON for the Next.js frontend
+Route::get('/api/categories', function () {
+    $cats = Category::query()
+        ->when(Schema::hasColumn('categories', 'is_active'), fn($q) => $q->where('is_active', 1))
+        ->withCount('stations')
+        ->orderBy('name')
+        ->get()
+        ->map(fn($c) => [
+            'id' => $c->id,
+            'name' => $c->name,
+            'slug' => Str::slug($c->name),
+            'count' => $c->stations_count,
+        ]);
+
+    return response()->json([
+        'ok' => true,
+        'data' => $cats,
     ]);
 });

@@ -1,0 +1,9 @@
+/* Scoped styles for Waves component */
+.waves {
+  pointer-events: none; /* allow interactions with foreground */
+}
+.wavesCanvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}

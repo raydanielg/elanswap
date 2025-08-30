@@ -1,0 +1,9 @@
+/* Waves background styles */
+.waves {
+  pointer-events: none; /* allow interactions with foreground */
+}
+.waves-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
