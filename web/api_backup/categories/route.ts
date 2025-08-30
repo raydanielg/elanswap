@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    const base = process.env.NEXT_PUBLIC_BACKEND_URL?.replace(/\/$/, "") || "https://www.swap.elanbrands.net";
+    const base = process.env.NEXT_PUBLIC_BACKEND_URL?.replace(/\/$/, "") || "https://swap.elanbrands.net";
     const res = await fetch(`${base}/api/categories`, {
       // Pass through cookies if same-origin is used in prod; optional
       // credentials: "include",
