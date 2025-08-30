@@ -9,7 +9,7 @@ export default function ContactPage() {
         {/* Hero */}
         <div className="grid lg:grid-cols-2 gap-8 items-center mb-12">
           <div>
-            <h1 className="text-3xl font-extrabold text-white">Contact Us</h1>
+            <h1 className="text-3xl font-extrabold text-white">Wasiliana Nasi</h1>
             <p className="mt-3 text-white/80">
               Tupo hapa kukusaidia. Tuma ujumbe, piga simu, au tutumie barua pepe. Timu yetu itakujibu haraka iwezekanavyo.
             </p>
@@ -29,7 +29,7 @@ export default function ContactPage() {
             </div>
           </div>
           <figure className="rounded-2xl overflow-hidden border border-white/15 bg-white/5">
-            <img src="/black-female-teacher-stands-front-explains-lesson-by-reading-from-book-from-desk_404612-572.jpg" alt="Get in touch" className="w-full h-64 object-cover" />
+            <img src="/black-female-teacher-stands-front-explains-lesson-by-reading-from-book-from-desk_404612-572.jpg" alt="Wasiliana nasi" className="w-full h-64 object-cover" />
           </figure>
         </div>
 
@@ -42,7 +42,7 @@ export default function ContactPage() {
         <div className="grid lg:grid-cols-2 gap-6 mt-10">
           <div className="rounded-2xl overflow-hidden border border-white/15 bg-white/5">
             <iframe
-              title="Elan Swap Location - Dar es Salaam"
+              title="Eneo la Elan Swap - Dar es Salaam"
               src="https://www.google.com/maps?q=-2.4987598269060056,32.922086337442195&output=embed"
               className="w-full h-64"
               loading="lazy"
@@ -54,18 +54,18 @@ export default function ContactPage() {
             </div>
           </div>
           <div className="rounded-2xl border border-white/15 bg-white/5 p-6">
-            <h2 className="text-white font-semibold text-lg">Working Hours</h2>
+            <h2 className="text-white font-semibold text-lg">Saa za Kazi</h2>
             <ul className="mt-3 space-y-2 text-sm text-white/80">
-              <li className="flex items-center gap-2"><svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="10"/></svg> Mon – Fri: 09:00 – 17:00</li>
-              <li className="flex items-center gap-2"><svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="10"/></svg> Sat: 10:00 – 14:00</li>
-              <li className="flex items-center gap-2"><svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="10"/></svg> Sun & Holidays: Closed</li>
+              <li className="flex items-center gap-2"><svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="10"/></svg> Jumatatu – Ijumaa: 09:00 – 17:00</li>
+              <li className="flex items-center gap-2"><svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="10"/></svg> Jumamosi: 10:00 – 14:00</li>
+              <li className="flex items-center gap-2"><svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="10"/></svg> Jumapili na Sikukuu: Haifanyi Kazi</li>
             </ul>
           </div>
         </div>
 
         {/* Disclaimer */}
         <div className="mt-10 rounded-xl border border-yellow-400/40 bg-yellow-500/10 p-4 text-yellow-200 text-sm">
-          <strong className="block text-yellow-300 mb-1">DISCLAIMER</strong>
+          <strong className="block text-yellow-300 mb-1">TAHADHARI</strong>
           Tafadhali kumbuka: ELAN SWAP si taasisi ya serikali, wala haihusiki na maamuzi ya kiutawala. Ni jukwaa huru
           linalosaidia wafanyakazi kuwasiliana na kupanga mabadilishano kwa hiari, kwa kuzingatia taratibu za waajiri wao.
         </div>

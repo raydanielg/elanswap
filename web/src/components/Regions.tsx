@@ -32,7 +32,7 @@ export default function Regions() {
             <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-gray-900">Mikoa</h2>
             <p className="mt-2 text-gray-600">Gundua fursa kwa mujibu wa mkoa.</p>
           </div>
-          <a href="/regions" className="text-sm text-gray-600 hover:text-[var(--color-secondary)]">Tazama yote</a>
+          <a href="/regions" className="text-sm text-gray-600 hover:text-[var(--color-secondary)]">Tazama zote</a>
         </div>
 
         {loading ? (

@@ -2,8 +2,8 @@
 
 const features = [
   {
-    title: "Fast Matching",
-    desc: "Quickly find compatible transfer matches based on role, region, and preferences.",
+    title: "Ulinganishaji wa Haraka",
+    desc: "Tafuta mechi zinazofaa za uhamisho haraka kulingana na jukumu, mkoa, na mapendeleo.",
     icon: (
       <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M13 17h8"/><path d="M13 13h6"/><path d="M13 9h4"/>
@@ -12,8 +12,8 @@ const features = [
     )
   },
   {
-    title: "Secure Profiles",
-    desc: "Your data stays safe with access controls and privacy-first design.",
+    title: "Profaili Salama",
+    desc: "Taarifa zako zinalindwa kwa udhibiti wa ufikiaji na muundo unaotanguliza faragha.",
     icon: (
       <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <rect x="3" y="11" width="18" height="10" rx="2"/>
@@ -22,8 +22,8 @@ const features = [
     )
   },
   {
-    title: "Guided Process",
-    desc: "Step-by-step flow to submit, track, and complete transfer requests.",
+    title: "Mchakato Unaongoza",
+    desc: "Mwongozo hatua kwa hatua wa kuwasilisha, kufuatilia, na kukamilisha maombi ya uhamisho.",
     icon: (
       <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <circle cx="12" cy="12" r="10"/>
@@ -32,8 +32,8 @@ const features = [
     )
   },
   {
-    title: "Real-time Tracking",
-    desc: "Enter a tracking ID to view the current status and history.",
+    title: "Ufuatiliaji kwa Wakati Halisi",
+    desc: "Weka kitambulisho cha ufuatiliaji ili kuona hali ya sasa na historia.",
     icon: (
       <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M21 21l-4.35-4.35"/>
@@ -42,8 +42,8 @@ const features = [
     )
   },
   {
-    title: "Notifications",
-    desc: "Get timely updates on approvals, matches, and messages.",
+    title: "Taarifa",
+    desc: "Pata masasisho kwa wakati kuhusu idhini, mechi, na ujumbe.",
     icon: (
       <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/>
@@ -52,8 +52,8 @@ const features = [
     )
   },
   {
-    title: "Support",
-    desc: "Reach our team for help, guidance, and feedback.",
+    title: "Msaada",
+    desc: "Wasiliana na timu yetu kwa usaidizi, mwongozo, na maoni.",
     icon: (
       <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M9 18v-1a3 3 0 0 1 3-3h2"/>
@@ -72,10 +72,10 @@ export default function FeaturesPage() {
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-24">
         <div className="max-w-3xl">
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-white drop-shadow">
-            Platform Features
+            Vipengele vya Jukwaa
           </h1>
           <p className="mt-4 text-white/90 max-w-prose">
-            Explore the tools that make Elan Swap seamless, transparent and efficient.
+            Gundua zana zinazofanya Elan Swap kuwa rahisi, wazi, na yenye ufanisi.
           </p>
         </div>
 

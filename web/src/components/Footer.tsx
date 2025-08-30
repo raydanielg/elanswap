@@ -12,7 +12,7 @@ export default function Footer() {
               <span className="text-white font-semibold">Elan Swap</span>
             </a>
             <p className="mt-3 text-sm text-white/75 leading-relaxed">
-              Smart swaps for your next opportunity. Tupo kukupa urahisi wa kubadilishana vituo.
+              Mabadilishano ya kiwerevu kwa fursa yako inayofuata. Tupo kukupa urahisi wa kubadilishana vituo.
             </p>
             <div className="mt-4 flex items-center gap-3 text-white/80">
               <a aria-label="X/Twitter" href="#" className="hover:text-white/100 transition">

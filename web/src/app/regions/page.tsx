@@ -63,8 +63,8 @@ export default function RegionsPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-end justify-between gap-4">
           <div>
-            <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white drop-shadow">All Regions</h1>
-            <p className="mt-2 text-white/90">Browse all regions with stations and district counts.</p>
+            <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white drop-shadow">Mikoa Yote</h1>
+            <p className="mt-2 text-white/90">Vinjari mikoa yote pamoja na idadi ya vituo na wilaya.</p>
           </div>
         </div>
 
@@ -86,7 +86,7 @@ export default function RegionsPage() {
                 id={r.slug}
                 type="button"
                 onClick={() => openModal(r)}
-                aria-label={`Open ${r.name} districts`}
+                aria-label={`Fungua wilaya za ${r.name}`}
                 className="group rounded-2xl border border-white/15 bg-white/5 hover:bg-white/10 backdrop-blur p-6 shadow transition text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-secondary)]/50"
               >
                 <div className="flex items-center gap-3">
@@ -95,7 +95,7 @@ export default function RegionsPage() {
                   </span>
                   <div>
                     <div className="font-semibold text-white">{r.name}</div>
-                    <div className="text-sm text-white/75">{r.districts_count} districts</div>
+                    <div className="text-sm text-white/75">{r.districts_count} wilaya</div>
                   </div>
                 </div>
               </button>
@@ -109,25 +109,25 @@ export default function RegionsPage() {
         <div className="fixed inset-0 z-50">
           <div className="absolute inset-0 bg-black/60" onClick={() => setModalOpen(false)} />
           <div className="absolute inset-0 flex items-center justify-center p-4">
-            <div className="w-full max-w-3xl rounded-2xl border border-white/15 bg-white/10 backdrop-blur shadow-xl">
+            <div className="w-full max-w-3xl rounded-xl sm:rounded-2xl border border-white/15 bg-white/10 backdrop-blur shadow-xl max-h-[85vh] overflow-y-auto">
               <div className="flex items-center justify-between p-4 sm:p-5 border-b border-white/10">
                 <div>
                   <h2 className="text-xl font-semibold text-white">{selected.name}</h2>
-                  <p className="text-sm text-white/80">Stations with applications</p>
+                  <p className="text-sm text-white/80">Vituo vyenye maombi</p>
                 </div>
-                <button onClick={() => setModalOpen(false)} aria-label="Close" className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-white/10 text-white hover:bg-white/20">
+                <button onClick={() => setModalOpen(false)} aria-label="Funga" className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-white/10 text-white hover:bg-white/20">
                   <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                 </button>
               </div>
               <div className="p-4 sm:p-5">
                 {sLoading ? (
-                  <div className="rounded-lg border border-white/10 bg-white/5 p-4 text-white/85">Loading stations...</div>
+                  <div className="rounded-lg border border-white/10 bg-white/5 p-4 text-white/85">Inapakia vituo...</div>
                 ) : sError ? (
                   <div className="rounded-lg border border-red-400/30 bg-red-500/10 p-4 text-red-200 text-sm">
-                    Failed to load stations. <button onClick={() => selected && openModal(selected)} className="underline">Retry</button>
+                    Imeshindikana kupakia vituo. <button onClick={() => selected && openModal(selected)} className="underline">Jaribu tena</button>
                   </div>
                 ) : stations.length === 0 ? (
-                  <div className="rounded-lg border border-white/10 bg-white/5 p-4 text-white/75">No stations with applications.</div>
+                  <div className="rounded-lg border border-white/10 bg-white/5 p-4 text-white/75">Hakuna vituo vyenye maombi.</div>
                 ) : (
                   <ul className="grid gap-3">
                     {stations.map((s) => {
@@ -156,16 +156,16 @@ export default function RegionsPage() {
                               <div className="text-xs text-white/75">{s.district}</div>
                             </div>
                             <span className="inline-flex items-center gap-1 rounded-full border border-white/15 bg-white/10 px-2 py-0.5 text-xs font-medium text-white/85">
-                              {s.applications_count} apps
+                              {s.applications_count} maombi
                             </span>
                           </button>
                           <div className={`${open ? "block" : "hidden"} border-t border-white/10 p-3 pt-2`}> 
                             {st.loading ? (
-                              <div className="text-white/85 text-sm">Loading applications...</div>
+                              <div className="text-white/85 text-sm">Inapakia maombi...</div>
                             ) : st.error ? (
-                              <div className="text-red-200 text-sm">Failed to load. <button onClick={toggle} className="underline">Retry</button></div>
+                              <div className="text-red-200 text-sm">Imeshindikana kupakia. <button onClick={toggle} className="underline">Jaribu tena</button></div>
                             ) : st.data.length === 0 ? (
-                              <div className="text-white/75 text-sm">No applications.</div>
+                              <div className="text-white/75 text-sm">Hakuna maombi.</div>
                             ) : (
                               <ul className="space-y-2">
                                 {st.data.map((a) => (

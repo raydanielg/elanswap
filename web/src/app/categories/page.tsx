@@ -28,8 +28,8 @@ export default function CategoriesPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-end justify-between gap-4">
           <div>
-            <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white drop-shadow">All Categories</h1>
-            <p className="mt-2 text-white/85">Browse all available categories and their listing counts.</p>
+            <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white drop-shadow">Jamii Zote</h1>
+            <p className="mt-2 text-white/85">Vinjari jamii zote na idadi ya matangazo yake.</p>
           </div>
         </div>
 
@@ -50,7 +50,7 @@ export default function CategoriesPage() {
                 key={c.id}
                 id={c.slug}
                 href={`#${c.slug}`}
-                aria-label={`Browse category ${c.name}`}
+                aria-label={`Vinjari jamii ${c.name}`}
                 className="group rounded-2xl border border-white/15 bg-white/5 hover:bg-white/10 backdrop-blur p-6 shadow transition hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-secondary)]/50"
               >
                 <div className="flex items-center gap-3">
@@ -61,7 +61,7 @@ export default function CategoriesPage() {
                     <div className="font-semibold text-white">{c.name}</div>
                     <span className="mt-1 inline-flex items-center gap-1 rounded-full border border-white/15 bg-white/10 px-2.5 py-1 text-xs font-medium text-white/85">
                       <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 17h18M3 12h18M3 7h18"/></svg>
-                      {c.count} listings
+                      {c.count} matangazo
                     </span>
                   </div>
                 </div>
