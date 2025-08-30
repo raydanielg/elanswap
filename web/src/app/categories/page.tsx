@@ -10,7 +10,7 @@ export default function CategoriesPage() {
 
   useEffect(() => {
     let mounted = true;
-    fetch("/api/categories")
+    fetch("https://www.swap.elanbrands.net/api/categories")
       .then((r) => r.json())
       .then((data) => {
         if (!mounted) return;
