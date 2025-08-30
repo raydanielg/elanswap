@@ -40,18 +40,24 @@ export default function Hero() {
             <p className="mt-4 text-white/90 max-w-prose">
               Jukwaa la kidijitali linalorahisisha mchakato wa kubadilishana vituo kwa wafanyakazi sekta mbalimbali. Unda akaunti, taja mahitaji yako, na pata mechi zinazofaa kulingana na vigezo vyako.
             </p>
-            <div className="mt-8 flex gap-3">
+            <div className="mt-8 flex flex-wrap gap-3">
               <a
-                href="#features"
+                href="/register"
                 className="inline-flex items-center rounded-lg px-5 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-secondary)] shadow-lg hover:shadow-xl hover:brightness-105 active:brightness-95 transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--color-primary)]"
               >
-                Tazama Vipengele
+                Jisajili
+              </a>
+              <a
+                href="/login"
+                className="inline-flex items-center rounded-lg px-5 py-2.5 text-sm font-medium text-white/90 border border-white/40 bg-white/10 hover:bg-white/20 hover:text-white shadow-md transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--color-secondary)]"
+              >
+                Ingia
               </a>
               <a
                 href="#contact"
                 className="inline-flex items-center rounded-lg px-5 py-2.5 text-sm font-medium text-white/90 border border-white/40 bg-white/10 hover:bg-white/20 hover:text-white shadow-md transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--color-secondary)]"
               >
-                Wasiliana Nasi
+                Mawasiliano
               </a>
             </div>
           </div>

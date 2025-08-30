@@ -17,8 +17,9 @@ class OtpVerification extends Model
         'is_verified'
     ];
 
-    protected $dates = [
-        'expires_at'
+    protected $casts = [
+        'expires_at' => 'datetime',
+        'is_verified' => 'boolean',
     ];
 
     public function user()
@@ -49,6 +50,11 @@ class OtpVerification extends Model
 
     public function isExpired()
     {
+        // If there is no expiry set, treat as expired for safety
+        if (!$this->expires_at) {
+            return true;
+        }
+        // With casts, expires_at is a Carbon instance
         return $this->expires_at->isPast();
     }
 
