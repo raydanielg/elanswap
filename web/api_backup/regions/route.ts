@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    const base = process.env.NEXT_PUBLIC_BACKEND_URL?.replace(/\/$/, "") || "http://localhost:8000";
+    const base = process.env.NEXT_PUBLIC_BACKEND_URL?.replace(/\/$/, "") || "https://www.swap.elanbrands.net/";
     const res = await fetch(`${base}/api/regions`, {
       cache: "no-store",
       headers: { Accept: "application/json" },
