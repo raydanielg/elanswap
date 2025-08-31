@@ -35,21 +35,4 @@ return [
         ],
     ],
 
-    // Selcom payment proxy config
-    'selcom' => [
-        'base'   => env('SELCOM_BASE', 'https://elan.co.tz/api/payments/selcom'),
-        'app_id' => env('SELCOM_APP_ID', '104'),
-        // SSL options: keep verification ON in production. For local/dev you may set SELCOM_VERIFY=false
-        // or provide a custom CA bundle path via SELCOM_CA_PATH to resolve cURL error 60.
-        'verify' => env('SELCOM_VERIFY', true),
-        'ca_path' => env('SELCOM_CA_PATH'),
-    ],
-
-    // SMS provider config
-    'sms' => [
-        'from' => env('SMS_FROM', 'Elan Brands'),
-        'auth' => env('SMS_AUTH'), // base64 encoded user:pass
-        'url'  => env('SMS_URL', 'https://messaging-service.co.tz/api/sms/v1/text/single'),
-    ],
-
 ];

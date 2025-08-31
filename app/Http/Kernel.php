@@ -69,6 +69,5 @@ class Kernel extends HttpKernel
         'role' => \App\Http\Middleware\RoleMiddleware::class,
         'installer' => \App\Http\Middleware\InstallerGuard::class,
         'profile.completed' => \App\Http\Middleware\EnsureProfileCompleted::class,
-        'paid' => \App\Http\Middleware\EnsurePaymentCompleted::class,
     ];
 }

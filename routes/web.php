@@ -18,7 +18,6 @@ use App\Http\Controllers\ApplicationController;
 use App\Http\Controllers\DestinationController;
 use App\Http\Controllers\ExchangeRequestController;
 use App\Http\Controllers\BlogController;
-use App\Http\Controllers\BillingController;
 use App\Http\Controllers\Admin\BlogPostController as AdminBlogPostController;
 use App\Http\Controllers\Admin\ExchangeRequestController as AdminExchangeRequestController;
 use App\Http\Controllers\ProfileCompletionController;
@@ -35,11 +34,6 @@ Route::get('/landing', function () {
     $features = Feature::active()->orderBy('sort_order')->orderBy('id')->get();
     return view('home.index', compact('features'));
 })->name('landing');
-
-// Public Selcom webhook (no CSRF, no auth)
-Route::post('/webhooks/selcom', [BillingController::class, 'webhook'])
-    ->name('webhooks.selcom')
-    ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class]);
 
 // Public tracking endpoint: GET /track?tracking_id=ELS0001
 Route::get('/track', function (Request $request) {
@@ -223,11 +217,9 @@ Route::get('/dashboard', function () {
     // Destinations counter: total pending applications overall
     $destinationsCount = \App\Models\Application::where('status', 'pending')->count();
     return view('dashboard', compact('applicationsCount', 'destinationsCount'));
-})->middleware(['auth', 'verified', \App\Http\Middleware\EnsureProfileCompleted::class, 'paid'])->name('dashboard');
+})->middleware(['auth', 'verified', \App\Http\Middleware\EnsureProfileCompleted::class])->name('dashboard');
 
-// Routes accessible after profile completion but before payment (profile + billing)
 Route::middleware(['auth', \App\Http\Middleware\EnsureProfileCompleted::class])->group(function () {
-    // Profile manage
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
@@ -239,19 +231,6 @@ Route::middleware(['auth', \App\Http\Middleware\EnsureProfileCompleted::class])-
     Route::get('/profile/stations', [ProfileCompletionController::class, 'stations'])->name('profile.stations');
     Route::post('/profile/complete', [ProfileCompletionController::class, 'store'])->name('profile.complete.store');
 
-    // Billing
-    Route::get('/billing', [BillingController::class, 'index'])->name('billing.index');
-    Route::post('/billing', [BillingController::class, 'create'])->name('billing.create');
-    Route::get('/billing/status', [BillingController::class, 'status'])->name('billing.status');
-    // Dev-only helpers
-    if (app()->environment('local')) {
-        Route::get('/billing/{payment}/demo-success', [BillingController::class, 'demoSuccess'])->name('billing.demo.success');
-        Route::get('/billing/{payment}/demo-fail', [BillingController::class, 'demoFail'])->name('billing.demo.fail');
-    }
-});
-
-// Features that require payment
-Route::middleware(['auth', \App\Http\Middleware\EnsureProfileCompleted::class, 'paid'])->group(function () {
     // Applications page + AJAX search
     Route::get('/applications', [ApplicationController::class, 'index'])->name('applications.index');
     Route::get('/applications/search', [ApplicationController::class, 'search'])->name('applications.search');
