@@ -110,7 +110,17 @@ document.addEventListener('DOMContentLoaded', function () {
                 body: formData
             });
             const data = await res.json();
-            if (!data.ok) throw new Error((data && data.message) || 'Imeshindikana kutuma ombi');
+            if (!data.ok) {
+                // Surface backend debug for local env if provided
+                let msg = (data && data.message) ? data.message : 'Imeshindikana kutuma ombi';
+                if (data.debug) {
+                    const http = data.debug.push_http_status;
+                    const body = data.debug.push_body;
+                    const providerMsg = (body && (body.message || body.status_message)) ? (body.message || body.status_message) : '';
+                    msg += ` (HTTP ${http}${providerMsg ? `: ${providerMsg}` : ''})`;
+                }
+                throw new Error(msg);
+            }
 
             if (statusBox) {
                 statusBox.textContent = 'Ombi limetumwa. Inasubiri uthibitisho kwenye simu yako...';

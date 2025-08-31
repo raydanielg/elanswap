@@ -84,12 +84,23 @@ class PaymentController extends Controller
         $base = rtrim((string) config('services.selcom.base_url'), '/') . '/';
         $appId = (string) config('services.selcom.app_id');
         $timeout = (int) config('services.selcom.timeout', 15);
+        $verify = config('services.selcom.verify', true);
+        $caPath = config('services.selcom.ca_path');
+        // Build a base HTTP client with SSL options
+        $baseClient = Http::timeout($timeout);
+        if ($caPath) {
+            // When a CA bundle is provided, use it (keeps verification on)
+            $baseClient = $baseClient->withOptions(['verify' => $caPath]);
+        } else {
+            // Otherwise honor the verify boolean (can be false for local/cPanel workaround)
+            $baseClient = $baseClient->withOptions(['verify' => (bool) $verify]);
+        }
 
         // Build order details
         $orderId = 'ORD_' . now()->format('YmdHis') . '_' . $user->id;
 
         // 1) Create MNO order (send as form-encoded; retry JSON if 415)
-        $http = Http::timeout($timeout)
+        $http = $baseClient
             ->withHeaders([
                 'Content-Type' => 'application/x-www-form-urlencoded',
                 'Accept' => 'application/json',
@@ -113,7 +124,7 @@ class PaymentController extends Controller
 
         $createRes = $http->post($base . 'api/v1/create_mno_order', $createPayload);
         if ($createRes->status() === 415) {
-            $createRes = Http::timeout($timeout)
+            $createRes = $baseClient
                 ->withHeaders([
                     'Content-Type' => 'application/json; charset=UTF-8',
                     'Accept' => 'application/json',
@@ -124,7 +135,7 @@ class PaymentController extends Controller
         }
         if ($createRes->status() === 415) {
             // Fallback: multipart/form-data
-            $req = Http::timeout($timeout)
+            $req = $baseClient
                 ->withHeaders([
                     'Accept' => 'application/json',
                     'X-Requested-With' => 'XMLHttpRequest',
@@ -192,7 +203,7 @@ class PaymentController extends Controller
         $pushPaths = ['api/v1/initiatePushUSSD', 'initiatePushUSSD'];
         $pushRes = null;
         foreach ($pushPaths as $idx => $path) {
-            $pushRes = Http::timeout($timeout)
+            $pushRes = $baseClient
                 ->withHeaders([
                     'Content-Type' => 'application/x-www-form-urlencoded',
                     'Accept' => 'application/json',
@@ -201,7 +212,7 @@ class PaymentController extends Controller
                 ->asForm()
                 ->post($base . $path, $pushPayload);
             if ($pushRes->status() === 415) {
-                $pushRes = Http::timeout($timeout)
+                $pushRes = $baseClient
                     ->withHeaders([
                         'Content-Type' => 'application/json; charset=UTF-8',
                         'Accept' => 'application/json',
@@ -212,7 +223,7 @@ class PaymentController extends Controller
             }
             if ($pushRes->status() === 415) {
                 // Fallback: multipart/form-data
-                $req2 = Http::timeout($timeout)
+                $req2 = $baseClient
                     ->withHeaders([
                         'Accept' => 'application/json',
                         'X-Requested-With' => 'XMLHttpRequest',
@@ -244,6 +255,15 @@ class PaymentController extends Controller
 
         $ok = ($push && isset($push['resultcode']) && (string)$push['resultcode'] === '000');
 
+        // If HTTP succeeded but provider result code is not success, log it for diagnostics
+        if ($pushRes->ok() && !$ok) {
+            \Log::warning('Selcom push responded with non-success resultcode', [
+                'http_status' => $pushRes->status(),
+                'provider_result' => $push,
+                'payload' => $pushPayload,
+            ]);
+        }
+
         $errorMessage = 'Imeshindikana kutuma ombi';
         if (!$ok) {
             if (is_array($push) && isset($push['message']) && $push['message']) {
@@ -253,7 +273,7 @@ class PaymentController extends Controller
             }
         }
 
-        return response()->json([
+        $response = [
             'ok' => $ok,
             'message' => $ok ? 'Tafadhali thibitisha kwenye simu yako.' : $errorMessage,
             'reference' => $reference,
@@ -263,7 +283,15 @@ class PaymentController extends Controller
             'order_id' => $orderId,
             'payment_url' => $paymentUrl,
             'status' => $ok ? 200 : $pushRes->status(),
-        ], $ok ? 200 : 502);
+        ];
+        // In local environment, include provider debug details to surface exact cause
+        if (app()->environment('local')) {
+            $response['debug'] = [
+                'push_http_status' => $pushRes->status(),
+                'push_body' => $push,
+            ];
+        }
+        return response()->json($response, $ok ? 200 : 502);
     }
 
     /**

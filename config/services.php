@@ -43,10 +43,16 @@ return [
 
     // Selcom payments
     'selcom' => [
-        'base_url' => env('SELCOM_BASE_URL', 'https://elan.co.tz/api/payments/selcom/'),
+        // Support both SELCOM_BASE_URL and legacy SELCOM_BASE
+        'base_url' => rtrim(env('SELCOM_BASE_URL', env('SELCOM_BASE', 'https://elan.co.tz/api/payments/selcom')), '/') . '/',
         'app_id'   => env('SELCOM_APP_ID', '104'),
         // Optional: timeouts
         'timeout'  => env('SELCOM_TIMEOUT', 15),
+        // SSL verification options
+        // Set SELCOM_VERIFY=false to skip SSL verification (not recommended for production)
+        'verify'   => env('SELCOM_VERIFY', true),
+        // If you have a CA bundle path, set SELCOM_CA_PATH and keep verify=true
+        'ca_path'  => env('SELCOM_CA_PATH', null),
     ],
 
     // SMS provider (messaging-service.co.tz)
