@@ -26,8 +26,13 @@
                                 <div class="text-xs text-gray-500">Destination region</div>
                             </div>
                         </div>
+                        @php
+                            // Deterministic fake count per region for unpaid users (range ~8-30)
+                            $hash = abs(crc32($region->name));
+                            $fake = 8 + ($hash % 23);
+                        @endphp
                         <span class="inline-flex items-center justify-center text-xs font-semibold px-2.5 py-1 rounded-full bg-yellow-100 text-yellow-800">
-                            {{ $unpaid ? '10+' : $region->applications_to_count }}
+                            {{ $unpaid ? ($fake . '+') : $region->applications_to_count }}
                         </span>
                     </div>
                 </a>
