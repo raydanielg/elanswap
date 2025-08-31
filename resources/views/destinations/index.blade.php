@@ -7,6 +7,9 @@
         <div class="border-t border-dashed border-gray-300 mt-2"></div>
     </div>
 
+    @php
+        $unpaid = (Auth::check() && method_exists(Auth::user(), 'hasPaid')) ? !Auth::user()->hasPaid() : true;
+    @endphp
     @if($regions->isEmpty())
         <div class="bg-white border rounded p-6 text-gray-600">No regions found.</div>
     @else
@@ -24,7 +27,7 @@
                             </div>
                         </div>
                         <span class="inline-flex items-center justify-center text-xs font-semibold px-2.5 py-1 rounded-full bg-yellow-100 text-yellow-800">
-                            {{ $region->applications_to_count }}
+                            {{ $unpaid ? '10+' : $region->applications_to_count }}
                         </span>
                     </div>
                 </a>
