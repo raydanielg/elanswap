@@ -138,7 +138,7 @@
 
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
                 <!-- My Applications -->
-                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 relative">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center">
                             <div class="p-2 bg-primary-100 rounded-lg">
@@ -147,16 +147,25 @@
                                 </svg>
                             </div>
                             <div class="ml-4">
-                                <h3 class="text-sm font-medium text-gray-600">My Applications</h3>
+                                <h3 class="text-sm font-medium text-gray-600 flex items-center">My Applications
+                                    <button type="button" class="ml-2" data-popover-target="po-apps" aria-label="Maelezo" aria-controls="po-apps" aria-expanded="false">
+                                        <svg class="w-4 h-4 text-gray-400 hover:text-gray-600" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/></svg>
+                                    </button>
+                                </h3>
                                 <p class="text-2xl font-bold text-gray-900">{{ $applicationsCount }}</p>
                             </div>
                         </div>
                         <a href="{{ route('applications.index') }}" class="text-sm text-primary-600 hover:text-primary-700 font-medium">View</a>
                     </div>
+                    <!-- Popover: My Applications -->
+                    <div id="po-apps" role="tooltip" class="fixed z-50 invisible opacity-0 transition-opacity duration-200 text-sm text-gray-600 bg-white border border-gray-200 rounded-lg shadow p-3 w-72">
+                        <p>Hii ni idadi ya maombi uliyoweka. Bonyeza "View" kuona na kuhariri maombi yako.</p>
+                        <div data-popper-arrow></div>
+                    </div>
                 </div>
 
                 <!-- Destinations -->
-                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 relative">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center">
                             <div class="p-2 bg-indigo-100 rounded-lg">
@@ -166,16 +175,25 @@
                                 </svg>
                             </div>
                             <div class="ml-4">
-                                <h3 class="text-sm font-medium text-gray-600">Destinations</h3>
+                                <h3 class="text-sm font-medium text-gray-600 flex items-center">Destinations
+                                    <button type="button" class="ml-2" data-popover-target="po-dest" aria-label="Maelezo" aria-controls="po-dest" aria-expanded="false">
+                                        <svg class="w-4 h-4 text-gray-400 hover:text-gray-600" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/></svg>
+                                    </button>
+                                </h3>
                                 <p class="text-2xl font-bold text-gray-900">{{ $destinationsCount }}</p>
                             </div>
                         </div>
                         <a href="{{ route('destinations.index') }}" class="text-sm text-indigo-600 hover:text-indigo-700 font-medium">Browse</a>
                     </div>
+                    <!-- Popover: Destinations -->
+                    <div id="po-dest" role="tooltip" class="fixed z-50 invisible opacity-0 transition-opacity duration-200 text-sm text-gray-600 bg-white border border-gray-200 rounded-lg shadow p-3 w-72">
+                        <p>Hapa unaona idadi ya mikoa yenye maombi ya kubadilishana vituo. Bonyeza "Browse" kuchagua mkoa na kuona maombi.</p>
+                        <div data-popper-arrow></div>
+                    </div>
                 </div>
 
                 <!-- Total Regions -->
-                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 relative">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center">
                             <div class="p-2 bg-emerald-100 rounded-lg">
@@ -184,20 +202,37 @@
                                 </svg>
                             </div>
                             <div class="ml-4">
-                                <h3 class="text-sm font-medium text-gray-600">Total Regions</h3>
+                                <h3 class="text-sm font-medium text-gray-600 flex items-center">Total Regions
+                                    <button type="button" class="ml-2" data-popover-target="po-reg" aria-label="Maelezo" aria-controls="po-reg" aria-expanded="false">
+                                        <svg class="w-4 h-4 text-gray-400 hover:text-gray-600" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/></svg>
+                                    </button>
+                                </h3>
                                 <p class="text-2xl font-bold text-gray-900">{{ $regionsCount }}</p>
                             </div>
                         </div>
                         <a href="#regions" class="text-sm text-emerald-600 hover:text-emerald-700 font-medium">Explore</a>
+                    </div>
+                    <!-- Popover: Total Regions -->
+                    <div id="po-reg" role="tooltip" class="fixed z-50 invisible opacity-0 transition-opacity duration-200 text-sm text-gray-600 bg-white border border-gray-200 rounded-lg shadow p-3 w-72">
+                        <p>Jumla ya mikoa iliyopo kwenye mfumo. Hii ni rejea tu, si lazima kila mkoa uwe na maombi.</p>
+                        <div data-popper-arrow></div>
                     </div>
                 </div>
             </div>
 
             <!-- Regions List Card -->
             <div id="regions" class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
-                <div class="p-6 border-b border-gray-100 flex items-center justify-between">
-                    <h3 class="text-lg font-semibold text-gray-900">Mikoa (Regions)</h3>
+                <div class="p-6 border-b border-gray-100 flex items-center justify-between relative">
+                    <h3 class="text-lg font-semibold text-gray-900 flex items-center">Mikoa (Regions)
+                        <button type="button" class="ml-2" data-popover-target="po-regions-section" aria-label="Maelezo" aria-controls="po-regions-section" aria-expanded="false">
+                            <svg class="w-4 h-4 text-gray-400 hover:text-gray-600" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/></svg>
+                        </button>
+                    </h3>
                     <a href="#regions" class="text-sm text-primary-600 hover:text-primary-700 font-medium">Browse</a>
+                    <div id="po-regions-section" role="tooltip" class="fixed z-50 invisible opacity-0 transition-opacity duration-200 text-sm text-gray-600 bg-white border border-gray-200 rounded-lg shadow p-3 w-80">
+                        <p>Hapa ni orodha ya mikoa yote. Bonyeza mkoa kuona maombi yaliyopo kwenye mkoa huo.</p>
+                        <div data-popper-arrow></div>
+                    </div>
                 </div>
                 <div class="p-6">
                     @php
@@ -222,15 +257,23 @@
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <!-- Recent Activity (User only) -->
                 <div class="bg-white rounded-lg shadow-sm border border-gray-200">
-                    <div class="p-6 border-b border-gray-100 flex items-center justify-between">
+                    <div class="p-6 border-b border-gray-100 flex items-center justify-between relative">
                         <div>
-                            <h3 class="text-lg font-semibold text-gray-900">Recent Activity</h3>
+                            <h3 class="text-lg font-semibold text-gray-900 flex items-center">Recent Activity
+                                <button type="button" class="ml-2" data-popover-target="po-recent" aria-label="Maelezo" aria-controls="po-recent" aria-expanded="false">
+                                    <svg class="w-4 h-4 text-gray-400 hover:text-gray-600" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/></svg>
+                                </button>
+                            </h3>
                             <p class="text-xs text-gray-500">Your actions only</p>
                         </div>
                         @php
                             $recentCount = \App\Models\Log::where('user_id', Auth::id())->count();
                         @endphp
                         <span class="text-xs text-gray-500">{{ $recentCount }} total</span>
+                        <div id="po-recent" role="tooltip" class="fixed z-50 invisible opacity-0 transition-opacity duration-200 text-sm text-gray-600 bg-white border border-gray-200 rounded-lg shadow p-3 w-80">
+                            <p>Muhtasari wa matukio yako ya karibuni (k.m. kuingia, kuhariri profaili, kuweka maombi). Inaonekana wewe pekee.</p>
+                            <div data-popper-arrow></div>
+                        </div>
                     </div>
                     <div class="p-6">
                         @php
@@ -280,11 +323,19 @@
 
                 <!-- Announcements -->
                 <div class="bg-white rounded-lg shadow-sm border border-gray-200">
-                    <div class="p-6 border-b border-gray-100 flex items-center justify-between">
-                        <h3 class="text-lg font-semibold text-gray-900">Announcements</h3>
+                    <div class="p-6 border-b border-gray-100 flex items-center justify-between relative">
+                        <h3 class="text-lg font-semibold text-gray-900 flex items-center">Announcements
+                            <button type="button" class="ml-2" data-popover-target="po-ann" aria-label="Maelezo" aria-controls="po-ann" aria-expanded="false">
+                                <svg class="w-4 h-4 text-gray-400 hover:text-gray-600" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/></svg>
+                            </button>
+                        </h3>
                         <div class="flex items-center gap-2">
                             <span class="loader text-blue-900" aria-label="Loading"></span>
                             <span class="text-xs text-gray-500">Loading</span>
+                        </div>
+                        <div id="po-ann" role="tooltip" class="fixed z-50 invisible opacity-0 transition-opacity duration-200 text-sm text-gray-600 bg-white border border-gray-200 rounded-lg shadow p-3 w-80">
+                            <p>Habari au taarifa muhimu kutoka kwa mfumo wa ElanSwap. Tazama hapa kujua jipya.</p>
+                            <div data-popper-arrow></div>
                         </div>
                     </div>
                     <div class="p-6 space-y-4">
@@ -314,9 +365,17 @@
                 </div>
                 <!-- Last Login History -->
                 <div class="bg-white rounded-lg shadow-sm border border-gray-200">
-                    <div class="p-6 border-b border-gray-100 flex items-center justify-between">
-                        <h3 class="text-lg font-semibold text-gray-900">Last Login History</h3>
+                    <div class="p-6 border-b border-gray-100 flex items-center justify-between relative">
+                        <h3 class="text-lg font-semibold text-gray-900 flex items-center">Last Login History
+                            <button type="button" class="ml-2" data-popover-target="po-login" aria-label="Maelezo" aria-controls="po-login" aria-expanded="false">
+                                <svg class="w-4 h-4 text-gray-400 hover:text-gray-600" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/></svg>
+                            </button>
+                        </h3>
                         <span class="text-xs text-gray-500">Security overview</span>
+                        <div id="po-login" role="tooltip" class="fixed z-50 invisible opacity-0 transition-opacity duration-200 text-sm text-gray-600 bg-white border border-gray-200 rounded-lg shadow p-3 w-80">
+                            <p>Orodha ya kuingia kwako (tarehe, IP, kifaa). Inakusaidia kufuatilia usalama wa akaunti yako.</p>
+                            <div data-popper-arrow></div>
+                        </div>
                     </div>
                     <div class="p-6">
                         @php
@@ -355,4 +414,95 @@
             </div>
         </div>
     </div>
+    <script>
+        (function(){
+          const tooltips = () => Array.from(document.querySelectorAll('[role="tooltip"]'));
+          const buttons = () => Array.from(document.querySelectorAll('[data-popover-target]'));
+
+          const setAria = (btn, expanded) => {
+            if (!btn) return;
+            btn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+          };
+
+          const hideAll = () => {
+            tooltips().forEach(el => { el.classList.add('invisible'); el.classList.add('opacity-0'); });
+            buttons().forEach(b => setAria(b, false));
+          };
+
+          const position = (btn, pop) => {
+            const rect = btn.getBoundingClientRect();
+            const scrollY = window.scrollY || document.documentElement.scrollTop;
+            const scrollX = window.scrollX || document.documentElement.scrollLeft;
+            pop.style.top = (rect.bottom + scrollY + 8) + 'px';
+            pop.style.left = Math.min(rect.left + scrollX, window.innerWidth - 320) + 'px';
+          };
+
+          const showPopover = (btn) => {
+            const id = btn?.getAttribute('data-popover-target');
+            if (!id) return;
+            const pop = document.getElementById(id);
+            if (!pop) return;
+            hideAll();
+            position(btn, pop);
+            pop.classList.remove('invisible');
+            pop.classList.remove('opacity-0');
+            setAria(btn, true);
+          };
+
+          document.addEventListener('click', (e) => {
+            const btn = e.target.closest('[data-popover-target]');
+            const insidePopover = e.target.closest('[role="tooltip"]');
+            if (insidePopover && !btn) return; // allow clicks inside
+            if (!btn) { hideAll(); return; }
+            // if same button already open, close; else open
+            const id = btn.getAttribute('data-popover-target');
+            const pop = document.getElementById(id);
+            const isOpen = pop && !pop.classList.contains('invisible');
+            if (isOpen) { hideAll(); return; }
+            showPopover(btn);
+          });
+
+          // Touch/Pointer support for mobile
+          document.addEventListener('pointerdown', (e) => {
+            const btn = e.target.closest('[data-popover-target]');
+            if (!btn) return;
+            e.preventDefault();
+            e.stopPropagation();
+            const id = btn.getAttribute('data-popover-target');
+            const pop = document.getElementById(id);
+            const isOpen = pop && !pop.classList.contains('invisible');
+            if (isOpen) { hideAll(); return; }
+            showPopover(btn);
+          }, { passive: false });
+
+          // Hover and focus support
+          buttons().forEach(btn => {
+            const id = btn.getAttribute('data-popover-target');
+            const pop = document.getElementById(id);
+            if (!pop) return;
+            let hideTimer;
+            const show = () => { clearTimeout(hideTimer); showPopover(btn); };
+            const scheduleHide = () => {
+              hideTimer = setTimeout(() => {
+                pop.classList.add('invisible');
+                pop.classList.add('opacity-0');
+                setAria(btn, false);
+              }, 150);
+            };
+            btn.addEventListener('mouseenter', show);
+            btn.addEventListener('focus', show);
+            btn.addEventListener('mouseleave', scheduleHide);
+            btn.addEventListener('blur', scheduleHide);
+            // Prevent immediate hide on quick taps
+            btn.addEventListener('touchstart', (ev) => { clearTimeout(hideTimer); showPopover(btn); }, { passive: true });
+            pop.addEventListener('mouseenter', () => clearTimeout(hideTimer));
+            pop.addEventListener('mouseleave', scheduleHide);
+          });
+
+          // Close on scroll/resize/ESC
+          window.addEventListener('scroll', hideAll, { passive: true });
+          window.addEventListener('resize', hideAll);
+          document.addEventListener('keydown', (e) => { if (e.key === 'Escape') hideAll(); });
+        })();
+    </script>
 </x-app-layout>

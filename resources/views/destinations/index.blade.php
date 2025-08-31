@@ -12,7 +12,7 @@
     @else
         <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             @foreach($regions as $region)
-                <a href="{{ route('destinations.show', $region) }}" class="block rounded-xl border border-gray-200 bg-white p-4 hover:shadow-md hover:border-indigo-200 transition transform hover:-translate-y-0.5">
+                <a href="{{ route('destinations.show', $region) }}" class="block rounded-xl border border-gray-200 bg-white p-4 hover:shadow-md hover:border-indigo-200 transition transform hover:-translate-y-0.5" data-requires-payment>
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-3 min-w-0">
                             <div class="w-8 h-8 rounded-full bg-indigo-500 text-white flex items-center justify-center text-xs font-bold">

@@ -269,9 +269,9 @@ Route::middleware(['auth', \App\Http\Middleware\EnsureProfileCompleted::class])-
     Route::post('/applications/{application}/reject', [ApplicationController::class, 'reject'])->middleware('paid')->name('applications.reject');
     Route::post('/applications/{application}/request-deletion', [ApplicationController::class, 'requestDeletion'])->middleware('paid')->name('applications.requestDeletion');
 
-    // Destinations (view allowed)
+    // Destinations (list allowed, viewing a specific region requires payment)
     Route::get('/destinations', [DestinationController::class, 'index'])->name('destinations.index');
-    Route::get('/destinations/{region}', [DestinationController::class, 'show'])->name('destinations.show');
+    Route::get('/destinations/{region}', [DestinationController::class, 'show'])->middleware('paid')->name('destinations.show');
 
     // Exchange Requests (actions require payment)
     Route::post('/exchange-requests', [ExchangeRequestController::class, 'store'])->middleware('paid')->name('exchange-requests.store');
