@@ -35,7 +35,7 @@
                         </svg>
                         <span>{{ __('Applications') }}</span>
                     </x-nav-link>
-                    <x-nav-link :href="route('requests.index')" :active="request()->routeIs('requests.*')" class="flex items-center space-x-2">
+                    <x-nav-link :href="route('requests.index')" :active="request()->routeIs('requests.*')" class="flex items-center space-x-2" data-requires-payment>
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h8M7 16h6"></path>
                         </svg>
@@ -231,7 +231,7 @@
                 </svg>
                 Applications
             </a>
-            <a href="{{ route('requests.index') }}" class="text-blue-200 hover:bg-primary-700 hover:text-white flex items-center px-3 py-2 rounded-md text-base font-medium">
+            <a href="{{ route('requests.index') }}" class="text-blue-200 hover:bg-primary-700 hover:text-white flex items-center px-3 py-2 rounded-md text-base font-medium" data-requires-payment>
                 <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h8M7 16h6"></path>
                 </svg>

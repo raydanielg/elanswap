@@ -53,6 +53,12 @@
 
             @include('layouts.partials.footer-front')
         </div>
+        <script>
+            // Expose unpaid status globally for modal trigger logic
+            window.UNPAID = @json((Auth::check() && method_exists(Auth::user(), 'hasPaid')) ? !Auth::user()->hasPaid() : true);
+        </script>
+        @include('partials.payment-required-modal')
+
         @stack('scripts')
     </body>
 </html>

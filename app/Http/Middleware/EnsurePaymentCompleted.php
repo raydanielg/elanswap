@@ -25,6 +25,11 @@ class EnsurePaymentCompleted
             return $next($request);
         }
 
+        // NEW: If profile is completed, allow access regardless of payment status
+        if (method_exists($user, 'hasCompletedProfile') && $user->hasCompletedProfile()) {
+            return $next($request);
+        }
+
         // If not paid, only allow payment and profile routes
         if (! $user->hasPaid()) {
             $route = $request->route();

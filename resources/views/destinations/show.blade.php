@@ -48,11 +48,11 @@
                                         <button type="button" class="inline-flex items-center px-3 py-1.5 bg-gray-200 text-gray-600 rounded cursor-not-allowed" disabled>
                                             {{ $label }}
                                         </button>
-                                        <a href="{{ route('requests.show', $req['id']) }}" class="inline-flex items-center px-4 py-2 bg-blue-100 text-black border border-blue-700 rounded-md hover:bg-blue-200 font-semibold shadow-sm">
+                                        <a href="{{ route('requests.show', $req['id']) }}" class="inline-flex items-center px-4 py-2 bg-blue-100 text-black border border-blue-700 rounded-md hover:bg-blue-200 font-semibold shadow-sm" data-requires-payment>
                                             View request
                                         </a>
                                     @else
-                                        <button type="button" class="inline-flex items-center px-4 py-2 bg-blue-100 text-black border border-blue-700 rounded-md hover:bg-blue-200 font-semibold shadow-sm open-exchange" data-modal="modal-app-{{ $app->id }}" title="Request exchange">
+                                        <button type="button" class="inline-flex items-center px-4 py-2 bg-blue-100 text-black border border-blue-700 rounded-md hover:bg-blue-200 font-semibold shadow-sm open-exchange" data-modal="modal-app-{{ $app->id }}" title="Request exchange" data-requires-payment>
                                             Exchange
                                         </button>
                                     @endif
@@ -89,7 +89,7 @@
                                                     <input type="hidden" name="application_id" value="{{ $app->id }}">
                                                     <div class="flex justify-end gap-2 pt-1">
                                                         <button type="button" class="px-3 py-1.5 border rounded text-sm hover:bg-gray-50" data-close="1">Cancel</button>
-                                                        <button type="submit" class="send-btn inline-flex items-center px-4 py-2 bg-blue-100 text-black border border-blue-700 rounded-md text-sm hover:bg-blue-200 font-semibold">
+                                                        <button type="submit" class="send-btn inline-flex items-center px-4 py-2 bg-blue-100 text-black border border-blue-700 rounded-md text-sm hover:bg-blue-200 font-semibold" data-requires-payment>
                                                             <span class="btn-text">Confirm</span>
                                                             <span class="ml-2 hidden loader-ring" aria-hidden="true">
                                                                 <span class="loader align-middle" style="width:16px;height:16px"></span>

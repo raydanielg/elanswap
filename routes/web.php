@@ -252,36 +252,37 @@ Route::middleware(['auth', \App\Http\Middleware\EnsureProfileCompleted::class])-
     Route::post('/profile/complete', [ProfileCompletionController::class, 'store'])->name('profile.complete.store');
 });
 
-// App features require completed profile and payment
-Route::middleware(['auth', \App\Http\Middleware\EnsureProfileCompleted::class, \App\Http\Middleware\EnsurePaymentCompleted::class])->group(function () {
-    // Applications page + AJAX search
+// App features require completed profile; payment only for selected actions
+Route::middleware(['auth', \App\Http\Middleware\EnsureProfileCompleted::class])->group(function () {
+    // Applications (read-only routes allowed without payment)
     Route::get('/applications', [ApplicationController::class, 'index'])->name('applications.index');
     Route::get('/applications/search', [ApplicationController::class, 'search'])->name('applications.search');
-    Route::get('/applications/create', [ApplicationController::class, 'create'])->name('applications.create');
-    Route::post('/applications', [ApplicationController::class, 'store'])->name('applications.store');
     Route::get('/applications/{application}', [ApplicationController::class, 'show'])->name('applications.show');
     Route::get('/applications/{application}/peek', [ApplicationController::class, 'peek'])->name('applications.peek');
-    // JSON + actions
     Route::get('/applications/{application}/details', [ApplicationController::class, 'details'])->name('applications.details');
-    Route::post('/applications/{application}/approve', [ApplicationController::class, 'approve'])->name('applications.approve');
-    Route::post('/applications/{application}/approve-with/{match}', [ApplicationController::class, 'approveWithMatch'])->name('applications.approve.match');
-    Route::post('/applications/{application}/reject', [ApplicationController::class, 'reject'])->name('applications.reject');
-    Route::post('/applications/{application}/request-deletion', [ApplicationController::class, 'requestDeletion'])->name('applications.requestDeletion');
 
-    // Destinations
+    // Applications (actions require payment)
+    Route::get('/applications/create', [ApplicationController::class, 'create'])->middleware('paid')->name('applications.create');
+    Route::post('/applications', [ApplicationController::class, 'store'])->middleware('paid')->name('applications.store');
+    Route::post('/applications/{application}/approve', [ApplicationController::class, 'approve'])->middleware('paid')->name('applications.approve');
+    Route::post('/applications/{application}/approve-with/{match}', [ApplicationController::class, 'approveWithMatch'])->middleware('paid')->name('applications.approve.match');
+    Route::post('/applications/{application}/reject', [ApplicationController::class, 'reject'])->middleware('paid')->name('applications.reject');
+    Route::post('/applications/{application}/request-deletion', [ApplicationController::class, 'requestDeletion'])->middleware('paid')->name('applications.requestDeletion');
+
+    // Destinations (view allowed)
     Route::get('/destinations', [DestinationController::class, 'index'])->name('destinations.index');
     Route::get('/destinations/{region}', [DestinationController::class, 'show'])->name('destinations.show');
 
-    // Exchange Requests
-    Route::post('/exchange-requests', [ExchangeRequestController::class, 'store'])->name('exchange-requests.store');
-    Route::post('/exchange-requests/{requestModel}/accept', [ExchangeRequestController::class, 'accept'])->name('exchange-requests.accept');
-    Route::post('/exchange-requests/{requestModel}/reject', [ExchangeRequestController::class, 'reject'])->name('exchange-requests.reject');
+    // Exchange Requests (actions require payment)
+    Route::post('/exchange-requests', [ExchangeRequestController::class, 'store'])->middleware('paid')->name('exchange-requests.store');
+    Route::post('/exchange-requests/{requestModel}/accept', [ExchangeRequestController::class, 'accept'])->middleware('paid')->name('exchange-requests.accept');
+    Route::post('/exchange-requests/{requestModel}/reject', [ExchangeRequestController::class, 'reject'])->middleware('paid')->name('exchange-requests.reject');
 
-    // My Requests (sent by current user)
-    Route::get('/my-requests', [ExchangeRequestController::class, 'index'])->name('requests.index');
-    Route::get('/my-requests/{requestModel}', [ExchangeRequestController::class, 'show'])->name('requests.show');
+    // My Requests (requires payment)
+    Route::get('/my-requests', [ExchangeRequestController::class, 'index'])->middleware('paid')->name('requests.index');
+    Route::get('/my-requests/{requestModel}', [ExchangeRequestController::class, 'show'])->middleware('paid')->name('requests.show');
 
-    // Blog (public pages under auth for now)
+    // Blog (view allowed)
     Route::get('/blog', [BlogController::class, 'index'])->name('blog.index');
     Route::get('/blog/{slug}', [BlogController::class, 'show'])->name('blog.show');
 });
