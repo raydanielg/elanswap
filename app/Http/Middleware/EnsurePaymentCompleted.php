@@ -40,7 +40,7 @@ class EnsurePaymentCompleted
                 return $next($request);
             }
 
-            return redirect()->route('payment.index')->with('status', 'Tafadhali lipia ili kuendelea kutumia huduma.');
+            return redirect()->route('profile.edit')->with('status', 'Tafadhali kamilisha wasifu na kufanya malipo ili kuendelea.');
         }
 
         return $next($request);

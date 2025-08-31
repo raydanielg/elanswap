@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Payment;
+use App\Services\SmsService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Auth;
@@ -171,7 +172,7 @@ class PaymentController extends Controller
      * Provider webhook to listen for payment result [Mock].
      * POST /payment/webhook
      */
-    public function webhook(Request $request)
+    public function webhook(Request $request, SmsService $sms)
     {
         // In production: verify signature / token from provider
         $data = $request->all();
@@ -200,11 +201,20 @@ class PaymentController extends Controller
         if ($transid !== '') { $meta['transid'] = $transid; }
 
         $updates = [ 'meta' => $meta ];
-        if (in_array(strtolower($status), ['success','completed','paid'], true)) {
+        $setPaid = in_array(strtolower($status), ['success','completed','paid'], true);
+        if ($setPaid) {
             $updates['paid_at'] = now();
         }
 
         $payment->fill($updates)->save();
+
+        // Send SMS notification upon successful payment
+        if ($setPaid && $payment->user_id) {
+            $amount = number_format((int) $payment->amount);
+            $ref = $payment->provider_reference ?: ($meta['order_id'] ?? '');
+            $message = "Malipo yako ya TZS {$amount} yamefanikiwa. Rejea: {$ref}. Asante kwa kutumia ElanSwap.";
+            try { $sms->sendSms($payment->user_id, $message); } catch (\Throwable $e) { /* log silently */ }
+        }
 
         return response()->json(['ok' => true, 'message' => 'Webhook processed']);
     }

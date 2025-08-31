@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Request;
+use Illuminate\Support\Facades\Http;
 
 class SmsService
 {
@@ -35,39 +36,26 @@ class SmsService
                 'user_agent' => Request::userAgent(),
             ]);
 
-            // Send the SMS
-            $from = "Elan Brands";
-            $to = $phone;
-            $auth = "Basic ZWxhbmJyYW5kczpFbGl5YWFtb3MxQA==";
+            // Send the SMS (config-driven)
+            $base = rtrim((string) config('services.sms.base_url', 'https://messaging-service.co.tz'), '/');
+            $endpoint = $base . '/api/sms/v1/text/single';
+            $from = (string) config('services.sms.from', 'Elan Brands');
+            $auth = (string) config('services.sms.auth', '');
 
-            $curl = curl_init();
-            curl_setopt_array($curl, [
-                CURLOPT_URL => 'https://messaging-service.co.tz/api/sms/v1/text/single',
-                CURLOPT_RETURNTRANSFER => true,
-                CURLOPT_ENCODING => '',
-                CURLOPT_MAXREDIRS => 10,
-                CURLOPT_TIMEOUT => 0,
-                CURLOPT_FOLLOWLOCATION => true,
-                CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-                CURLOPT_CUSTOMREQUEST => 'POST',
-                // Use application/x-www-form-urlencoded to satisfy API expectations and avoid 415
-                CURLOPT_POSTFIELDS => http_build_query([
+            $res = Http::withHeaders([
+                    'Authorization' => $auth,
+                    'Accept' => 'application/json',
+                ])
+                ->asJson()
+                ->timeout((int) config('services.sms.timeout', 15))
+                ->post($endpoint, [
                     'from' => $from,
-                    'to'   => $to, // send as plain string, not array
+                    'to'   => [$phone],
                     'text' => $message,
-                ]),
-                CURLOPT_HTTPHEADER => [
-                    "Authorization: $auth",
-                    'Content-Type: application/x-www-form-urlencoded',
-                    'Accept: application/json',
-                ],
-            ]);
+                ]);
 
-            $response = curl_exec($curl);
-            $httpCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
-            curl_close($curl);
-
-            $responseData = json_decode($response, true);
+            $httpCode = $res->status();
+            $responseData = $res->json();
             // Default to 'pending' like your reference implementation
             $status = 'pending';
 

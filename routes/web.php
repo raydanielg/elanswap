@@ -208,9 +208,14 @@ Route::get('/home', function () {
         return redirect()->route('admin.dashboard');
     }
     $completed = $user && ($user->region_id && $user->district_id && $user->category_id && $user->station_id);
-    return $completed
-        ? redirect()->route('dashboard')
-        : redirect()->route('profile.edit');
+    if (! $completed) {
+        return redirect()->route('profile.edit');
+    }
+    // If profile completed but not paid, send to profile to finalize
+    if ($user && method_exists($user, 'hasPaid') && ! $user->hasPaid()) {
+        return redirect()->route('profile.edit')->with('status', 'Tafadhali kamilisha malipo ili kuendelea.');
+    }
+    return redirect()->route('dashboard');
 })->middleware(['auth', 'verified'])->name('home');
 
 Route::get('/dashboard', function () {
@@ -218,7 +223,7 @@ Route::get('/dashboard', function () {
     // Destinations counter: total pending applications overall
     $destinationsCount = \App\Models\Application::where('status', 'pending')->count();
     return view('dashboard', compact('applicationsCount', 'destinationsCount'));
-})->middleware(['auth', 'verified', \App\Http\Middleware\EnsureProfileCompleted::class, 'paid'])->name('dashboard');
+})->middleware(['auth', 'verified', \App\Http\Middleware\EnsureProfileCompleted::class, \App\Http\Middleware\EnsurePaymentCompleted::class])->name('dashboard');
 
 // Payment page (accessible after auth, even if unpaid)
 Route::middleware(['auth', \App\Http\Middleware\EnsureProfileCompleted::class])->group(function () {
@@ -248,7 +253,7 @@ Route::middleware(['auth', \App\Http\Middleware\EnsureProfileCompleted::class])-
 });
 
 // App features require completed profile and payment
-Route::middleware(['auth', \App\Http\Middleware\EnsureProfileCompleted::class, 'paid'])->group(function () {
+Route::middleware(['auth', \App\Http\Middleware\EnsureProfileCompleted::class, \App\Http\Middleware\EnsurePaymentCompleted::class])->group(function () {
     // Applications page + AJAX search
     Route::get('/applications', [ApplicationController::class, 'index'])->name('applications.index');
     Route::get('/applications/search', [ApplicationController::class, 'search'])->name('applications.search');

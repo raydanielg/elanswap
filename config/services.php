@@ -49,4 +49,12 @@ return [
         'timeout'  => env('SELCOM_TIMEOUT', 15),
     ],
 
+    // SMS provider (messaging-service.co.tz)
+    'sms' => [
+        'base_url' => env('SMS_BASE_URL', 'https://messaging-service.co.tz'),
+        'from'     => env('SMS_FROM', 'Elan Brands'),
+        'auth'     => env('SMS_AUTH', ''), // e.g., Basic ZWxhbmJyYW5kczpFbGl5YWFtb3MxQA==
+        'timeout'  => env('SMS_TIMEOUT', 15),
+    ],
+
 ];
