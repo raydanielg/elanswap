@@ -24,10 +24,16 @@ use App\Http\Controllers\ProfileCompletionController;
 use App\Models\Feature;
 use Illuminate\Http\Request;
 
+// Make login the first page
 Route::get('/', function () {
+    return redirect()->route('login');
+})->name('home.public');
+
+// Keep the previous homepage available at /landing
+Route::get('/landing', function () {
     $features = Feature::active()->orderBy('sort_order')->orderBy('id')->get();
     return view('home.index', compact('features'));
-})->name('home.public');
+})->name('landing');
 
 // Public tracking endpoint: GET /track?tracking_id=ELS0001
 Route::get('/track', function (Request $request) {
