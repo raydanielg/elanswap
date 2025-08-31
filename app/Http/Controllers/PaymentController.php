@@ -187,35 +187,46 @@ class PaymentController extends Controller
             'order_id' => $orderId,
             'is_reference_payment' => 0,
         ];
-        $pushRes = Http::timeout($timeout)
-            ->withHeaders([
-                'Content-Type' => 'application/x-www-form-urlencoded',
-                'Accept' => 'application/json',
-                'X-Requested-With' => 'XMLHttpRequest',
-            ])
-            ->asForm()
-            ->post($base . 'api/v1/initiatePushUSSD', $pushPayload);
-        if ($pushRes->status() === 415) {
+        // Some gateways expose initiatePushUSSD without the api/v1 prefix.
+        // Try with api/v1 first, then without if we get a 404.
+        $pushPaths = ['api/v1/initiatePushUSSD', 'initiatePushUSSD'];
+        $pushRes = null;
+        foreach ($pushPaths as $idx => $path) {
             $pushRes = Http::timeout($timeout)
                 ->withHeaders([
-                    'Content-Type' => 'application/json; charset=UTF-8',
+                    'Content-Type' => 'application/x-www-form-urlencoded',
                     'Accept' => 'application/json',
                     'X-Requested-With' => 'XMLHttpRequest',
                 ])
-                ->asJson()
-                ->post($base . 'api/v1/initiatePushUSSD', $pushPayload);
-        }
-        if ($pushRes->status() === 415) {
-            // Fallback: multipart/form-data
-            $req2 = Http::timeout($timeout)
-                ->withHeaders([
-                    'Accept' => 'application/json',
-                    'X-Requested-With' => 'XMLHttpRequest',
-                ]);
-            foreach ($pushPayload as $k => $v) {
-                $req2 = $req2->attach($k, (string) $v);
+                ->asForm()
+                ->post($base . $path, $pushPayload);
+            if ($pushRes->status() === 415) {
+                $pushRes = Http::timeout($timeout)
+                    ->withHeaders([
+                        'Content-Type' => 'application/json; charset=UTF-8',
+                        'Accept' => 'application/json',
+                        'X-Requested-With' => 'XMLHttpRequest',
+                    ])
+                    ->asJson()
+                    ->post($base . $path, $pushPayload);
             }
-            $pushRes = $req2->post($base . 'api/v1/initiatePushUSSD');
+            if ($pushRes->status() === 415) {
+                // Fallback: multipart/form-data
+                $req2 = Http::timeout($timeout)
+                    ->withHeaders([
+                        'Accept' => 'application/json',
+                        'X-Requested-With' => 'XMLHttpRequest',
+                    ]);
+                foreach ($pushPayload as $k => $v) {
+                    $req2 = $req2->attach($k, (string) $v);
+                }
+                $pushRes = $req2->post($base . $path);
+            }
+            // If not a 404, accept this response; otherwise try next path
+            if ($pushRes->status() !== 404) {
+                break;
+            }
+            \Log::warning('initiatePushUSSD 404 on path, trying alternative', ['path' => $path, 'base' => $base]);
         }
         $push = $pushRes->ok() ? $pushRes->json() : null;
         if (!$pushRes->ok()) {
