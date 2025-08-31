@@ -88,10 +88,10 @@ class PaymentController extends Controller
         // Build order details
         $orderId = 'ORD_' . now()->format('YmdHis') . '_' . $user->id;
 
-        // 1) Create MNO order (send JSON)
+        // 1) Create MNO order (send as form-encoded)
         $createRes = Http::timeout($timeout)
             ->acceptJson()
-            ->asJson()
+            ->asForm()
             ->post($base . 'api/v1/create_mno_order', [
                 'app_id'             => $appId,
                 'order_firstname'    => $user->name ?? 'Customer',
@@ -145,10 +145,10 @@ class PaymentController extends Controller
             ],
         ]);
 
-        // 2) Initiate Push USSD (send JSON)
+        // 2) Initiate Push USSD (send as form-encoded)
         $pushRes = Http::timeout($timeout)
             ->acceptJson()
-            ->asJson()
+            ->asForm()
             ->post($base . 'api/v1/initiatePushUSSD', [
                 'project_id' => $appId,
                 'phone' => $phone,
