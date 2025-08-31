@@ -32,11 +32,11 @@
 
                             <div class="flex justify-end">
                                 <button data-pay-cta data-url="{{ route('payment.index') }}" type="button"
-                                    class="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-white font-semibold bg-gradient-to-r from-red-500 to-rose-600 shadow-[0_8px_20px_-6px_rgba(244,63,94,0.65)] hover:from-red-600 hover:to-rose-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 ring-1 ring-rose-200/60 transform hover:scale-[1.04] active:scale-100 transition duration-200">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    class="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-gray-800 bg-white hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-600 ring-1 ring-blue-200 shadow-sm transform hover:scale-[1.03] active:scale-100 transition duration-200">
+                                    <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                     </svg>
-                                    Lipa sasa (<span class="count">2</span>)
+                                    <span class="label text-blue-700">Lipa sasa</span> (<span class="count text-gray-700">2</span>)
                                 </button>
                             </div>
                             <p class="mt-2 text-xs text-gray-500">Bofya kitufe kwenda mara moja, au subiri uhamishwe kiotomatiki.</p>
@@ -74,11 +74,11 @@
                         @include('profile.partials.user-summary-card')
                         <div class="mt-4 flex justify-end">
                             <button data-pay-cta data-url="{{ route('payment.index') }}" type="button"
-                                class="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-white font-semibold bg-gradient-to-r from-red-500 to-rose-600 shadow-[0_8px_20px_-6px_rgba(244,63,94,0.65)] hover:from-red-600 hover:to-rose-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 ring-1 ring-rose-200/60 transform hover:scale-[1.04] active:scale-100 transition duration-200">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                class="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-gray-800 bg-white hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-600 ring-1 ring-blue-200 shadow-sm transform hover:scale-[1.03] active:scale-100 transition duration-200">
+                                <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
-                                Lipa sasa (<span class="count">2</span>)
+                                <span class="label text-blue-700">Lipa sasa</span> (<span class="count text-gray-700">2</span>)
                             </button>
                         </div>
                     </div>
