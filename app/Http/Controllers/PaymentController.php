@@ -136,9 +136,15 @@ class PaymentController extends Controller
         }
 
         if (!$createRes->ok()) {
+            \Log::error('Selcom create_mno_order failed', [
+                'status' => $createRes->status(),
+                'body' => $createRes->body(),
+                'payload' => $createPayload,
+                'base' => $base,
+            ]);
             return response()->json([
                 'ok' => false,
-                'message' => 'Imeshindikana kuanzisha oda. Tafadhali jaribu tena.',
+                'message' => 'Imeshindikana kuanzisha oda (' . $createRes->status() . ').',
                 'status' => $createRes->status(),
                 'body' => $createRes->body(),
             ], 502);
@@ -212,6 +218,14 @@ class PaymentController extends Controller
             $pushRes = $req2->post($base . 'api/v1/initiatePushUSSD');
         }
         $push = $pushRes->ok() ? $pushRes->json() : null;
+        if (!$pushRes->ok()) {
+            \Log::error('Selcom initiatePushUSSD failed', [
+                'status' => $pushRes->status(),
+                'body' => $pushRes->body(),
+                'payload' => $pushPayload,
+                'base' => $base,
+            ]);
+        }
 
         // Save push response in meta
         $payment->meta = array_merge((array) $payment->meta, ['push_response' => $push]);
@@ -219,15 +233,25 @@ class PaymentController extends Controller
 
         $ok = ($push && isset($push['resultcode']) && (string)$push['resultcode'] === '000');
 
+        $errorMessage = 'Imeshindikana kutuma ombi';
+        if (!$ok) {
+            if (is_array($push) && isset($push['message']) && $push['message']) {
+                $errorMessage = (string) $push['message'];
+            } elseif (!$pushRes->ok()) {
+                $errorMessage = 'Push haikufaulu (' . $pushRes->status() . ')';
+            }
+        }
+
         return response()->json([
             'ok' => $ok,
-            'message' => $ok ? 'Tafadhali thibitisha kwenye simu yako.' : ($push['message'] ?? 'Imeshindikana kutuma ombi'),
+            'message' => $ok ? 'Tafadhali thibitisha kwenye simu yako.' : $errorMessage,
             'reference' => $reference,
             'payment_id' => $payment->id,
             'method' => $method,
             'phone' => $phone,
             'order_id' => $orderId,
             'payment_url' => $paymentUrl,
+            'status' => $ok ? 200 : $pushRes->status(),
         ], $ok ? 200 : 502);
     }
 
