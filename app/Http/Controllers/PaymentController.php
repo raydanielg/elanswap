@@ -88,23 +88,52 @@ class PaymentController extends Controller
         // Build order details
         $orderId = 'ORD_' . now()->format('YmdHis') . '_' . $user->id;
 
-        // 1) Create MNO order (send as form-encoded)
-        $createRes = Http::timeout($timeout)
-            ->acceptJson()
-            ->asForm()
-            ->post($base . 'api/v1/create_mno_order', [
-                'app_id'             => $appId,
-                'order_firstname'    => $user->name ?? 'Customer',
-                'order_lastname'     => 'Customer',
-                'order_email'        => $user->email ?? 'info@elanbrands.net',
-                'order_phone'        => $phone,
-                'amount'             => $amount,
-                'order_id'           => $orderId,
-                'currency'           => 'TZS',
-                'order_item_cont'    => 1,
-                'service_name'       => 'subscription',
-                'is_reference_payment' => 1,
-            ]);
+        // 1) Create MNO order (send as form-encoded; retry JSON if 415)
+        $http = Http::timeout($timeout)
+            ->withHeaders([
+                'Content-Type' => 'application/x-www-form-urlencoded',
+                'Accept' => 'application/json',
+                'X-Requested-With' => 'XMLHttpRequest',
+            ])
+            ->asForm();
+
+        $createPayload = [
+            'app_id'             => $appId,
+            'order_firstname'    => $user->name ?? 'Customer',
+            'order_lastname'     => 'Customer',
+            'order_email'        => $user->email ?? 'info@elanbrands.net',
+            'order_phone'        => $phone,
+            'amount'             => $amount,
+            'order_id'           => $orderId,
+            'currency'           => 'TZS',
+            'order_item_cont'    => 1,
+            'service_name'       => 'subscription',
+            'is_reference_payment' => 1,
+        ];
+
+        $createRes = $http->post($base . 'api/v1/create_mno_order', $createPayload);
+        if ($createRes->status() === 415) {
+            $createRes = Http::timeout($timeout)
+                ->withHeaders([
+                    'Content-Type' => 'application/json; charset=UTF-8',
+                    'Accept' => 'application/json',
+                    'X-Requested-With' => 'XMLHttpRequest',
+                ])
+                ->asJson()
+                ->post($base . 'api/v1/create_mno_order', $createPayload);
+        }
+        if ($createRes->status() === 415) {
+            // Fallback: multipart/form-data
+            $req = Http::timeout($timeout)
+                ->withHeaders([
+                    'Accept' => 'application/json',
+                    'X-Requested-With' => 'XMLHttpRequest',
+                ]);
+            foreach ($createPayload as $k => $v) {
+                $req = $req->attach($k, (string) $v);
+            }
+            $createRes = $req->post($base . 'api/v1/create_mno_order');
+        }
 
         if (!$createRes->ok()) {
             return response()->json([
@@ -145,16 +174,43 @@ class PaymentController extends Controller
             ],
         ]);
 
-        // 2) Initiate Push USSD (send as form-encoded)
+        // 2) Initiate Push USSD (send as form-encoded; retry JSON if 415)
+        $pushPayload = [
+            'project_id' => $appId,
+            'phone' => $phone,
+            'order_id' => $orderId,
+            'is_reference_payment' => 0,
+        ];
         $pushRes = Http::timeout($timeout)
-            ->acceptJson()
+            ->withHeaders([
+                'Content-Type' => 'application/x-www-form-urlencoded',
+                'Accept' => 'application/json',
+                'X-Requested-With' => 'XMLHttpRequest',
+            ])
             ->asForm()
-            ->post($base . 'api/v1/initiatePushUSSD', [
-                'project_id' => $appId,
-                'phone' => $phone,
-                'order_id' => $orderId,
-                'is_reference_payment' => 0,
-            ]);
+            ->post($base . 'api/v1/initiatePushUSSD', $pushPayload);
+        if ($pushRes->status() === 415) {
+            $pushRes = Http::timeout($timeout)
+                ->withHeaders([
+                    'Content-Type' => 'application/json; charset=UTF-8',
+                    'Accept' => 'application/json',
+                    'X-Requested-With' => 'XMLHttpRequest',
+                ])
+                ->asJson()
+                ->post($base . 'api/v1/initiatePushUSSD', $pushPayload);
+        }
+        if ($pushRes->status() === 415) {
+            // Fallback: multipart/form-data
+            $req2 = Http::timeout($timeout)
+                ->withHeaders([
+                    'Accept' => 'application/json',
+                    'X-Requested-With' => 'XMLHttpRequest',
+                ]);
+            foreach ($pushPayload as $k => $v) {
+                $req2 = $req2->attach($k, (string) $v);
+            }
+            $pushRes = $req2->post($base . 'api/v1/initiatePushUSSD');
+        }
         $push = $pushRes->ok() ? $pushRes->json() : null;
 
         // Save push response in meta
