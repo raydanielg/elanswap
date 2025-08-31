@@ -6,45 +6,55 @@
     </x-slot>
 
     <div class="py-12">
-        <div class="max-w-3xl mx-auto sm:px-6 lg:px-8 space-y-6">
+        <div class="max-w-4xl mx-auto sm:px-6 lg:px-8 space-y-6">
             @if (session('status'))
                 <div class="p-4 bg-green-50 border border-green-200 rounded-lg text-green-800 text-sm">
                     {{ session('status') }}
                 </div>
             @endif
 
-            <div class="p-6 bg-white shadow sm:rounded-lg">
-                <h3 class="text-lg font-semibold mb-2">Muhtasari</h3>
-                <p class="text-gray-700">Kiasi cha kulipa: <span class="font-medium">TZS {{ number_format($amount) }}</span></p>
+            <div class="relative p-6 bg-white shadow sm:rounded-lg">
+                <div class="flex flex-col gap-4">
+                    <div>
+                        <div class="mb-3 flex items-center gap-3">
+                            <img src="{{ asset('download (1).png') }}" alt="logo-1" class="w-10 h-10 rounded-full object-cover ring-1 ring-gray-200">
+                            <img src="{{ asset('download (2).png') }}" alt="logo-2" class="w-10 h-10 rounded-full object-cover ring-1 ring-gray-200">
+                            <img src="{{ asset('download.jpg') }}" alt="logo-3" class="w-10 h-10 rounded-full object-cover ring-1 ring-gray-200">
+                            <img src="{{ asset('download.png') }}" alt="logo-4" class="w-10 h-10 rounded-full object-cover ring-1 ring-gray-200">
+                        </div>
+                        <h3 class="text-lg font-semibold mb-2">Muhtasari</h3>
+                        <p class="text-gray-700">Kiasi: <span class="font-medium">TZS {{ number_format($amount) }}</span></p>
 
-                <div class="mt-4 text-sm" id="summaryCard" data-has-latest="{{ $latest ? '1' : '0' }}" data-paid="{{ $latest && $latest->paid_at ? '1' : '0' }}">
-                    <p class="text-gray-600 mb-2">Hali ya malipo yako ya karibuni:</p>
-                    <div class="flex items-center gap-3">
-                        <span id="statusBadge" class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">
+                        <div class="mt-4 text-sm" id="summaryCard" data-has-latest="{{ $latest ? '1' : '0' }}" data-paid="{{ $latest && $latest->paid_at ? '1' : '0' }}">
+                            <p class="text-gray-600 mb-2">Hali ya malipo yako ya karibuni:</p>
+                            <div class="flex items-center gap-3">
+                                <span id="statusBadge" class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">
+                                    @if($latest && $latest->paid_at)
+                                        <svg class="animate-pulse h-3 w-3 text-green-500 mr-1" viewBox="0 0 8 8" fill="currentColor"><circle cx="4" cy="4" r="4"/></svg>
+                                        PAID
+                                    @elseif($latest)
+                                        <svg class="animate-spin h-3 w-3 text-amber-500 mr-1" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path></svg>
+                                        PENDING
+                                    @else
+                                        HAKUNA MALIPO
+                                    @endif
+                                </span>
+                                <span id="timeInfo" class="text-gray-500"></span>
+                            </div>
                             @if($latest && $latest->paid_at)
-                                <svg class="animate-pulse h-3 w-3 text-green-500 mr-1" viewBox="0 0 8 8" fill="currentColor"><circle cx="4" cy="4" r="4"/></svg>
-                                PAID
-                            @elseif($latest)
-                                <svg class="animate-spin h-3 w-3 text-amber-500 mr-1" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path></svg>
-                                PENDING
-                            @else
-                                HAKUNA MALIPO
+                                <div class="mt-1 text-gray-700">Imethibitishwa: <span id="paidTime">{{ $latest->paid_at->format('Y-m-d H:i') }}</span></div>
                             @endif
-                        </span>
-                        <span id="methodBadge" class="text-gray-600">Njia: {{ strtoupper($latest->method ?? '-') }}</span>
-                        <span id="timeInfo" class="text-gray-500"></span>
+                            @if(false) @endif
+                            <div id="statusAlert" class="mt-3 hidden"></div>
+                        </div>
                     </div>
-                    @if($latest && $latest->paid_at)
-                        <div class="mt-1 text-gray-700">Imethibitishwa: <span id="paidTime">{{ $latest->paid_at->format('Y-m-d H:i') }}</span></div>
-                    @endif
-                    <div id="statusAlert" class="mt-3 hidden"></div>
                 </div>
             </div>
 
             @if(!auth()->user()->hasPaid())
                 <div class="p-6 bg-white shadow sm:rounded-lg" x-data>
-                    <h3 class="text-lg font-semibold mb-4">Weka Namba ya Simu</h3>
-                    <p class="text-sm text-gray-600 mb-3">Ingiza namba ya simu utakayopokea ombi la malipo (mf. 07XXXXXXXX au 2557XXXXXXXX).</p>
+                    <h3 class="text-lg font-semibold mb-1">Weka Namba ya Simu</h3>
+                    <p class="text-sm text-gray-600 mb-3">Ingiza namba utakayopokea ombi la malipo (mf. 07XXXXXXXX au 2557XXXXXXXX). Mfumo utatuma ombi la USSD/Push.</p>
                     <form id="pushForm" method="POST" action="{{ route('payment.push') }}" class="space-y-4">
                         @csrf
                         <div>
@@ -57,6 +67,7 @@
                         @enderror
 
                         <button id="pushBtn" type="submit" class="mt-2 inline-flex items-center px-4 py-2 bg-primary-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-primary-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-25 transition">Tuma Ombi la Malipo</button>
+                        <p class="mt-2 text-xs text-gray-500">Ukishapokea ombi kwenye simu, weka PIN kuthibitisha. Halafu subiri sekunde chache.</p>
                     </form>
                     <div id="pushStatus" class="mt-3 text-sm text-gray-700 hidden"></div>
                     <p class="mt-2 text-xs text-gray-500">Baada ya kutuma, thibitisha ombi la malipo kwenye simu yako.</p>
@@ -64,6 +75,9 @@
             @else
                 <div class="p-6 bg-green-50 border border-green-200 rounded-lg">
                     <p class="text-green-800">Asante! Malipo yako yamekamilika. Unaweza kuendelea kutumia huduma zote.</p>
+                    <div class="mt-2 text-sm">
+                        <a href="{{ route('dashboard') }}" class="text-primary-600 hover:underline">Nenda kwenye Dashboard</a>
+                    </div>
                 </div>
             @endif
         </div>
