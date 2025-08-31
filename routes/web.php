@@ -21,6 +21,7 @@ use App\Http\Controllers\BlogController;
 use App\Http\Controllers\Admin\BlogPostController as AdminBlogPostController;
 use App\Http\Controllers\Admin\ExchangeRequestController as AdminExchangeRequestController;
 use App\Http\Controllers\ProfileCompletionController;
+use App\Http\Controllers\PaymentController;
 use App\Models\Feature;
 use Illuminate\Http\Request;
 
@@ -217,8 +218,22 @@ Route::get('/dashboard', function () {
     // Destinations counter: total pending applications overall
     $destinationsCount = \App\Models\Application::where('status', 'pending')->count();
     return view('dashboard', compact('applicationsCount', 'destinationsCount'));
-})->middleware(['auth', 'verified', \App\Http\Middleware\EnsureProfileCompleted::class])->name('dashboard');
+})->middleware(['auth', 'verified', \App\Http\Middleware\EnsureProfileCompleted::class, 'paid'])->name('dashboard');
 
+// Payment page (accessible after auth, even if unpaid)
+Route::middleware(['auth', \App\Http\Middleware\EnsureProfileCompleted::class])->group(function () {
+    Route::get('/payment', [PaymentController::class, 'index'])->name('payment.index');
+    Route::post('/payment', [PaymentController::class, 'pay'])->name('payment.pay');
+    // Initiate a push payment (mock)
+    Route::post('/payment/push', [PaymentController::class, 'requestPush'])->name('payment.push');
+    // Poll latest payment status for current user
+    Route::get('/payment/status', [PaymentController::class, 'status'])->name('payment.status');
+});
+
+// Webhook listener (public, CSRF-exempt via middleware config)
+Route::post('/payment/webhook', [PaymentController::class, 'webhook'])->name('payment.webhook');
+
+// Profile pages (accessible without payment, but require profile completion middleware to manage flow)
 Route::middleware(['auth', \App\Http\Middleware\EnsureProfileCompleted::class])->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
@@ -230,7 +245,10 @@ Route::middleware(['auth', \App\Http\Middleware\EnsureProfileCompleted::class])-
     Route::get('/profile/categories', [ProfileCompletionController::class, 'categories'])->name('profile.categories');
     Route::get('/profile/stations', [ProfileCompletionController::class, 'stations'])->name('profile.stations');
     Route::post('/profile/complete', [ProfileCompletionController::class, 'store'])->name('profile.complete.store');
+});
 
+// App features require completed profile and payment
+Route::middleware(['auth', \App\Http\Middleware\EnsureProfileCompleted::class, 'paid'])->group(function () {
     // Applications page + AJAX search
     Route::get('/applications', [ApplicationController::class, 'index'])->name('applications.index');
     Route::get('/applications/search', [ApplicationController::class, 'search'])->name('applications.search');

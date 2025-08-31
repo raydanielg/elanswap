@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class User extends Authenticatable
 {
@@ -213,6 +214,25 @@ class User extends Authenticatable
     public function station(): BelongsTo
     {
         return $this->belongsTo(Station::class);
+    }
+
+    /**
+     * Payments relationship
+     */
+    public function payments(): HasMany
+    {
+        return $this->hasMany(Payment::class);
+    }
+
+    /**
+     * Check if user has completed payment
+     */
+    public function hasPaid(): bool
+    {
+        // Prefer paid_at presence which is gateway-agnostic and avoids enum/check mismatches
+        return $this->payments()
+            ->whereNotNull('paid_at')
+            ->exists();
     }
 
     /**

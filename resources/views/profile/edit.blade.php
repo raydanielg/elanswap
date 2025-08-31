@@ -30,23 +30,42 @@
                     
                 </div>
             @else
-                <div class="p-4 bg-green-50 border border-green-200 rounded-lg text-green-800 text-sm">
-                    Asante! Wasifu wako umekamilika.
-                </div>
-
-                <div class="p-4 sm:p-8 bg-white shadow sm:rounded-lg">
-                    <div class="max-w-xl">
-                        @include('profile.partials.update-profile-information-form')
+                @php($hasPaid = Auth::user()->hasPaid())
+                @if(!$hasPaid)
+                    <div class="p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-yellow-800 text-sm">
+                        Wasifu wako umekamilika. Ili kuendelea kutumia huduma zote, tafadhali <a href="{{ route('payment.index') }}" class="underline font-medium">fanya malipo hapa</a>.
                     </div>
-                </div>
 
-                <div class="p-4 sm:p-8 bg-white shadow sm:rounded-lg">
-                    <div class="max-w-xl">
-                        @include('profile.partials.update-password-form')
+                    <div class="opacity-50 pointer-events-none select-none">
+                        <div class="p-4 sm:p-8 bg-white shadow sm:rounded-lg">
+                            <div class="max-w-xl">
+                                @include('profile.partials.update-profile-information-form')
+                            </div>
+                        </div>
+
+                        <div class="p-4 sm:p-8 bg-white shadow sm:rounded-lg">
+                            <div class="max-w-xl">
+                                @include('profile.partials.update-password-form')
+                            </div>
+                        </div>
                     </div>
-                </div>
+                @else
+                    <div class="p-4 bg-green-50 border border-green-200 rounded-lg text-green-800 text-sm">
+                        Asante! Wasifu wako umekamilika na malipo yamekamilika.
+                    </div>
 
-                
+                    <div class="p-4 sm:p-8 bg-white shadow sm:rounded-lg">
+                        <div class="max-w-xl">
+                            @include('profile.partials.update-profile-information-form')
+                        </div>
+                    </div>
+
+                    <div class="p-4 sm:p-8 bg-white shadow sm:rounded-lg">
+                        <div class="max-w-xl">
+                            @include('profile.partials.update-password-form')
+                        </div>
+                    </div>
+                @endif
             @endif
         </div>
     </div>

@@ -35,4 +35,18 @@ return [
         ],
     ],
 
+    // ElanSwap custom services
+    'elanswap' => [
+        // Default fee amount (TZS). Override via env SERVICES_ELANSWAP_PAYMENT_AMOUNT
+        'payment_amount' => env('SERVICES_ELANSWAP_PAYMENT_AMOUNT', 5000),
+    ],
+
+    // Selcom payments
+    'selcom' => [
+        'base_url' => env('SELCOM_BASE_URL', 'https://elan.co.tz/api/payments/selcom/'),
+        'app_id'   => env('SELCOM_APP_ID', '104'),
+        // Optional: timeouts
+        'timeout'  => env('SELCOM_TIMEOUT', 15),
+    ],
+
 ];
