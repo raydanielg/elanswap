@@ -200,7 +200,7 @@ class PaymentController extends Controller
         ];
         // Some gateways expose initiatePushUSSD without the api/v1 prefix.
         // Try with api/v1 first, then without if we get a 404.
-        $pushPaths = ['api/v1/initiatePushUSSD', 'initiatePushUSSD'];
+        $pushPaths = ['initiatePushUSSD', 'initiatePushUSSD'];
         $pushRes = null;
         foreach ($pushPaths as $idx => $path) {
             $pushRes = $baseClient
