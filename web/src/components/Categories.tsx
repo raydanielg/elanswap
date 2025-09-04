@@ -12,7 +12,7 @@ export default function Categories() {
   const load = () => {
     setLoading(true);
     setError(null);
-    fetch("https://www.swap.elanbrands.net/api/categories")
+    fetch("https://app.elanswap.com/api/categories")
       .then(async (r) => {
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
         return r.json();

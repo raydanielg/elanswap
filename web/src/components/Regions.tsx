@@ -10,7 +10,7 @@ export default function Regions() {
 
   useEffect(() => {
     let mounted = true;
-    fetch("https://www.swap.elanbrands.net/api/regions")
+    fetch("https://app.elanswap.com/api/regions")
       .then((r) => r.json())
       .then((data) => {
         if (!mounted) return;
@@ -71,3 +71,4 @@ export default function Regions() {
     </section>
   );
 }
+
