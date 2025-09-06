@@ -10,7 +10,7 @@ export default function Regions() {
 
   useEffect(() => {
     let mounted = true;
-    fetch("https://app.elanswap.com/api/regions")
+    fetch("https://swap.elanbrands.net/api/regions")
       .then((r) => r.json())
       .then((data) => {
         if (!mounted) return;

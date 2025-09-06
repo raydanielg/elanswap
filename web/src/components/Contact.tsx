@@ -20,7 +20,7 @@ export default function Contact() {
     setSent(null);
     setErrText(null);
     try {
-      const res = await fetch("https://app.elanswap.com/api/contact", {
+      const res = await fetch("https://swap.elanbrands.net/api/contact", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ name, email, message, company: "" }), // company = honeypot
@@ -44,7 +44,7 @@ export default function Contact() {
     setNlBusy(true);
     setNlDone(null);
     try {
-      const res = await fetch("https://app.elanswap.com/api/newsletter", {
+      const res = await fetch("https://swap.elanbrands.net/api/newsletter", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ email: nlEmail, website: "" }), // website = honeypot

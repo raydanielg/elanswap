@@ -19,7 +19,7 @@ export default function RegionsPage() {
 
   useEffect(() => {
     let mounted = true;
-    fetch("https://app.elanswap.com/api/regions")
+    fetch("https://swap.elanbrands.net/api/regions")
       .then((r) => r.json())
       .then((data) => {
         if (!mounted) return;
@@ -39,7 +39,7 @@ export default function RegionsPage() {
     setSError(null);
     setStations([]);
     try {
-      const res = await fetch(`https://app.elanswap.com/api/regions/${region.id}/stations-with-apps`);
+      const res = await fetch(`https://swap.elanbrands.net/api/regions/${region.id}/stations-with-apps`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const json = await res.json();
       setStations((json?.data as StationWithApps[]) ?? []);
@@ -139,7 +139,7 @@ export default function RegionsPage() {
                         if (next && !st.data.length && !st.loading) {
                           setAppsByStation((prev) => ({ ...prev, [s.id]: { loading: true, error: null, data: [] } }));
                           try {
-                            const r = await fetch(`https://app.elanswap.com/api/stations/${s.id}/applications`);
+                            const r = await fetch(`https://swap.elanbrands.net/api/stations/${s.id}/applications`);
                             if (!r.ok) throw new Error(`HTTP ${r.status}`);
                             const j = await r.json();
                             setAppsByStation((prev) => ({ ...prev, [s.id]: { loading: false, error: null, data: (j?.data as StationApplication[]) ?? [] } }));
