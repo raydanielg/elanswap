@@ -11,14 +11,14 @@ export default function Header() {
           <div className="flex items-center gap-3">
             {/* Login: refined ghost button with clearer border */}
             <a
-              href="https://app.elanswap.com/login"
+              href="https://swap.elanbrands.net/login"
               className="inline-flex items-center rounded-full px-4 py-2 text-sm font-medium text-gray-800 bg-white/70 border border-gray-300 hover:bg-white hover:border-[var(--color-secondary)] hover:text-gray-900 shadow-sm transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--color-secondary)]"
             >
               Ingia
             </a>
             {/* Get Started: gradient with subtle border for definition */}
             <a
-              href="https://app.elanswap.com/register"
+              href="https://swap.elanbrands.net/register"
               className="inline-flex items-center rounded-full px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-secondary)] border border-white/30 hover:border-white/50 shadow-md hover:shadow-lg hover:brightness-105 active:brightness-95 transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--color-secondary)]"
             >
               Jisajili
