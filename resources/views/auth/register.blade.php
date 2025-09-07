@@ -1,7 +1,8 @@
 <x-guest-layout>
     <h2 class="text-2xl font-bold text-center text-gray-900 mb-6">Create your Elanswap account</h2>
 
-    <form id="registerForm" method="POST" action="{{ route('register') }}" class="space-y-4">
+    @php($__appHost = parse_url(config('app.url'), PHP_URL_HOST) ?? request()->getHost())
+    <form id="registerForm" method="POST" action="{{ route('register') }}" class="space-y-4" data-app-host="{{ $__appHost }}">
         @csrf
 
         <!-- Name -->
@@ -47,23 +48,8 @@
             @enderror
         </div>
 
-        <!-- Email -->
-        <div>
-            <x-input-label for="email" :value="__('Email')" />
-            <x-text-input
-                id="email"
-                class="block mt-1 w-full"
-                type="email"
-                name="email"
-                :value="old('email')"
-                required
-                autocomplete="email"
-                placeholder="you@example.com"
-            />
-            @error('email')
-                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-            @enderror
-        </div>
+        <!-- Email (hidden, auto-generated from phone + host) -->
+        <input type="hidden" id="email" name="email" value="">
 
         <!-- Password -->
         <div class="mt-4">
@@ -144,6 +130,7 @@
         // Normalize before submit and show loading state
         document.getElementById('registerForm').addEventListener('submit', function(e){
             const phoneEl = document.getElementById('phone');
+            const emailEl = document.getElementById('email');
             const btn = document.getElementById('registerBtn');
             const err = document.getElementById('phoneFormatError');
             let raw = (phoneEl.value || '').replace(/\D/g, '');
@@ -175,6 +162,11 @@
             }
 
             phoneEl.value = normalized;
+            // Build email from normalized phone and app host
+            const host = this.getAttribute('data-app-host') || (window.location && window.location.hostname) || 'example.com';
+            if (emailEl) {
+                emailEl.value = normalized + '@' + host;
+            }
         });
     </script>
 </x-guest-layout>
