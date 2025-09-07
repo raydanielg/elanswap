@@ -76,6 +76,17 @@ class PaymentController extends Controller
         $orderId = 'ORD_' . now()->format('YmdHis') . '_' . $user->id;
         $appId = (string) config('services.selcom.app_id', '104');
         $apiUrl = rtrim((string) config('services.selcom.base_url'), '/');
+        $timeout = (int) config('services.selcom.timeout', 15);
+        $verify = (bool) config('services.selcom.verify', true);
+        $caPath = (string) (config('services.selcom.ca_path') ?? '');
+
+        \Log::info('PAYMENT: Preparing create_mno_order', [
+            'order_id' => $orderId,
+            'app_id' => $appId,
+            'phone' => $phone,
+            'amount' => $amount,
+            'api_url' => $apiUrl,
+        ]);
 
         // 1. Create MNO order
         $createPayload = http_build_query([
@@ -96,11 +107,20 @@ class PaymentController extends Controller
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_POSTFIELDS, $createPayload);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_TIMEOUT, $timeout);
+        if ($caPath !== '') {
+            curl_setopt($ch, CURLOPT_CAINFO, $caPath);
+        } else {
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, $verify);
+        }
         $createResponse = curl_exec($ch);
+        $curlErr = curl_error($ch);
 
         if ($createResponse === false) {
-            return response()->json(['ok' => false, 'message' => 'cURL Error: ' . curl_error($ch)], 500);
+            \Log::error('PAYMENT: create_mno_order cURL failed', ['error' => $curlErr]);
+            return response()->json(['ok' => false, 'message' => 'cURL Error: ' . $curlErr], 500);
         }
+        \Log::info('PAYMENT: create_mno_order response', ['response' => $createResponse]);
 
         $createData = json_decode($createResponse);
         $reference = $createData->reference ?? null;
@@ -140,11 +160,14 @@ class PaymentController extends Controller
         curl_setopt($ch, CURLOPT_URL, $apiUrl . '/initiatePushUSSD');
         curl_setopt($ch, CURLOPT_POSTFIELDS, $pushPayload);
         $pushResponse = curl_exec($ch);
+        $pushErr = curl_error($ch);
         curl_close($ch);
 
         if ($pushResponse === false) {
-            return response()->json(['ok' => false, 'message' => 'Push request failed via cURL.'], 500);
+            \Log::error('PAYMENT: initiatePushUSSD cURL failed', ['error' => $pushErr]);
+            return response()->json(['ok' => false, 'message' => 'Push request failed via cURL: ' . $pushErr], 500);
         }
+        \Log::info('PAYMENT: initiatePushUSSD response', ['response' => $pushResponse]);
 
         $pushData = json_decode($pushResponse);
         $ok = (!empty($pushData->resultcode) && $pushData->resultcode == '000');
