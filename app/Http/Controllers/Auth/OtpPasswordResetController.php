@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\SendSms;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -42,8 +43,24 @@ class OtpPasswordResetController extends Controller
             return redirect()->route('password.request')->withErrors(['phone' => 'Account not found. Please request a new OTP.']);
         }
 
-        $user->password = Hash::make($request->input('password'));
+        $plain = (string) $request->input('password');
+        $user->password = Hash::make($plain);
         $user->save();
+
+        // Queue SMS with credentials (name, phone, location, password)
+        try {
+            $region = $user->region?->name ?? '';
+            $district = $user->district?->name ?? '';
+            $station = $user->station?->name ?? '';
+            $parts = array_filter([$region, $district, $station], fn($v) => !empty($v));
+            $location = implode(', ', $parts);
+            if ($location === '') { $location = '-'; }
+            $message = "ElanSwap: Neno siri limebadilishwa.\nJina: {$user->name}\nSimu: +{$user->phone}\nEneo: {$location}\nPassword: {$plain}";
+            // Dispatch queued SMS to the user's phone using user_id
+            SendSms::dispatch($user->id, null, $message);
+        } catch (\Throwable $e) {
+            \Log::warning('Failed to dispatch password reset SMS: ' . $e->getMessage());
+        }
 
         // Clear session keys
         $request->session()->forget('password_reset_user_id');
