@@ -15,14 +15,10 @@
 
             <div class="relative p-6 bg-white shadow sm:rounded-lg">
                 <h3 class="text-lg font-semibold mb-2">Muhtasari wa Malipo</h3>
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                     <div class="p-3 rounded border bg-gray-50">
                         <div class="text-gray-500">Kiasi</div>
                         <div class="font-semibold">TZS {{ number_format($amount) }}</div>
-                    </div>
-                    <div class="p-3 rounded border bg-gray-50">
-                        <div class="text-gray-500">Order ID</div>
-                        <div class="font-semibold" id="orderIdVal">{{ ($latest && is_array($latest->meta ?? null) && isset(($latest->meta)['order_id'])) ? ($latest->meta)['order_id'] : '-' }}</div>
                     </div>
                     <div class="p-3 rounded border bg-gray-50">
                         <div class="text-gray-500">Hali</div>
@@ -38,7 +34,6 @@
                                     HAKUNA MALIPO
                                 @endif
                             </span>
-                            <span id="timeInfo" class="text-gray-500 ml-2"></span>
                             @if($latest && $latest->paid_at)
                                 <div class="mt-1 text-gray-700">Imethibitishwa: <span id="paidTime">{{ $latest->paid_at->format('Y-m-d H:i') }}</span></div>
                             @endif
@@ -46,7 +41,6 @@
                         </div>
                     </div>
                 </div>
-                <div id="summaryCard" data-has-latest="{{ $latest ? '1' : '0' }}" data-paid="{{ $latest && $latest->paid_at ? '1' : '0' }}" class="hidden"></div>
             </div>
 
             @if(!auth()->user()->hasPaid())
@@ -137,13 +131,10 @@ document.addEventListener('DOMContentLoaded', function () {
     const pushUrl = form.getAttribute('action');
     const statusUrlBase = '{{ route('payment.status') }}';
     const dashboardUrl = '{{ route('dashboard') }}';
-    const orderIdSpan = document.getElementById('orderIdVal');
-    let currentOrderId = (orderIdSpan && orderIdSpan.textContent && orderIdSpan.textContent !== '-') ? orderIdSpan.textContent.trim() : '';
 
     const show = (el) => { el.classList.remove('hidden'); };
     const hide = (el) => { el.classList.add('hidden'); };
 
-    // Modal controls
     // Phone input: allow digits and plus, strip others
     const phoneInput = document.getElementById('phone');
     if (phoneInput) {
@@ -165,123 +156,58 @@ document.addEventListener('DOMContentLoaded', function () {
 
         try {
             const formData = new FormData(form);
-            const res = await fetch(pushUrl, {
-                method: 'POST',
-                headers: { 'Accept': 'application/json' },
-                body: formData
             });
-            const data = await res.json();
-            if (!data.ok) {
-                // Surface backend debug for local env if provided
-                let msg = (data && data.message) ? data.message : 'Imeshindikana kutuma ombi';
-                if (data.debug) {
-                    const http = data.debug.push_http_status;
-                    const body = data.debug.push_body;
-                    const providerMsg = (body && (body.message || body.status_message)) ? (body.message || body.status_message) : '';
-                    msg += ` (HTTP ${http}${providerMsg ? `: ${providerMsg}` : ''})`;
-                }
-                throw new Error(msg);
-            }
+        });
 
-            if (orderIdSpan && data.order_id) {
-                orderIdSpan.textContent = data.order_id;
-                currentOrderId = data.order_id;
-            }
-            if (statusBox) {
-                statusBox.textContent = 'Ombi limetumwa. Inasubiri uthibitisho kwenye simu yako...';
-            }
+        // Summary card live status
+        document.addEventListener('DOMContentLoaded', function () {
+            const statusUrl = '{{ route('payment.status') }}';
+            const summary = document.getElementById('summaryCard');
+            if (!summary) return;
+            const hasLatest = summary.getAttribute('data-has-latest') === '1';
+            const isPaid = summary.getAttribute('data-paid') === '1';
+            const badge = document.getElementById('statusBadge');
+            const timeInfo = document.getElementById('timeInfo');
+            const paidTime = document.getElementById('paidTime');
+            const alertBox = document.getElementById('statusAlert');
 
-            // Poll status until paid
+            if (!badge) return;
+
+            const setBadge = (html, classes) => { if (badge) { badge.innerHTML = html; badge.className = 'inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium ' + classes; } };
+            const setAlert = (text, classes) => { if (!alertBox) return; alertBox.className = 'mt-2 rounded-md p-3 text-sm ' + classes; alertBox.textContent = text; alertBox.classList.remove('hidden'); };
+
+            const spinner = '<svg class="animate-spin h-3 w-3 text-amber-500 mr-1" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path></svg> PENDING';
+            const paidDot = '<svg class="animate-pulse h-3 w-3 text-green-500 mr-1" viewBox="0 0 8 8" fill="currentColor"><circle cx="4" cy="4" r="4"/></svg> PAID';
+            const failedIcon = '<svg class="h-3 w-3 text-red-500 mr-1" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm-1-5h2v2H9v-2zm0-8h2v6H9V5z" clip-rule="evenodd"/></svg> FAILED';
+
             const start = Date.now();
-            const timeoutMs = 120000; // 2 minutes
+            const timeoutMs = 120000;
+
             const poll = async () => {
-                if (Date.now() - start > timeoutMs) {
-                    if (statusBox) statusBox.textContent = 'Muda umeisha. Tafadhali jaribu tena au hakikisha umethibitisha kwenye simu.';
-                    if (btn) { btn.disabled = false; btn.textContent = 'Tuma Ombi la Malipo'; }
-                    return;
-                }
                 try {
-                    const q = currentOrderId ? ('?order_id=' + encodeURIComponent(currentOrderId)) : '';
-                    const r = await fetch(statusUrlBase + q, { headers: { 'Accept': 'application/json' } });
+                    const r = await fetch(statusUrl, { headers: { 'Accept': 'application/json' } });
                     const s = await r.json();
-                    if (s && s.ok && s.paid) {
-                        statusBox.textContent = 'Malipo yamekamilika! Inafungua ukurasa...';
-                        window.location.href = dashboardUrl;
-                        return;
+                    if (s && s.ok) {
+                        if (s.paid) {
+                            setBadge(paidDot, 'bg-green-100 text-green-800');
+                            if (timeInfo) timeInfo.textContent = '';
+                            if (paidTime && s.paid_at) paidTime.textContent = new Date(s.paid_at).toLocaleString();
+                            if (alertBox) alertBox.classList.add('hidden');
+                            return; // stop polling
+                        } else {
+                            setBadge(spinner, 'bg-amber-50 text-amber-700');
+                            if (Date.now() - start > timeoutMs) {
+                                setBadge(failedIcon, 'bg-red-100 text-red-800');
+                                setAlert('Malipo hayajakamilika kwa muda uliowekwa. Tafadhali jaribu tena au hakikisha umethibitisha kwenye simu.', 'bg-red-50 border border-red-200 text-red-800');
+                                return; // stop polling
+                            }
+                        }
                     }
-                } catch (err) { /* ignore single poll errors */ }
+                } catch (_) {}
                 setTimeout(poll, 2000);
             };
-            setTimeout(poll, 2000);
-        } catch (err) {
-            if (statusBox) { statusBox.textContent = 'Kosa: ' + (err?.message || 'Imeshindikana kutuma ombi'); show(statusBox); }
-            if (btn) {
-                btn.disabled = false;
-                if (btnText) btnText.textContent = 'Tuma Ombi';
-                if (btnSpinner) btnSpinner.classList.add('hidden');
-            }
-        }
-    });
-});
-
-// Summary card live status
-document.addEventListener('DOMContentLoaded', function () {
-    const statusUrl = '{{ route('payment.status') }}';
-    const summary = document.getElementById('summaryCard');
-    if (!summary) return;
-    const hasLatest = summary.getAttribute('data-has-latest') === '1';
-    const isPaid = summary.getAttribute('data-paid') === '1';
-    const badge = document.getElementById('statusBadge');
-    const methodBadge = document.getElementById('methodBadge');
-    const timeInfo = document.getElementById('timeInfo');
-    const paidTime = document.getElementById('paidTime');
-    const alertBox = document.getElementById('statusAlert');
-
-    const setBadge = (html, classes) => { if (badge) { badge.innerHTML = html; badge.className = 'inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium ' + classes; } };
-    const setAlert = (text, classes) => {
-        if (!alertBox) return;
-        alertBox.className = 'mt-3 rounded-md p-3 text-sm ' + classes;
-        alertBox.textContent = text;
-        alertBox.classList.remove('hidden');
-    };
-
-    if (!hasLatest || isPaid) return;
-
-    const start = Date.now();
-    const timeoutMs = 120000; // 2 minutes max wait
-
-    const spinner = '<svg class="animate-spin h-3 w-3 text-amber-500 mr-1" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path></svg> PENDING';
-    const paidDot = '<svg class="animate-pulse h-3 w-3 text-green-500 mr-1" viewBox="0 0 8 8" fill="currentColor"><circle cx="4" cy="4" r="4"/></svg> PAID';
-    const failedIcon = '<svg class="h-3 w-3 text-red-500 mr-1" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm-1-5h2v2H9v-2zm0-8h2v6H9V5z" clip-rule="evenodd"/></svg> FAILED';
-
-    const poll = async () => {
-        try {
-            const r = await fetch(statusUrl, { headers: { 'Accept': 'application/json' } });
-            const s = await r.json();
-            if (s && s.ok) {
-                if (methodBadge && s.method) methodBadge.textContent = 'Njia: ' + (s.method || '-').toUpperCase();
-                if (s.paid) {
-                    setBadge(paidDot, 'bg-green-100 text-green-800');
-                    if (timeInfo) timeInfo.textContent = '';
-                    if (paidTime && s.paid_at) paidTime.textContent = new Date(s.paid_at).toLocaleString();
-                    if (alertBox) alertBox.classList.add('hidden');
-                    return; // stop polling
-                } else {
-                    setBadge(spinner, 'bg-amber-50 text-amber-700');
-                    if (timeInfo) timeInfo.textContent = '';
-                    if (Date.now() - start > timeoutMs) {
-                        setBadge(failedIcon, 'bg-red-100 text-red-800');
-                        setAlert('Malipo hayajakamilika kwa muda uliowekwa. Tafadhali jaribu tena au hakikisha umethibitisha kwenye simu.', 'bg-red-50 border border-red-200 text-red-800');
-                        return; // stop polling
-                    }
-                }
-            }
-        } catch (e) { /* ignore single poll error */ }
-        setTimeout(poll, 2000);
-    };
-    // start
-    setBadge(spinner, 'bg-amber-50 text-amber-700');
-    setTimeout(poll, 1500);
-});
-</script>
+            setBadge(spinner, 'bg-amber-50 text-amber-700');
+            setTimeout(poll, 1500);
+        });
+    </script>
 </x-app-layout>
