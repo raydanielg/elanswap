@@ -81,12 +81,11 @@ export default function RegionsPage() {
         ) : (
           <div className="mt-10 grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {items.map((r) => (
-              <button
+              <a
                 key={r.id}
                 id={r.slug}
-                type="button"
-                onClick={() => openModal(r)}
-                aria-label={`Fungua wilaya za ${r.name}`}
+                href="https://swap.elanbrands.net/login"
+                aria-label={`Nenda kuingia kuona ${r.name}`}
                 className="group rounded-2xl border border-white/15 bg-white/5 hover:bg-white/10 backdrop-blur p-6 shadow transition text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-secondary)]/50"
               >
                 <div className="flex items-center gap-3">
@@ -98,7 +97,7 @@ export default function RegionsPage() {
                     <div className="text-sm text-white/75">{r.districts_count} wilaya</div>
                   </div>
                 </div>
-              </button>
+              </a>
             ))}
           </div>
         )}

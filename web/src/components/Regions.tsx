@@ -49,7 +49,7 @@ export default function Regions() {
             {items.map((r) => (
               <a
                 key={r.slug}
-                href={`/regions#${r.slug}`}
+                href={`https://swap.elanbrands.net/login`}
                 aria-label={`Vinjari mkoa ${r.name}`}
                 className="group rounded-xl border border-gray-200 bg-white p-5 shadow-sm hover:shadow-md transition shadow-gray-100 hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-secondary)]/50"
               >
