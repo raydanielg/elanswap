@@ -29,12 +29,18 @@
                 --primary-900: #0c4a6e;
                 --primary-950: #082f49;
             }
+
+            /* Fallback responsive rules in case Tailwind responsive utilities aren't present in built CSS */
+            @media (min-width: 1024px) {
+                .auth-left { display: flex !important; width: 50% !important; }
+                .auth-right { width: 50% !important; }
+            }
         </style>
     </head>
     <body class="font-sans antialiased bg-gray-50 text-gray-900 h-full">
         <div class="min-h-screen flex flex-col lg:flex-row">
-            <!-- Left side - Features -->
-            <div class="w-full lg:w-1/2 bg-primary-900 text-white p-8 lg:p-12 flex flex-col justify-center">
+            <!-- Left side - Features (hidden on small screens) -->
+            <div class="hidden lg:flex lg:w-1/2 bg-primary-900 text-white p-8 lg:p-12 flex-col justify-center auth-left">
                 <div class="max-w-lg mx-auto w-full">
                     <div class="flex items-center mb-8">
                         <svg class="w-10 h-10 text-white mr-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
@@ -97,7 +103,7 @@
             </div>
 
             <!-- Right side - Login Form -->
-            <div class="w-full lg:w-1/2 flex items-center justify-center p-8 lg:p-12 bg-white">
+            <div class="w-full lg:w-1/2 flex items-center justify-center p-8 lg:p-12 bg-white auth-right">
                 <div class="w-full max-w-md">
                     {{ $slot }}
                 </div>
