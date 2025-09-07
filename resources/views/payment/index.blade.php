@@ -291,3 +291,4 @@ document.addEventListener('DOMContentLoaded', function () {
     setTimeout(poll, 1500);
 });
 </script>
+</x-app-layout>
