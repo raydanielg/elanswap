@@ -375,35 +375,6 @@ class PaymentController extends Controller
         return response()->json(['ok' => true, 'message' => 'Webhook processed']);
     }
 
-    /**
-     * Provider webhook to listen for payment result [Mock].
-     * POST /payment/webhook
-     */
-    public function webhook(Request $request, SmsService $sms)
-    {
-        // ... (rest of the code remains the same)
-
-        if ($setPaid && $payment->user_id) {
-            $amount = number_format((int) $payment->amount);
-            $ref = $payment->provider_reference ?: ($meta['order_id'] ?? '');
-            $message = trim(($transid !== '' ? ($transid.' ') : '') . "Tumepokea malipo yako ya Tsh {$amount}. Rejea: {$ref}");
-            try { SendSms::dispatch($payment->user_id, null, $message); } catch (\Throwable $e) { /* silent */ }
-
-            // Domain actions
-            $this->onPaymentNotification((string) ($meta['order_id'] ?? $orderId), $payment, app(SmsService::class));
-
-            // Notify admins
-            try {
-                $user = \App\Models\User::find($payment->user_id);
-                $uname = $user?->name ?: 'Mtumiaji';
-                $uphone = $user?->phone ? ('+'. $user->phone) : '';
-                $adminMsg = "ElanSwap: Malipo mapya yamepokelewa.\nJina: {$uname}\nSimu: {$uphone}\nKiasi: TZS {$amount}\nRejea: {$ref}";
-                SendSms::dispatch(null, '+255 757 756 184', $adminMsg);
-                SendSms::dispatch(null, '0742710054', $adminMsg);
-            } catch (\Throwable $e) { /* silent */ }
-        }
-
-        return response()->json(['ok' => true]);
     }
 
     /**
