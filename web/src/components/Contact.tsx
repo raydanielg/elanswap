@@ -22,8 +22,10 @@ export default function Contact() {
     try {
       const res = await fetch("https://swap.elanbrands.net/api/contact", {
         method: "POST",
-        headers: { Accept: "application/json" },
-        // Send as application/x-www-form-urlencoded (browser sets the Content-Type)
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
+        },
         body: new URLSearchParams({ name, email, message, company: "" }) as any,
       });
       const json = await res.json();
@@ -47,7 +49,10 @@ export default function Contact() {
     try {
       const res = await fetch("https://swap.elanbrands.net/api/newsletter", {
         method: "POST",
-        headers: { Accept: "application/json" },
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
+        },
         body: new URLSearchParams({ email: nlEmail, website: "" }) as any,
       });
       const json = await res.json();
