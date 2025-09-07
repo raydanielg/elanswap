@@ -192,12 +192,13 @@ class PaymentController extends Controller
             ],
         ]);
 
-        // 2) Initiate Push USSD (send as form-encoded; retry JSON if 415)
+        // 2) Initiate Push USSD
         $pushPayload = [
             'project_id' => $appId,
             'phone' => $phone,
             'order_id' => $orderId,
-            'is_reference_payment' => 1,  // Changed to 1 since we're using reference payment
+            'is_reference_payment' => 1,  // Changed to 1 for reference payments
+            'reference' => $reference,     // Add the reference from create_mno_order
         ];
         // Try different push endpoints
         $pushPaths = [
@@ -210,8 +211,8 @@ class PaymentController extends Controller
         $lastError = null;
         
         foreach ($pushPaths as $path) {
-            \Log::info('Trying push endpoint: ' . $path, [
-                'base' => $base,
+            \Log::info('Attempting push notification', [
+                'endpoint' => $base . $path,
                 'payload' => $pushPayload
             ]);
             $pushRes = $baseClient
@@ -250,17 +251,19 @@ class PaymentController extends Controller
                 break;
             }
             
+            // Log the error and try next endpoint
             $lastError = [
                 'path' => $path,
                 'status' => $pushRes->status(),
                 'response' => $pushRes->json() ?? $pushRes->body()
             ];
             
-            \Log::warning('Push request failed', $lastError);
+            \Log::warning('Push notification attempt failed', $lastError);
         }
         $push = $pushRes->successful() ? $pushRes->json() : null;
         
         if (!$pushRes->successful()) {
+            $errorMessage = 'Failed to initiate payment request';
             $errorMessage = 'Imeshindikana kutuma ombi la malipo.';
             
             // Try to get a more specific error message
