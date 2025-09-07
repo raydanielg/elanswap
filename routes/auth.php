@@ -36,7 +36,7 @@ Route::middleware('web')->group(function () {
         ->name('otp.verify.submit');
         
     Route::post('/resend-otp', [OtpVerificationController::class, 'resend'])
-        ->middleware(\App\Http\Middleware\EnsureUserIsUnverified::class)
+        ->middleware([\App\Http\Middleware\EnsureUserIsUnverified::class, 'throttle:1,1'])
         ->name('otp.resend');
 
     Route::post('/change-number', [OtpVerificationController::class, 'changeNumber'])

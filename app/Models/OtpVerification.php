@@ -11,7 +11,8 @@ class OtpVerification extends Model
     protected $fillable = [
         'user_id',
         'phone',
-        'otp',
+        'otp', // store 6-digit plain to satisfy varchar(6) column
+        'otp_hash', // bcrypt hash for verification
         'otp_plain',
         'expires_at',
         'is_verified'
@@ -42,9 +43,10 @@ class OtpVerification extends Model
         return self::create([
             'user_id' => $user->id,
             'phone' => $phone,
-            'otp' => bcrypt($otp), // Store hashed OTP
-            'otp_plain' => $otp, // Store plain OTP for debugging (remove in production)
-            'expires_at' => now()->addMinutes(15), // OTP valid for 15 minutes
+            'otp' => $otp, // keep 6-digit plain in varchar(6)
+            'otp_hash' => bcrypt($otp), // store secure hash for verification
+            'otp_plain' => $otp, // For debugging; remove in production
+            'expires_at' => now()->addMinutes(15),
         ]);
     }
 
@@ -65,8 +67,13 @@ class OtpVerification extends Model
             return false;
         }
 
-        // Verify the OTP using hash comparison
-        $isValid = Hash::check($otp, $this->otp);
+        // Verify the OTP using hash comparison against otp_hash when available
+        if (!empty($this->otp_hash)) {
+            $isValid = Hash::check($otp, $this->otp_hash);
+        } else {
+            // Fallback: if legacy records stored hash in 'otp', still check it
+            $isValid = Hash::check($otp, $this->otp);
+        }
         
         // If valid, mark as verified
         if ($isValid) {
