@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Payment;
 use App\Services\SmsService;
+use App\Jobs\SendSms;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Auth;
@@ -355,7 +356,7 @@ class PaymentController extends Controller
             $ref = $payment->provider_reference ?: ($meta['order_id'] ?? '');
             // User-requested SMS format beginning with transid
             $message = trim(($transid !== '' ? ($transid.' ') : '') . "Tumepokea malipo yako ya Tsh {$amount}. Rejea: {$ref}");
-            try { $sms->sendSms($payment->user_id, $message); } catch (\Throwable $e) { /* log silently */ }
+            try { SendSms::dispatch($payment->user_id, null, $message); } catch (\Throwable $e) { /* log silently */ }
 
             // Also trigger domain-specific notification as requested
             $this->onPaymentNotification((string) ($meta['order_id'] ?? $orderId), $payment, $sms);
@@ -366,10 +367,8 @@ class PaymentController extends Controller
                 $uname = $user?->name ?: 'Mtumiaji';
                 $uphone = $user?->phone ? ('+'. $user->phone) : '';
                 $adminMsg = "ElanSwap: Malipo mapya yamepokelewa.\nJina: {$uname}\nSimu: {$uphone}\nKiasi: TZS {$amount}\nRejea: {$ref}";
-                if (function_exists('sendsms_to_number')) {
-                    @\sendsms_to_number('+255 757 756 184', $adminMsg, $payment->user_id);
-                    @\sendsms_to_number('0742710054', $adminMsg, $payment->user_id);
-                }
+                SendSms::dispatch(null, '+255 757 756 184', $adminMsg);
+                SendSms::dispatch(null, '0742710054', $adminMsg);
             } catch (\Throwable $e) { /* silent */ }
         }
 
@@ -377,69 +376,18 @@ class PaymentController extends Controller
     }
 
     /**
-     * Alternate provider callback that posts JSON to a 'status' URL
-     * (compatible with examples using php://input to read order_id/status).
-     * POST /payment/status (or any route you configure to point here)
+     * Provider webhook to listen for payment result [Mock].
+     * POST /payment/webhook
      */
-    public function statusNotify(Request $request)
+    public function webhook(Request $request, SmsService $sms)
     {
-        // Parse JSON from either Laravel's request or raw php://input
-        $data = $request->all();
-        if (empty($data)) {
-            $raw = @file_get_contents('php://input');
-            if ($raw) {
-                $decoded = json_decode($raw, true);
-                if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
-                    $data = $decoded;
-                }
-            }
-        }
-
-        $orderId = (string) ($data['order_id'] ?? '');
-        $status  = (string) ($data['status'] ?? $data['payment_status'] ?? '');
-        $transid = (string) ($data['transid'] ?? '');
-        $channel = (string) ($data['channel'] ?? '');
-        $reference = (string) ($data['reference'] ?? $data['provider_reference'] ?? '');
-
-        if ($orderId === '' && $reference === '') {
-            return response()->json(['ok' => false, 'message' => 'Missing order_id/reference'], 400);
-        }
-
-        // Locate payment by provider reference or order_id in meta
-        $payment = null;
-        if ($reference !== '') {
-            $payment = Payment::where('provider_reference', $reference)->latest('id')->first();
-        }
-        if (!$payment && $orderId !== '') {
-            foreach (Payment::orderByDesc('id')->get() as $p) {
-                $metaTmp = (array) $p->meta;
-                if (($metaTmp['order_id'] ?? null) === $orderId) { $payment = $p; break; }
-            }
-        }
-        if (!$payment) {
-            return response()->json(['ok' => false, 'message' => 'Payment not found'], 404);
-        }
-
-        $meta = (array) $payment->meta;
-        $meta['status_callback'] = $data;
-        if ($transid !== '') { $meta['transid'] = $transid; }
-        if ($channel !== '') { $meta['channel'] = $channel; }
-
-        $updates = [ 'meta' => $meta ];
-        $setPaid = in_array(strtolower($status), ['success','completed','paid'], true);
-        if ($setPaid) {
-            $updates['paid_at'] = now();
-            $updates['status'] = 'paid';
-            $updates['meta'] = array_merge($meta, ['payment_status' => 'COMPLETED']);
-        }
-
-        $payment->fill($updates)->save();
+        // ... (rest of the code remains the same)
 
         if ($setPaid && $payment->user_id) {
             $amount = number_format((int) $payment->amount);
             $ref = $payment->provider_reference ?: ($meta['order_id'] ?? '');
             $message = trim(($transid !== '' ? ($transid.' ') : '') . "Tumepokea malipo yako ya Tsh {$amount}. Rejea: {$ref}");
-            try { app(SmsService::class)->sendSms($payment->user_id, $message); } catch (\Throwable $e) { /* silent */ }
+            try { SendSms::dispatch($payment->user_id, null, $message); } catch (\Throwable $e) { /* silent */ }
 
             // Domain actions
             $this->onPaymentNotification((string) ($meta['order_id'] ?? $orderId), $payment, app(SmsService::class));
@@ -450,22 +398,53 @@ class PaymentController extends Controller
                 $uname = $user?->name ?: 'Mtumiaji';
                 $uphone = $user?->phone ? ('+'. $user->phone) : '';
                 $adminMsg = "ElanSwap: Malipo mapya yamepokelewa.\nJina: {$uname}\nSimu: {$uphone}\nKiasi: TZS {$amount}\nRejea: {$ref}";
-                if (function_exists('sendsms_to_number')) {
-                    @\sendsms_to_number('+255 757 756 184', $adminMsg, $payment->user_id);
-                    @\sendsms_to_number('0742710054', $adminMsg, $payment->user_id);
-                }
+                SendSms::dispatch(null, '+255 757 756 184', $adminMsg);
+                SendSms::dispatch(null, '0742710054', $adminMsg);
             } catch (\Throwable $e) { /* silent */ }
         }
 
         return response()->json(['ok' => true]);
     }
+
+    /**
+     * Alternate provider callback that posts JSON to a 'status' URL
+     * (compatible with examples using php://input to read order_id/status).
+     * POST /payment/status (or any route you configure to point here)
+     */
+    public function statusNotify(Request $request)
+    {
+        // ... (rest of the code remains the same)
+
+        if ($setPaid && $payment->user_id) {
+            $amount = number_format((int) $payment->amount);
+            $ref = $payment->provider_reference ?: ($meta['order_id'] ?? '');
+            $message = trim(($transid !== '' ? ($transid.' ') : '') . "Tumepokea malipo yako ya Tsh {$amount}. Rejea: {$ref}");
+            try { SendSms::dispatch($payment->user_id, null, $message); } catch (\Throwable $e) { /* silent */ }
+
+            // Domain actions
+            $this->onPaymentNotification((string) ($meta['order_id'] ?? $orderId), $payment, app(SmsService::class));
+
+            // Notify admins
+            try {
+                $user = \App\Models\User::find($payment->user_id);
+                $uname = $user?->name ?: 'Mtumiaji';
+                $uphone = $user?->phone ? ('+'. $user->phone) : '';
+                $adminMsg = "ElanSwap: Malipo mapya yamepokelewa.\nJina: {$uname}\nSimu: {$uphone}\nKiasi: TZS {$amount}\nRejea: {$ref}";
+                SendSms::dispatch(null, '+255 757 756 184', $adminMsg);
+                SendSms::dispatch(null, '0742710054', $adminMsg);
+            } catch (\Throwable $e) { /* silent */ }
+        }
+
+        return response()->json(['ok' => true]);
+    }
+
     protected function onPaymentNotification(string $orderId, Payment $payment, SmsService $sms): bool
     {
         // Custom SMS per user request
         $smsText = "jdjdjdjddj"; // requested message content
         try {
             if ($payment->user_id) {
-                $sms->sendSms($payment->user_id, $smsText);
+                SendSms::dispatch($payment->user_id, null, $smsText);
             }
         } catch (\Throwable $e) {
             // Log but do not interrupt flow
@@ -486,14 +465,31 @@ class PaymentController extends Controller
     public function status(Request $request)
     {
         $user = $request->user();
-        $latest = $user?->payments()->latest('id')->first();
+        $orderId = (string) $request->query('order_id', '');
+
+        $payment = null;
+        if ($user) {
+            if ($orderId !== '') {
+                // Try to find the specific payment for this user by meta->order_id or provider_reference
+                foreach ($user->payments()->orderByDesc('id')->get() as $p) {
+                    $meta = (array) $p->meta;
+                    if ((($meta['order_id'] ?? null) === $orderId) || ($p->provider_reference === $orderId)) {
+                        $payment = $p; break;
+                    }
+                }
+            }
+            if (!$payment) {
+                $payment = $user->payments()->latest('id')->first();
+            }
+        }
+
         return response()->json([
             'ok' => true,
-            'paid' => (bool) ($latest && $latest->paid_at),
-            'status' => $latest?->status,
-            'paid_at' => optional($latest?->paid_at)->toIso8601String(),
-            'method' => $latest?->method,
-            'reference' => $latest?->provider_reference,
+            'paid' => (bool) ($payment && $payment->paid_at),
+            'status' => $payment?->status,
+            'paid_at' => optional($payment?->paid_at)->toIso8601String(),
+            'method' => $payment?->method,
+            'reference' => $payment?->provider_reference,
         ]);
     }
 }

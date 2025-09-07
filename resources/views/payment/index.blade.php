@@ -92,9 +92,10 @@ document.addEventListener('DOMContentLoaded', function () {
     const btn = document.getElementById('pushBtn');
     const statusBox = document.getElementById('pushStatus');
     const pushUrl = form.getAttribute('action');
-    const statusUrl = '{{ route('payment.status') }}';
+    const statusUrlBase = '{{ route('payment.status') }}';
     const dashboardUrl = '{{ route('dashboard') }}';
     const orderIdSpan = document.getElementById('orderIdVal');
+    let currentOrderId = (orderIdSpan && orderIdSpan.textContent && orderIdSpan.textContent !== '-') ? orderIdSpan.textContent.trim() : '';
 
     const show = (el) => { el.classList.remove('hidden'); };
     const hide = (el) => { el.classList.add('hidden'); };
@@ -126,6 +127,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             if (orderIdSpan && data.order_id) {
                 orderIdSpan.textContent = data.order_id;
+                currentOrderId = data.order_id;
             }
             if (statusBox) {
                 statusBox.textContent = 'Ombi limetumwa. Inasubiri uthibitisho kwenye simu yako...';
@@ -141,7 +143,8 @@ document.addEventListener('DOMContentLoaded', function () {
                     return;
                 }
                 try {
-                    const r = await fetch(statusUrl, { headers: { 'Accept': 'application/json' } });
+                    const q = currentOrderId ? ('?order_id=' + encodeURIComponent(currentOrderId)) : '';
+                    const r = await fetch(statusUrlBase + q, { headers: { 'Accept': 'application/json' } });
                     const s = await r.json();
                     if (s && s.ok && s.paid) {
                         statusBox.textContent = 'Malipo yamekamilika! Inafungua ukurasa...';
@@ -197,14 +200,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (methodBadge && s.method) methodBadge.textContent = 'Njia: ' + (s.method || '-').toUpperCase();
                 if (s.paid) {
                     setBadge(paidDot, 'bg-green-100 text-green-800');
-                    if (timeInfo && s.paid_at) timeInfo.textContent = new Date(s.paid_at).toLocaleString();
+                    if (timeInfo) timeInfo.textContent = '';
                     if (paidTime && s.paid_at) paidTime.textContent = new Date(s.paid_at).toLocaleString();
                     if (alertBox) alertBox.classList.add('hidden');
                     return; // stop polling
                 } else {
-                    const elapsed = Math.round((Date.now() - start) / 1000);
                     setBadge(spinner, 'bg-amber-50 text-amber-700');
-                    if (timeInfo) timeInfo.textContent = 'Imesubiri sekunde ' + elapsed;
+                    if (timeInfo) timeInfo.textContent = '';
                     if (Date.now() - start > timeoutMs) {
                         setBadge(failedIcon, 'bg-red-100 text-red-800');
                         setAlert('Malipo hayajakamilika kwa muda uliowekwa. Tafadhali jaribu tena au hakikisha umethibitisha kwenye simu.', 'bg-red-50 border border-red-200 text-red-800');
