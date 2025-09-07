@@ -167,6 +167,7 @@ class PaymentController extends Controller
         $basePush = [
             'phone' => $phone,
             'order_id' => $orderId,
+            'amount' => $amount,
             'is_reference_payment' => 0,
         ];
         $payloadVariants = [
@@ -253,7 +254,14 @@ class PaymentController extends Controller
         $payment->meta = array_merge((array) $payment->meta, ['push_response' => $push]);
         $payment->save();
 
-        $ok = ($push && isset($push['resultcode']) && (string)$push['resultcode'] === '000');
+        // Provider success detection across variants
+        $ok = false;
+        if (is_array($push)) {
+            $rc = isset($push['resultcode']) ? (string) $push['resultcode'] : (isset($push['result_code']) ? (string) $push['result_code'] : null);
+            $code = isset($push['code']) ? (string) $push['code'] : null;
+            $statusStr = isset($push['status']) ? strtoupper((string)$push['status']) : (isset($push['status_message']) ? strtoupper((string)$push['status_message']) : null);
+            $ok = ($rc === '000') || ($rc === '0') || ($code === '000') || ($code === '0') || ($code === '200') || ($statusStr === 'SUCCESS' || $statusStr === 'OK');
+        }
 
         // If HTTP succeeded but provider result code is not success, log it for diagnostics
         if ($pushRes && $pushRes->ok() && !$ok) {
@@ -273,6 +281,8 @@ class PaymentController extends Controller
                     $errorMessage = (string) $push['status_message'];
                 } elseif (!empty($push['resultcode']) && $push['resultcode'] !== '000') {
                     $errorMessage = 'Hitilafu ya malipo: ' . (string) $push['resultcode'];
+                } elseif (!empty($push['code'])) {
+                    $errorMessage = 'Hitilafu ya malipo (code ' . (string) $push['code'] . ')';
                 }
             } elseif ($pushRes) {
                 $errorMessage = 'Push haikufaulu (HTTP ' . $pushRes->status() . ')';
@@ -289,8 +299,13 @@ class PaymentController extends Controller
             'order_id' => $orderId,
             'payment_url' => $paymentUrl,
             'status' => $ok ? 200 : ($pushRes ? $pushRes->status() : 500),
-            // Optional hint for debugging environments
-            'endpoint' => $ok ? ($lastTried['url'] ?? null) : ($lastTried['url'] ?? null),
+            // Provider response snapshot for diagnostics (safe subset)
+            'provider' => is_array($push) ? [
+                'resultcode' => $push['resultcode'] ?? ($push['result_code'] ?? null),
+                'code' => $push['code'] ?? null,
+                'status' => $push['status'] ?? ($push['status_message'] ?? null),
+            ] : null,
+            'endpoint' => $lastTried['url'] ?? null,
         ];
         return response()->json($response, $ok ? 200 : 502);
     }
