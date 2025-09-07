@@ -269,6 +269,7 @@ class PaymentController extends Controller
         $orderId   = (string) ($data['order_id'] ?? '');
         $status    = (string) ($data['status'] ?? ''); // Selcom may send 'paid'
         $transid   = (string) ($data['transid'] ?? '');
+        $channel   = (string) ($data['channel'] ?? '');
 
         $payment = null;
         if ($reference !== '') {
@@ -288,11 +289,15 @@ class PaymentController extends Controller
         $meta = (array) $payment->meta;
         $meta['webhook'] = $data;
         if ($transid !== '') { $meta['transid'] = $transid; }
+        if ($channel !== '') { $meta['channel'] = $channel; }
 
         $updates = [ 'meta' => $meta ];
         $setPaid = in_array(strtolower($status), ['success','completed','paid'], true);
         if ($setPaid) {
             $updates['paid_at'] = now();
+            // Reflect completion in status/meta for reporting compatibility
+            $updates['status'] = 'paid';
+            $updates['meta'] = array_merge($meta, ['payment_status' => 'COMPLETED']);
         }
 
         $payment->fill($updates)->save();
@@ -506,14 +511,32 @@ class PaymentController extends Controller
     public function status(Request $request)
     {
         $user = $request->user();
-        $latest = $user?->payments()->latest('id')->first();
+        $orderId = (string) $request->query('order_id', '');
+
+        $payment = null;
+        if ($user) {
+            if ($orderId !== '') {
+                // Find by meta->order_id or provider_reference match
+                foreach ($user->payments()->orderByDesc('id')->get() as $p) {
+                    $meta = (array) $p->meta;
+                    if ((($meta['order_id'] ?? null) === $orderId) || ($p->provider_reference === $orderId)) {
+                        $payment = $p; break;
+                    }
+                }
+            }
+            if (!$payment) {
+                $payment = $user->payments()->latest('id')->first();
+            }
+        }
+
+        $isPaid = (bool) ($payment && ($payment->paid_at || ($payment->status === 'paid')));
         return response()->json([
             'ok' => true,
-            'paid' => (bool) ($latest && $latest->paid_at),
-            'status' => $latest?->status,
-            'paid_at' => optional($latest?->paid_at)->toIso8601String(),
-            'method' => $latest?->method,
-            'reference' => $latest?->provider_reference,
+            'paid' => $isPaid,
+            'status' => $payment?->status,
+            'paid_at' => optional($payment?->paid_at)->toIso8601String(),
+            'method' => $payment?->method,
+            'reference' => $payment?->provider_reference,
         ]);
     }
 }
