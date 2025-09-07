@@ -163,13 +163,26 @@ class PaymentController extends Controller
             ],
         ]);
 
-        // 2) Initiate Push USSD (send as form-encoded; retry JSON if 415)
-        $pushPayload = [
-            'project_id' => $appId,
+        // 2) Initiate Push USSD (some providers expect different keys)
+        $basePush = [
             'phone' => $phone,
             'order_id' => $orderId,
             'is_reference_payment' => 0,
         ];
+        $payloadVariants = [
+            array_merge(['project_id' => $appId], $basePush),
+            array_merge(['app_id' => $appId], $basePush),
+        ];
+        if (!empty($reference)) {
+            // Try reference-based variant as well
+            $payloadVariants[] = [
+                'project_id' => $appId,
+                'phone' => $phone,
+                'order_id' => $orderId,
+                'reference' => $reference,
+                'is_reference_payment' => 1,
+            ];
+        }
         // Try different push endpoints (providers differ slightly)
         $pushPaths = [
             'api/v1/initiatePushUSSD',
@@ -178,56 +191,60 @@ class PaymentController extends Controller
             'initiatePush',
         ];
         $pushRes = null;
+        $lastTried = null;
         $lastError = null;
-        foreach ($pushPaths as $idx => $path) {
-            \Log::info('Selcom push: attempting', ['url' => $base . $path, 'payload' => $pushPayload]);
-            $pushRes = $baseClient
-                ->withHeaders([
-                    'Content-Type' => 'application/x-www-form-urlencoded',
-                    'Accept' => 'application/json',
-                    'X-Requested-With' => 'XMLHttpRequest',
-                ])
-                ->asForm()
-                ->post($base . $path, $pushPayload);
-            if ($pushRes->status() === 415) {
+        foreach ($payloadVariants as $variant) {
+            foreach ($pushPaths as $path) {
+                $lastTried = ['url' => $base . $path, 'payload_keys' => array_keys($variant)];
+                \Log::info('Selcom push: attempting', $lastTried);
                 $pushRes = $baseClient
                     ->withHeaders([
-                        'Content-Type' => 'application/json; charset=UTF-8',
+                        'Content-Type' => 'application/x-www-form-urlencoded',
                         'Accept' => 'application/json',
                         'X-Requested-With' => 'XMLHttpRequest',
                     ])
-                    ->asJson()
-                    ->post($base . $path, $pushPayload);
-            }
-            if ($pushRes->status() === 415) {
-                // Fallback: multipart/form-data
-                $req2 = $baseClient
-                    ->withHeaders([
-                        'Accept' => 'application/json',
-                        'X-Requested-With' => 'XMLHttpRequest',
-                    ]);
-                foreach ($pushPayload as $k => $v) {
-                    $req2 = $req2->attach($k, (string) $v);
+                    ->asForm()
+                    ->post($base . $path, $variant);
+                if ($pushRes->status() === 415) {
+                    $pushRes = $baseClient
+                        ->withHeaders([
+                            'Content-Type' => 'application/json; charset=UTF-8',
+                            'Accept' => 'application/json',
+                            'X-Requested-With' => 'XMLHttpRequest',
+                        ])
+                        ->asJson()
+                        ->post($base . $path, $variant);
                 }
-                $pushRes = $req2->post($base . $path);
+                if ($pushRes->status() === 415) {
+                    // Fallback: multipart/form-data
+                    $req2 = $baseClient
+                        ->withHeaders([
+                            'Accept' => 'application/json',
+                            'X-Requested-With' => 'XMLHttpRequest',
+                        ]);
+                    foreach ($variant as $k => $v) {
+                        $req2 = $req2->attach($k, (string) $v);
+                    }
+                    $pushRes = $req2->post($base . $path);
+                }
+                if ($pushRes->successful()) {
+                    $lastError = null;
+                    break 2; // success; exit both loops
+                }
+                $lastError = [
+                    'path' => $path,
+                    'status' => $pushRes->status(),
+                    'body' => $pushRes->json() ?? $pushRes->body(),
+                    'payload_keys' => array_keys($variant),
+                ];
+                \Log::warning('Selcom push attempt failed', $lastError);
             }
-            // If successful, use this response; otherwise try next path
-            if ($pushRes->successful()) {
-                $lastError = null;
-                break;
-            }
-            $lastError = [
-                'path' => $path,
-                'status' => $pushRes->status(),
-                'body' => $pushRes->json() ?? $pushRes->body(),
-            ];
-            \Log::warning('Selcom push attempt failed', $lastError);
         }
         $push = $pushRes && $pushRes->successful() ? $pushRes->json() : null;
         if (!$pushRes || !$pushRes->successful()) {
-            \Log::error('Selcom push failed (all endpoints tried)', [
+            \Log::error('Selcom push failed (all endpoints/payloads tried)', [
                 'last_error' => $lastError,
-                'payload' => $pushPayload,
+                'last_tried' => $lastTried,
                 'base' => $base,
             ]);
         }
@@ -239,15 +256,15 @@ class PaymentController extends Controller
         $ok = ($push && isset($push['resultcode']) && (string)$push['resultcode'] === '000');
 
         // If HTTP succeeded but provider result code is not success, log it for diagnostics
-        if ($pushRes->ok() && !$ok) {
+        if ($pushRes && $pushRes->ok() && !$ok) {
             \Log::warning('Selcom push responded with non-success resultcode', [
                 'http_status' => $pushRes->status(),
                 'provider_result' => $push,
-                'payload' => $pushPayload,
+                'last_tried' => $lastTried,
             ]);
         }
 
-        $errorMessage = 'Imeshindikana kutuma ombi';
+        $errorMessage = 'Imeshindikana kutuma ombi la malipo';
         if (!$ok) {
             if (is_array($push)) {
                 if (!empty($push['message'])) {
@@ -258,7 +275,7 @@ class PaymentController extends Controller
                     $errorMessage = 'Hitilafu ya malipo: ' . (string) $push['resultcode'];
                 }
             } elseif ($pushRes) {
-                $errorMessage = 'Push haikufaulu (' . $pushRes->status() . ')';
+                $errorMessage = 'Push haikufaulu (HTTP ' . $pushRes->status() . ')';
             }
         }
 
@@ -271,7 +288,9 @@ class PaymentController extends Controller
             'phone' => $phone,
             'order_id' => $orderId,
             'payment_url' => $paymentUrl,
-            'status' => $ok ? 200 : $pushRes->status(),
+            'status' => $ok ? 200 : ($pushRes ? $pushRes->status() : 500),
+            // Optional hint for debugging environments
+            'endpoint' => $ok ? ($lastTried['url'] ?? null) : ($lastTried['url'] ?? null),
         ];
         return response()->json($response, $ok ? 200 : 502);
     }
