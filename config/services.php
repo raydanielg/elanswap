@@ -38,7 +38,7 @@ return [
     // ElanSwap custom services
     'elanswap' => [
         // Default fee amount (TZS). Override via env SERVICES_ELANSWAP_PAYMENT_AMOUNT
-        'payment_amount' => env('SERVICES_ELANSWAP_PAYMENT_AMOUNT', 500),
+        'payment_amount' => env('SERVICES_ELANSWAP_PAYMENT_AMOUNT', 100),
     ],
 
     // Selcom payments
