@@ -57,6 +57,10 @@
                     <form method="POST" action="{{ route('payment.pay') }}" class="space-y-4">
                         @csrf
                         <div>
+                            <label for="amount" class="block text-sm font-medium text-gray-700">Kiasi (TZS)</label>
+                            <input id="amount" name="amount" type="number" value="{{ $amount }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 bg-gray-50" readonly>
+                        </div>
+                        <div>
                             <label for="method" class="block text-sm font-medium text-gray-700">Njia ya Malipo</label>
                             <select id="method" name="method" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500" required>
                                 <option value="">Chagua njia ya malipo</option>
