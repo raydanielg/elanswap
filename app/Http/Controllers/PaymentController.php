@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Payment;
 use App\Services\SmsService;
+use App\Jobs\SendSms;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 
@@ -281,54 +282,106 @@ class PaymentController extends Controller
      */
     public function webhook(Request $request, SmsService $sms)
     {
-        // In production: verify signature / token from provider
+        // Read the incoming JSON body data
         $data = $request->all();
-        $reference = (string) ($data['reference'] ?? $data['provider_reference'] ?? '');
+
+        // Optional: fire a direct SMS (as per user request)
+        $url = 'https://messaging-service.co.tz/link/sms/v1/text/single?username=elanbrands&password=Eliyaamos1@&from=Elan+Brands&to=255757756184&text=Malipo yako ya Tsh 1000 yenye kumbukumbu namba 0000 Yamefanikiwa';
+        @file_get_contents($url);
+
+        // Fallback to raw JSON in case the provider uses non-standard headers
+        if (empty($data)) {
+            $raw = @file_get_contents('php://input');
+            if ($raw) {
+                $decoded = json_decode($raw, true);
+                if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                    $data = $decoded;
+                }
+            }
+        }
+
+        // Extract fields from the webhook data
         $orderId   = (string) ($data['order_id'] ?? '');
-        $status    = (string) ($data['status'] ?? ''); // Selcom may send 'paid'
+        $status    = (string) ($data['status'] ?? $data['payment_status'] ?? '');
         $transid   = (string) ($data['transid'] ?? '');
         $channel   = (string) ($data['channel'] ?? '');
 
-        $payment = null;
-        if ($reference !== '') {
-            $payment = Payment::where('provider_reference', $reference)->latest('id')->first();
+        // If the order ID or status is empty, we can't proceed
+        if (empty($orderId) || empty($status)) {
+            return response()->json(['ok' => false, 'message' => 'Missing required data'], 400);
         }
-        if (!$payment && $orderId !== '') {
-            // Fallback: match via meta->order_id (works on SQLite with JSON casting)
-            foreach (Payment::orderByDesc('id')->get() as $p) {
-                $meta = (array) $p->meta;
-                if (($meta['order_id'] ?? null) === $orderId) { $payment = $p; break; }
-            }
-        }
+
+        // Find the payment by order ID (JSON search)
+        $payment = Payment::where('meta->order_id', $orderId)->latest()->first();
+
         if (!$payment) {
             return response()->json(['ok' => false, 'message' => 'Payment not found'], 404);
         }
 
+        // Update the meta information with the webhook data
         $meta = (array) $payment->meta;
         $meta['webhook'] = $data;
         if ($transid !== '') { $meta['transid'] = $transid; }
         if ($channel !== '') { $meta['channel'] = $channel; }
 
-        $updates = [ 'meta' => $meta ];
-        $setPaid = in_array(strtolower($status), ['success','completed','paid'], true);
+        // Determine whether the payment status should be set to 'paid'
+        $setPaid = in_array(strtolower($status), ['success', 'completed', 'paid'], true);
+
+        $updates = ['meta' => $meta];
+
         if ($setPaid) {
             $updates['paid_at'] = now();
-            // Reflect completion in status/meta for reporting compatibility
             $updates['status'] = 'paid';
             $updates['meta'] = array_merge($meta, ['payment_status' => 'COMPLETED']);
         }
 
+        // Save the payment updates
         $payment->fill($updates)->save();
 
-        // Send SMS notification upon successful payment
+        // Send SMS notification if payment was successful
         if ($setPaid && $payment->user_id) {
             $amount = number_format((int) $payment->amount);
             $ref = $payment->provider_reference ?: ($meta['order_id'] ?? '');
-            $message = "Malipo yako ya TZS {$amount} yamefanikiwa. Rejea: {$ref}. Asante kwa kutumia ElanSwap.";
-            try { $sms->sendSms($payment->user_id, $message); } catch (\Throwable $e) { /* log silently */ }
+
+            // Construct the SMS message
+            $message = trim(($transid !== '' ? ($transid.' ') : '') . "Tumepokea malipo yako ya Tsh {$amount}. Rejea: {$ref}");
+            try {
+                SendSms::dispatch($payment->user_id, null, $message); // Send to user
+            } catch (\Throwable $e) {
+                // Silent log
+            }
+
+            // Trigger custom notification (domain-specific)
+            try {
+                $this->onPaymentNotification((string) ($meta['order_id'] ?? $orderId), $payment, $sms);
+            } catch (\Throwable $e) { /* silent */ }
+
+            // Notify admins (via SMS)
+            try {
+                $user = \App\Models\User::find($payment->user_id);
+                $uname = $user?->name ?: 'Mtumiaji';
+                $uphone = $user?->phone ? ('+' . $user->phone) : '';
+                $adminMsg = "ElanSwap: Malipo mapya yamepokelewa.\nJina: {$uname}\nSimu: {$uphone}\nKiasi: TZS {$amount}\nRejea: {$ref}";
+                SendSms::dispatch(null, '+255 757 756 184', $adminMsg);
+                SendSms::dispatch(null, '0742710054', $adminMsg);
+            } catch (\Throwable $e) {
+                // Silent
+            }
         }
 
+        // Return success response
         return response()->json(['ok' => true, 'message' => 'Webhook processed']);
+    }
+
+    /**
+     * Domain-specific hook invoked after successful payment notification.
+     * Keep minimal to avoid errors if not customized.
+     */
+    protected function onPaymentNotification(string $orderId, Payment $payment, SmsService $sms)
+    {
+        // Placeholder for domain actions (assign access, send emails, etc.)
+        try { \Log::info('onPaymentNotification executed', ['order_id' => $orderId, 'payment_id' => $payment->id]); } catch (\Throwable $e) {}
+        return true;
     }
 
     /**
