@@ -117,24 +117,28 @@
 
 <!-- Modal: Ingiza Namba ya Simu -->
 <div id="payModal" class="fixed inset-0 bg-black/40 hidden items-center justify-center z-50">
-    <div class="bg-white w-full max-w-md rounded-lg shadow-lg p-6">
+    <div class="bg-white w-full max-w-md rounded-lg shadow-lg p-6 relative">
         <div class="flex items-start justify-between mb-3">
             <h3 class="text-lg font-semibold">Ingiza Namba ya Simu</h3>
-            <button id="closePayModal" class="text-gray-500 hover:text-gray-700">&times;</button>
+            <button id="closePayModal" class="text-gray-500 hover:text-gray-700" aria-label="Funga">&times;</button>
         </div>
         <p class="text-sm text-gray-600 mb-4">Weka namba utakayopokea ombi la malipo (mf. 07XXXXXXXX au 2557XXXXXXXX). Mfumo utatuma ombi la USSD/Push.</p>
         <form id="pushForm" method="POST" action="{{ route('payment.push') }}" class="space-y-4">
             @csrf
             <div>
                 <label for="phone" class="block text-sm font-medium text-gray-700">Namba ya Simu</label>
-                <input id="phone" name="phone" type="text" inputmode="tel" placeholder="07XXXXXXXX au 2557XXXXXXXX" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500" required>
+                <input id="phone" name="phone" type="tel" inputmode="numeric" pattern="[0-9+]{9,15}" maxlength="15" placeholder="07XXXXXXXX au 2557XXXXXXXX" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500" required>
+                <p id="phoneHint" class="mt-1 text-xs text-gray-500">Ruhusu tarakimu na + pekee. Mfano: 0712XXXXXX au 2557XXXXXXX.</p>
             </div>
             @error('phone')
                 <p class="text-sm text-red-600">{{ $message }}</p>
             @enderror
             <div class="flex items-center justify-end gap-3">
                 <button type="button" id="cancelPayModal" class="px-4 py-2 rounded-md border text-gray-700">Ghairi</button>
-                <button id="pushBtn" type="submit" class="inline-flex items-center px-4 py-2 bg-primary-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-primary-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-25 transition">Tuma Ombi</button>
+                <button id="pushBtn" type="submit" class="inline-flex items-center px-4 py-2 bg-primary-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-primary-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 transition">
+                    <svg id="btnSpinner" class="hidden animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path></svg>
+                    <span id="btnText">Tuma Ombi</span>
+                </button>
             </div>
         </form>
     </div>
@@ -144,8 +148,9 @@
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const form = document.getElementById('pushForm');
-    if (!form) return;
     const btn = document.getElementById('pushBtn');
+    const btnText = document.getElementById('btnText');
+    const btnSpinner = document.getElementById('btnSpinner');
     const statusBox = document.getElementById('pushStatus');
     const pushUrl = form.getAttribute('action');
     const statusUrlBase = '{{ route('payment.status') }}';
@@ -158,19 +163,52 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Modal controls
     const modal = document.getElementById('payModal');
+    const modalCard = modal ? modal.querySelector('.bg-white') : null;
     const openBtn = document.getElementById('openPayModal');
     const closeBtn = document.getElementById('closePayModal');
     const cancelBtn = document.getElementById('cancelPayModal');
-    const showModal = () => { if (modal) { modal.classList.remove('hidden'); modal.classList.add('flex'); } };
-    const hideModal = () => { if (modal) { modal.classList.add('hidden'); modal.classList.remove('flex'); } };
+    const phoneInput = document.getElementById('phone');
+    const showModal = () => {
+        if (!modal) return;
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        document.body.style.overflow = 'hidden';
+        setTimeout(() => { phoneInput?.focus(); }, 50);
+    };
+    const hideModal = () => {
+        if (!modal) return;
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        document.body.style.overflow = '';
+    };
     if (openBtn) openBtn.addEventListener('click', showModal);
     if (closeBtn) closeBtn.addEventListener('click', hideModal);
     if (cancelBtn) cancelBtn.addEventListener('click', hideModal);
+    // overlay click closes
+    if (modal) {
+        modal.addEventListener('click', (e) => { if (e.target === modal) hideModal(); });
+        // prevent click-through inside card
+        modalCard?.addEventListener('click', (e) => e.stopPropagation());
+    }
+    // ESC key closes
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !modal.classList.contains('hidden')) hideModal(); });
+
+    // Phone input: allow digits and plus, strip others
+    if (phoneInput) {
+        phoneInput.addEventListener('input', () => {
+            const cleaned = phoneInput.value.replace(/[^0-9+]/g, '');
+            if (cleaned !== phoneInput.value) phoneInput.value = cleaned;
+        });
+    }
 
     if (!form) return;
     form.addEventListener('submit', async function (e) {
         e.preventDefault();
-        if (btn) { btn.disabled = true; btn.textContent = 'Inatuma...'; }
+        if (btn) {
+            btn.disabled = true;
+            if (btnText) btnText.textContent = 'Inatuma...';
+            if (btnSpinner) btnSpinner.classList.remove('hidden');
+        }
         if (statusBox) { statusBox.textContent = 'Inatuma ombi la malipo...'; show(statusBox); }
 
         try {
@@ -226,7 +264,11 @@ document.addEventListener('DOMContentLoaded', function () {
             setTimeout(poll, 2000);
         } catch (err) {
             if (statusBox) { statusBox.textContent = 'Kosa: ' + (err?.message || 'Imeshindikana kutuma ombi'); show(statusBox); }
-            if (btn) { btn.disabled = false; btn.textContent = 'Tuma Ombi la Malipo'; }
+            if (btn) {
+                btn.disabled = false;
+                if (btnText) btnText.textContent = 'Tuma Ombi';
+                if (btnSpinner) btnSpinner.classList.add('hidden');
+            }
         }
     });
 });
