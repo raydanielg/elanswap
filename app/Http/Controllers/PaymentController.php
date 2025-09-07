@@ -375,60 +375,6 @@ class PaymentController extends Controller
         return response()->json(['ok' => true, 'message' => 'Webhook processed']);
     }
 
-    }
-
-    /**
-     * Alternate provider callback that posts JSON to a 'status' URL
-     * (compatible with examples using php://input to read order_id/status).
-     * POST /payment/status (or any route you configure to point here)
-     */
-    public function statusNotify(Request $request)
-    {
-        // ... (rest of the code remains the same)
-
-        if ($setPaid && $payment->user_id) {
-            $amount = number_format((int) $payment->amount);
-            $ref = $payment->provider_reference ?: ($meta['order_id'] ?? '');
-            $message = trim(($transid !== '' ? ($transid.' ') : '') . "Tumepokea malipo yako ya Tsh {$amount}. Rejea: {$ref}");
-            try { SendSms::dispatch($payment->user_id, null, $message); } catch (\Throwable $e) { /* silent */ }
-
-            // Domain actions
-            $this->onPaymentNotification((string) ($meta['order_id'] ?? $orderId), $payment, app(SmsService::class));
-
-            // Notify admins
-            try {
-                $user = \App\Models\User::find($payment->user_id);
-                $uname = $user?->name ?: 'Mtumiaji';
-                $uphone = $user?->phone ? ('+'. $user->phone) : '';
-                $adminMsg = "ElanSwap: Malipo mapya yamepokelewa.\nJina: {$uname}\nSimu: {$uphone}\nKiasi: TZS {$amount}\nRejea: {$ref}";
-                SendSms::dispatch(null, '+255 757 756 184', $adminMsg);
-                SendSms::dispatch(null, '0742710054', $adminMsg);
-            } catch (\Throwable $e) { /* silent */ }
-        }
-
-        return response()->json(['ok' => true]);
-    }
-
-    protected function onPaymentNotification(string $orderId, Payment $payment, SmsService $sms): bool
-    {
-        // Custom SMS per user request
-        $smsText = "jdjdjdjddj"; // requested message content
-        try {
-            if ($payment->user_id) {
-                SendSms::dispatch($payment->user_id, null, $smsText);
-            }
-        } catch (\Throwable $e) {
-            // Log but do not interrupt flow
-            \Log::warning('onPaymentNotification SMS failed: ' . $e->getMessage());
-        }
-
-        // Additional recommended actions can be added here, e.g.:
-        // - Grant access/roles, mark subscription active in user meta
-        // - Emit events, notify admins, enqueue emails, etc.
-
-        return true;
-    }
-
     /**
      * Polling endpoint: return latest payment status for current user
      * GET /payment/status
