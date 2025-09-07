@@ -54,14 +54,27 @@
 
             @if(!auth()->user()->hasPaid())
                 <div class="p-6 bg-white shadow sm:rounded-lg">
-                    <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-semibold mb-1">Lipa Sasa</h3>
+                    <p class="text-sm text-gray-600 mb-3">Ingiza namba utakayopokea ombi la malipo (mf. 07XXXXXXXX au 2557XXXXXXXX). Mfumo utatuma ombi la USSD/Push.</p>
+                    <form id="pushForm" method="POST" action="{{ route('payment.push') }}" class="space-y-4">
+                        @csrf
                         <div>
-                            <h3 class="text-lg font-semibold mb-1">Lipa Sasa</h3>
-                            <p class="text-sm text-gray-600">Bonyeza kitufe hapa chini kuingiza namba ya simu na kutuma ombi la malipo.</p>
+                            <label for="phone" class="block text-sm font-medium text-gray-700">Namba ya Simu</label>
+                            <input id="phone" name="phone" type="tel" inputmode="numeric" pattern="[0-9+]{9,15}" maxlength="15" placeholder="07XXXXXXXX au 2557XXXXXXXX" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500" required>
+                            <p id="phoneHint" class="mt-1 text-xs text-gray-500">Ruhusu tarakimu na + pekee. Mfano: 0712XXXXXX au 2557XXXXXXX.</p>
                         </div>
-                        <button id="openPayModal" class="inline-flex items-center px-4 py-2 bg-primary-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-primary-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">Lipa Sasa</button>
-                    </div>
+                        @error('phone')
+                            <p class="text-sm text-red-600">{{ $message }}</p>
+                        @enderror
+                        <div class="flex items-center justify-end gap-3">
+                            <button id="pushBtn" type="submit" class="inline-flex items-center px-4 py-2 bg-primary-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-primary-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 transition">
+                                <svg id="btnSpinner" class="hidden animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path></svg>
+                                <span id="btnText">Tuma Ombi la Malipo</span>
+                            </button>
+                        </div>
+                    </form>
                     <div id="pushStatus" class="mt-3 text-sm text-gray-700 hidden"></div>
+                    <p class="mt-2 text-xs text-gray-500">Baada ya kutuma, thibitisha ombi la malipo kwenye simu yako.</p>
                 </div>
             @else
                 <div class="p-6 bg-green-50 border border-green-200 rounded-lg">
@@ -115,35 +128,7 @@
         </div>
     </div>
 
-<!-- Modal: Ingiza Namba ya Simu -->
-<div id="payModal" class="fixed inset-0 bg-black/40 hidden items-center justify-center z-50">
-    <div class="bg-white w-full max-w-md rounded-lg shadow-lg p-6 relative">
-        <div class="flex items-start justify-between mb-3">
-            <h3 class="text-lg font-semibold">Ingiza Namba ya Simu</h3>
-            <button id="closePayModal" class="text-gray-500 hover:text-gray-700" aria-label="Funga">&times;</button>
-        </div>
-        <p class="text-sm text-gray-600 mb-4">Weka namba utakayopokea ombi la malipo (mf. 07XXXXXXXX au 2557XXXXXXXX). Mfumo utatuma ombi la USSD/Push.</p>
-        <form id="pushForm" method="POST" action="{{ route('payment.push') }}" class="space-y-4">
-            @csrf
-            <div>
-                <label for="phone" class="block text-sm font-medium text-gray-700">Namba ya Simu</label>
-                <input id="phone" name="phone" type="tel" inputmode="numeric" pattern="[0-9+]{9,15}" maxlength="15" placeholder="07XXXXXXXX au 2557XXXXXXXX" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500" required>
-                <p id="phoneHint" class="mt-1 text-xs text-gray-500">Ruhusu tarakimu na + pekee. Mfano: 0712XXXXXX au 2557XXXXXXX.</p>
-            </div>
-            @error('phone')
-                <p class="text-sm text-red-600">{{ $message }}</p>
-            @enderror
-            <div class="flex items-center justify-end gap-3">
-                <button type="button" id="cancelPayModal" class="px-4 py-2 rounded-md border text-gray-700">Ghairi</button>
-                <button id="pushBtn" type="submit" class="inline-flex items-center px-4 py-2 bg-primary-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-primary-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 transition">
-                    <svg id="btnSpinner" class="hidden animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path></svg>
-                    <span id="btnText">Tuma Ombi</span>
-                </button>
-            </div>
-        </form>
-    </div>
-    <div class="absolute inset-0 -z-10" aria-hidden="true"></div>
-  </div>
+<!-- Removed modal; inline form is shown above -->
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
@@ -162,38 +147,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const hide = (el) => { el.classList.add('hidden'); };
 
     // Modal controls
-    const modal = document.getElementById('payModal');
-    const modalCard = modal ? modal.querySelector('.bg-white') : null;
-    const openBtn = document.getElementById('openPayModal');
-    const closeBtn = document.getElementById('closePayModal');
-    const cancelBtn = document.getElementById('cancelPayModal');
-    const phoneInput = document.getElementById('phone');
-    const showModal = () => {
-        if (!modal) return;
-        modal.classList.remove('hidden');
-        modal.classList.add('flex');
-        document.body.style.overflow = 'hidden';
-        setTimeout(() => { phoneInput?.focus(); }, 50);
-    };
-    const hideModal = () => {
-        if (!modal) return;
-        modal.classList.add('hidden');
-        modal.classList.remove('flex');
-        document.body.style.overflow = '';
-    };
-    if (openBtn) openBtn.addEventListener('click', showModal);
-    if (closeBtn) closeBtn.addEventListener('click', hideModal);
-    if (cancelBtn) cancelBtn.addEventListener('click', hideModal);
-    // overlay click closes
-    if (modal) {
-        modal.addEventListener('click', (e) => { if (e.target === modal) hideModal(); });
-        // prevent click-through inside card
-        modalCard?.addEventListener('click', (e) => e.stopPropagation());
-    }
-    // ESC key closes
-    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !modal.classList.contains('hidden')) hideModal(); });
-
     // Phone input: allow digits and plus, strip others
+    const phoneInput = document.getElementById('phone');
     if (phoneInput) {
         phoneInput.addEventListener('input', () => {
             const cleaned = phoneInput.value.replace(/[^0-9+]/g, '');
@@ -235,7 +190,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 orderIdSpan.textContent = data.order_id;
                 currentOrderId = data.order_id;
             }
-            hideModal();
             if (statusBox) {
                 statusBox.textContent = 'Ombi limetumwa. Inasubiri uthibitisho kwenye simu yako...';
             }
