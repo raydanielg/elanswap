@@ -5,8 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\Payment;
 use App\Services\SmsService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Redirect;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 
 class PaymentController extends Controller
@@ -22,35 +20,7 @@ class PaymentController extends Controller
         return view('payment.index', compact('user','latest','amount'));
     }
 
-    /**
-     * Mock pay handler. In production, integrate real provider (M-Pesa/TigoPesa/Airtel/Card).
-     */
-    public function pay(Request $request)
-    {
-        $request->validate([
-            'method' => ['required','in:mpesa,tigopesa,airtel,card'],
-        ]);
-
-        $user = $request->user();
-        $amount = (int) (config('services.elanswap.payment_amount', 2500));
-
-        // Create a payment record. Do NOT force a specific status value to avoid
-        // violating existing SQLite CHECK constraints from previous schemas.
-        // We mark paid via paid_at and leave status to its default ('pending') for safety.
-        $payment = Payment::create([
-            'user_id' => $user->id,
-            'method' => (string) $request->string('method'),
-            'amount' => $amount,
-            'currency' => 'TZS',
-            'paid_at' => now(),
-            'meta' => [
-                'mock' => true,
-                'note' => 'Marked as paid for testing. Replace with real provider integration.',
-            ],
-        ]);
-
-        return Redirect::route('payment.index')->with('status', 'Malipo yamekamilika. Asante!');
-    }
+    
 
     /**
      * Initiate a push payment via Selcom APIs (create_mno_order + initiatePushUSSD).
@@ -284,18 +254,11 @@ class PaymentController extends Controller
             'payment_url' => $paymentUrl,
             'status' => $ok ? 200 : $pushRes->status(),
         ];
-        // In local environment, include provider debug details to surface exact cause
-        if (app()->environment('local')) {
-            $response['debug'] = [
-                'push_http_status' => $pushRes->status(),
-                'push_body' => $push,
-            ];
-        }
         return response()->json($response, $ok ? 200 : 502);
     }
 
     /**
-     * Provider webhook to listen for payment result [Mock].
+     * Provider webhook to listen for payment result.
      * POST /payment/webhook
      */
     public function webhook(Request $request, SmsService $sms)
@@ -343,6 +306,197 @@ class PaymentController extends Controller
         }
 
         return response()->json(['ok' => true, 'message' => 'Webhook processed']);
+    }
+
+    /**
+     * Unified Selcom handler: handles both webhook (JSON) and form submission (POST)
+     * POST /payment/selcom
+     */
+    public function selcom(Request $request)
+    {
+        // If JSON payload contains webhook status, process webhook branch
+        if ($request->isJson()) {
+            $data = $request->json()->all();
+            $orderId = (string) ($data['order_id'] ?? '');
+            $status  = strtolower((string) ($data['status'] ?? ''));
+            $transid = (string) ($data['transid'] ?? '');
+            $reference = (string) ($data['reference'] ?? $data['provider_reference'] ?? '');
+
+            if ($orderId === '') {
+                return response()->json(['status' => 'error', 'message' => 'order_id missing'], 422);
+            }
+
+            // Find payment by reference first, fallback to order_id in meta
+            $payment = null;
+            if ($reference !== '') {
+                $payment = Payment::where('provider_reference', $reference)->latest('id')->first();
+            }
+            if (!$payment) {
+                $payment = Payment::query()->orderByDesc('id')->get()->first(function ($p) use ($orderId) {
+                    $meta = (array) $p->meta;
+                    return (($meta['order_id'] ?? null) === $orderId);
+                });
+            }
+            if (!$payment) {
+                return response()->json(['status' => 'error', 'message' => 'Payment not found'], 404);
+            }
+
+            $meta = (array) $payment->meta;
+            $meta['webhook'] = $data;
+            if ($transid !== '') { $meta['transid'] = $transid; }
+            if ($reference !== '') { $meta['reference'] = $reference; }
+
+            $updates = ['meta' => $meta];
+            if (in_array($status, ['paid','success','completed'], true)) {
+                $updates['paid_at'] = now();
+            }
+            $payment->fill($updates)->save();
+
+            // Optionally notify user by SMS (simple text)
+            try {
+                if ($payment->user_id && isset($updates['paid_at'])) {
+                    $amount = number_format((int) $payment->amount);
+                    $ref = $payment->provider_reference ?: ($meta['order_id'] ?? '');
+                    $msg = "Malipo yako ya TZS {$amount} yamefanikiwa. Rejea: {$ref}. Asante kwa kutumia ElanSwap.";
+                    app(SmsService::class)->sendSms($payment->user_id, $msg);
+                }
+            } catch (\Throwable $e) { /* silent */ }
+
+            return response()->json([
+                'status'     => 'success',
+                'message'    => 'Webhook processed',
+                'order_id'   => $orderId,
+                'new_status' => $status,
+            ]);
+        }
+
+        // Otherwise handle form-style POST to create order and push USSD
+        if (!$request->isMethod('post')) {
+            return response()->json(['status' => 'error', 'message' => 'Invalid request method'], 405);
+        }
+
+        $username = (string) $request->input('username', $request->user()?->name ?? 'Customer');
+        $phoneIn  = (string) $request->input('phone', '');
+        $amount   = (int) ($request->input('amount', config('services.elanswap.payment_amount', 2500)));
+        $orderId  = (string) $request->input('order_id', 'ORD_' . now()->format('YmdHis') . '_' . ($request->user()?->id ?? 'guest'));
+        if ($phoneIn === '') {
+            return response()->json(['status' => false, 'message' => 'Phone is required'], 422);
+        }
+        $phone = $this->normalizeTzPhone($phoneIn);
+
+        $base = rtrim((string) config('services.selcom.base_url'), '/') . '/';
+        $appId = (string) config('services.selcom.app_id', '104');
+
+        // 1) Create mno order
+        $createPayload = [
+            'app_id'             => $appId,
+            'order_firstname'    => $username,
+            'order_lastname'     => 'Customer',
+            'order_email'        => $request->user()?->email ?? 'info@elanbrands.net',
+            'order_phone'        => $phone,
+            'amount'             => $amount,
+            'order_id'           => $orderId,
+            'currency'           => 'TZS',
+            'order_item_cont'    => 1,
+            'service_name'       => 'subscription',
+            'is_reference_payment' => 1,
+        ];
+
+        $createRes = Http::asForm()->withHeaders([
+            'Accept' => 'application/json',
+            'X-Requested-With' => 'XMLHttpRequest',
+        ])->post($base . 'api/v1/create_mno_order', $createPayload);
+
+        if (!$createRes->ok()) {
+            return response()->json([
+                'status' => false,
+                'payment_id' => '',
+                'message' => 'Tafadhali Jaribu Tena',
+                'url' => '',
+                'mode' => 'mno',
+                'debug' => app()->environment('local') ? $createRes->body() : null,
+            ], 502);
+        }
+
+        $create = (array) $createRes->json();
+        $reference = (string) ($create['reference'] ?? '');
+        $paymentUrl = (string) ($create['payment_url'] ?? '');
+        if ($reference === '' || !is_numeric($reference)) {
+            return response()->json([
+                'status' => false,
+                'payment_id' => '',
+                'message' => 'Tafadhali Jaribu Tena',
+                'url' => '',
+                'mode' => 'mno',
+            ], 502);
+        }
+
+        // Save local record (pending)
+        $method = 'mpesa';
+        if (preg_match('/^25565|^25567|^25568|^25569/', $phone)) { $method = 'tigopesa'; }
+        elseif (preg_match('/^25574|^25575|^25576|^25578/', $phone)) { $method = 'airtel'; }
+
+        $payment = Payment::create([
+            'user_id' => $request->user()?->id,
+            'method' => $method,
+            'amount' => $amount,
+            'currency' => 'TZS',
+            'provider_reference' => $reference,
+            'meta' => [
+                'order_id' => $orderId,
+                'phone' => $phone,
+                'payment_url' => $paymentUrl,
+                'provider' => 'selcom',
+                'create_response' => $create,
+            ],
+        ]);
+
+        // 2) Push request (USSD)
+        $pushPayload = [
+            'project_id' => $appId,
+            'phone' => $phone,
+            'order_id' => $orderId,
+            'is_reference_payment' => 0,
+        ];
+        $pushRes = Http::asForm()->withHeaders([
+            'Accept' => 'application/json',
+            'X-Requested-With' => 'XMLHttpRequest',
+        ])->post($base . 'initiatePushUSSD', $pushPayload);
+
+        $push = $pushRes->ok() ? (array) $pushRes->json() : null;
+        if (!$pushRes->ok()) {
+            \Log::error('Selcom initiatePushUSSD failed', [
+                'status' => $pushRes->status(), 'body' => $pushRes->body(), 'payload' => $pushPayload, 'base' => $base,
+            ]);
+        }
+
+        // Save push response
+        $payment->meta = array_merge((array) $payment->meta, ['push_response' => $push]);
+        $payment->save();
+
+        $ok = ($push && isset($push['resultcode']) && (string)$push['resultcode'] === '000');
+        $message = $ok ? 'Please check your phone to input PIN' : ($push['message'] ?? 'Unknown error');
+
+        return response()->json([
+            'status'     => $ok,
+            'message'    => $message,
+            'url'        => $paymentUrl,
+            'order_id'   => $orderId,
+            'reference'  => $reference,
+            'mode'       => 'mno',
+        ], $ok ? 200 : 502);
+    }
+
+    /**
+     * Normalize Tanzanian phone to E.164 without plus (e.g. 2557XXXXXXXX)
+     */
+    private function normalizeTzPhone(string $raw): string
+    {
+        $raw = preg_replace('/[^0-9+]/', '', $raw);
+        if (str_starts_with($raw, '+')) { $raw = substr($raw, 1); }
+        if (str_starts_with($raw, '0')) { return '255' . substr($raw, 1); }
+        if (str_starts_with($raw, '255')) { return $raw; }
+        return '255' . $raw;
     }
 
     /**
