@@ -42,15 +42,8 @@ class PaymentController extends Controller
             return $user;
         });
 
-        // Call the requestPush method directly
-        $pushResponse = $this->requestPush($pushRequest);
-        $pushData = $pushResponse->getData(true);
-
-        if ($pushData['ok']) {
-            return Redirect::route('payment.index')->with('status', 'Ombi la malipo limetumwa kwenye simu yako. Tafadhali thibitisha.');
-        } else {
-            return Redirect::route('payment.index')->with('error', $pushData['message'] ?? 'Imeshindikana kutuma ombi la malipo.');
-        }
+        // Call the requestPush method directly and return its JSON response
+        return $this->requestPush($pushRequest);
     }
 
     /**

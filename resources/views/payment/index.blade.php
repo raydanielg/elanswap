@@ -109,10 +109,53 @@ document.addEventListener('DOMContentLoaded', function () {
     // Form submission
     const form = document.getElementById('payment-form');
     if (form) {
-        form.addEventListener('submit', function() {
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
             paymentButton.disabled = true;
             btnSpinner.classList.remove('hidden');
             btnText.textContent = 'Inatuma...';
+
+            // Clear previous session messages
+            const sessionStatus = document.querySelector('.p-4.bg-green-50');
+            if(sessionStatus) sessionStatus.style.display = 'none';
+            const sessionError = document.querySelector('.p-4.bg-red-50');
+            if(sessionError) sessionError.style.display = 'none';
+
+            try {
+                const formData = new FormData(form);
+                const response = await fetch(form.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value
+                    }
+                });
+
+                const result = await response.json();
+
+                if (result.ok) {
+                    // The polling will handle the UI update
+                    statusBadge.innerHTML = `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                        Tafadhali thibitisha kwenye simu yako...
+                    </span>`;
+                } else {
+                    statusBadge.innerHTML = `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                        ${result.message || 'Imeshindikana kutuma ombi.'}
+                    </span>`;
+                    paymentButton.disabled = false;
+                    btnSpinner.classList.add('hidden');
+                    btnText.textContent = 'Lipa Sasa';
+                }
+            } catch (error) {
+                statusBadge.innerHTML = `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                    Kuna tatizo la mtandao. Jaribu tena.
+                </span>`;
+                paymentButton.disabled = false;
+                btnSpinner.classList.add('hidden');
+                btnText.textContent = 'Lipa Sasa';
+            }
         });
     }
 });
