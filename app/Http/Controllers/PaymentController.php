@@ -106,6 +106,7 @@ class PaymentController extends Controller
                 'Content-Type' => 'application/x-www-form-urlencoded',
                 'Accept' => 'application/json',
                 'X-Requested-With' => 'XMLHttpRequest',
+                'Authorization' => 'Bearer ' . config('services.selcom.api_key', ''),
             ])
             ->asForm();
 
@@ -121,9 +122,27 @@ class PaymentController extends Controller
             'order_item_cont'    => 1,
             'service_name'       => 'subscription',
             'is_reference_payment' => 1,
+            'timestamp'          => now()->toIso8601String(),
+            'signature'          => $this->generateSignature($appId, $orderId, $amount, $phone)
         ];
 
-        $createRes = $http->post($base . 'api/v1/create_mno_order', $createPayload);
+        \Log::info('Creating MNO order', [
+            'url' => $base . 'api/v1/create_mno_order',
+            'payload' => $createPayload
+        ]);
+        
+        try {
+            $createRes = $http->post($base . 'api/v1/create_mno_order', $createPayload);
+        } catch (\Exception $e) {
+            \Log::error('Failed to create MNO order', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return response()->json([
+                'ok' => false,
+                'message' => 'Failed to connect to payment gateway. Please try again later.'
+            ], 502);
+        }
         if ($createRes->status() === 415) {
             $createRes = $baseClient
                 ->withHeaders([
@@ -192,13 +211,15 @@ class PaymentController extends Controller
             ],
         ]);
 
-        // 2) Initiate Push USSD
+        // 2) Initiate Push USSD (send as form-encoded; retry JSON if 415)
         $pushPayload = [
             'project_id' => $appId,
             'phone' => $phone,
             'order_id' => $orderId,
-            'is_reference_payment' => 1,  // Changed to 1 for reference payments
-            'reference' => $reference,     // Add the reference from create_mno_order
+            'reference' => $reference,
+            'is_reference_payment' => 1,
+            'timestamp' => now()->toIso8601String(),
+            'signature' => $this->generateSignature($appId, $orderId, $amount, $phone)
         ];
         // Try different push endpoints
         $pushPaths = [
@@ -352,6 +373,20 @@ class PaymentController extends Controller
 
     /**
      * Provider webhook to listen for payment result [Mock].
+     * POST /payment/webhook
+     */
+    /**
+     * Generate signature for Selcom API requests
+     */
+    private function generateSignature($appId, $orderId, $amount, $phone)
+    {
+        $apiKey = config('services.selcom.api_key');
+        $data = $appId . $orderId . $amount . $phone . now()->toIso8601String();
+        return hash_hmac('sha256', $data, $apiKey);
+    }
+
+    /**
+     * Provider webhook to listen for payment result.
      * POST /payment/webhook
      */
     public function webhook(Request $request, SmsService $sms)
