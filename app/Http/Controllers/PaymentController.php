@@ -17,7 +17,8 @@ class PaymentController extends Controller
         $user = $request->user();
         $amount = (int) (config('services.elanswap.payment_amount', 100)); // TZS
         $latest = $user->payments()->latest('id')->first();
-        return view('payment.index', compact('user','latest','amount'));
+        $orders = $user->payments()->orderByDesc('id')->limit(10)->get();
+        return view('payment.index', compact('user','latest','amount','orders'));
     }
 
     
@@ -168,11 +169,17 @@ class PaymentController extends Controller
             'order_id' => $orderId,
             'is_reference_payment' => 0,
         ];
-        // Some gateways expose initiatePushUSSD without the api/v1 prefix.
-        // Try with api/v1 first, then without if we get a 404.
-        $pushPaths = ['initiatePushUSSD', 'initiatePushUSSD'];
+        // Try different push endpoints (providers differ slightly)
+        $pushPaths = [
+            'api/v1/initiatePushUSSD',
+            'initiatePushUSSD',
+            'api/v1/initiatePush',
+            'initiatePush',
+        ];
         $pushRes = null;
+        $lastError = null;
         foreach ($pushPaths as $idx => $path) {
+            \Log::info('Selcom push: attempting', ['url' => $base . $path, 'payload' => $pushPayload]);
             $pushRes = $baseClient
                 ->withHeaders([
                     'Content-Type' => 'application/x-www-form-urlencoded',
@@ -203,17 +210,22 @@ class PaymentController extends Controller
                 }
                 $pushRes = $req2->post($base . $path);
             }
-            // If not a 404, accept this response; otherwise try next path
-            if ($pushRes->status() !== 404) {
+            // If successful, use this response; otherwise try next path
+            if ($pushRes->successful()) {
+                $lastError = null;
                 break;
             }
-            \Log::warning('initiatePushUSSD 404 on path, trying alternative', ['path' => $path, 'base' => $base]);
-        }
-        $push = $pushRes->ok() ? $pushRes->json() : null;
-        if (!$pushRes->ok()) {
-            \Log::error('Selcom initiatePushUSSD failed', [
+            $lastError = [
+                'path' => $path,
                 'status' => $pushRes->status(),
-                'body' => $pushRes->body(),
+                'body' => $pushRes->json() ?? $pushRes->body(),
+            ];
+            \Log::warning('Selcom push attempt failed', $lastError);
+        }
+        $push = $pushRes && $pushRes->successful() ? $pushRes->json() : null;
+        if (!$pushRes || !$pushRes->successful()) {
+            \Log::error('Selcom push failed (all endpoints tried)', [
+                'last_error' => $lastError,
                 'payload' => $pushPayload,
                 'base' => $base,
             ]);
@@ -236,9 +248,15 @@ class PaymentController extends Controller
 
         $errorMessage = 'Imeshindikana kutuma ombi';
         if (!$ok) {
-            if (is_array($push) && isset($push['message']) && $push['message']) {
-                $errorMessage = (string) $push['message'];
-            } elseif (!$pushRes->ok()) {
+            if (is_array($push)) {
+                if (!empty($push['message'])) {
+                    $errorMessage = (string) $push['message'];
+                } elseif (!empty($push['status_message'])) {
+                    $errorMessage = (string) $push['status_message'];
+                } elseif (!empty($push['resultcode']) && $push['resultcode'] !== '000') {
+                    $errorMessage = 'Hitilafu ya malipo: ' . (string) $push['resultcode'];
+                }
+            } elseif ($pushRes) {
                 $errorMessage = 'Push haikufaulu (' . $pushRes->status() . ')';
             }
         }

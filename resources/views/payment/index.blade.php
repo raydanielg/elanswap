@@ -53,25 +53,15 @@
             </div>
 
             @if(!auth()->user()->hasPaid())
-                <div class="p-6 bg-white shadow sm:rounded-lg" x-data>
-                    <h3 class="text-lg font-semibold mb-1">Weka Namba ya Simu</h3>
-                    <p class="text-sm text-gray-600 mb-3">Ingiza namba utakayopokea ombi la malipo (mf. 07XXXXXXXX au 2557XXXXXXXX). Mfumo utatuma ombi la USSD/Push.</p>
-                    <form id="pushForm" method="POST" action="{{ route('payment.push') }}" class="space-y-4">
-                        @csrf
+                <div class="p-6 bg-white shadow sm:rounded-lg">
+                    <div class="flex items-center justify-between">
                         <div>
-                            <label for="phone" class="block text-sm font-medium text-gray-700">Namba ya Simu</label>
-                            <input id="phone" name="phone" type="text" inputmode="tel" placeholder="07XXXXXXXX au 2557XXXXXXXX" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500" required>
+                            <h3 class="text-lg font-semibold mb-1">Lipa Sasa</h3>
+                            <p class="text-sm text-gray-600">Bonyeza kitufe hapa chini kuingiza namba ya simu na kutuma ombi la malipo.</p>
                         </div>
-
-                        @error('phone')
-                            <p class="text-sm text-red-600">{{ $message }}</p>
-                        @enderror
-
-                        <button id="pushBtn" type="submit" class="mt-2 inline-flex items-center px-4 py-2 bg-primary-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-primary-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-25 transition">Tuma Ombi la Malipo</button>
-                        <p class="mt-2 text-xs text-gray-500">Ukishapokea ombi kwenye simu, weka PIN kuthibitisha. Halafu subiri sekunde chache.</p>
-                    </form>
+                        <button id="openPayModal" class="inline-flex items-center px-4 py-2 bg-primary-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-primary-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">Lipa Sasa</button>
+                    </div>
                     <div id="pushStatus" class="mt-3 text-sm text-gray-700 hidden"></div>
-                    <p class="mt-2 text-xs text-gray-500">Baada ya kutuma, thibitisha ombi la malipo kwenye simu yako.</p>
                 </div>
             @else
                 <div class="p-6 bg-green-50 border border-green-200 rounded-lg">
@@ -81,9 +71,75 @@
                     </div>
                 </div>
             @endif
+
+            <div class="p-6 bg-white shadow sm:rounded-lg">
+                <h3 class="text-lg font-semibold mb-3">Oda Zako za Hivi Karibuni</h3>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200 text-sm">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-3 py-2 text-left font-medium text-gray-700">Tarehe</th>
+                                <th class="px-3 py-2 text-left font-medium text-gray-700">Order ID</th>
+                                <th class="px-3 py-2 text-left font-medium text-gray-700">Kiasi</th>
+                                <th class="px-3 py-2 text-left font-medium text-gray-700">Njia</th>
+                                <th class="px-3 py-2 text-left font-medium text-gray-700">Hali</th>
+                                <th class="px-3 py-2 text-left font-medium text-gray-700">Reference</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">
+                            @forelse(($orders ?? []) as $o)
+                                @php($meta = (array) ($o->meta ?? []))
+                                <tr>
+                                    <td class="px-3 py-2 text-gray-700 whitespace-nowrap">{{ $o->created_at?->format('Y-m-d H:i') }}</td>
+                                    <td class="px-3 py-2 text-gray-700">{{ $meta['order_id'] ?? '-' }}</td>
+                                    <td class="px-3 py-2 text-gray-700">TZS {{ number_format((int) $o->amount) }}</td>
+                                    <td class="px-3 py-2 text-gray-700 uppercase">{{ $o->method ?? '-' }}</td>
+                                    <td class="px-3 py-2">
+                                        @if($o->paid_at || ($o->status === 'paid'))
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs bg-green-100 text-green-800">PAID</span>
+                                        @else
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs bg-amber-50 text-amber-700">PENDING</span>
+                                        @endif
+                                    </td>
+                                    <td class="px-3 py-2 text-gray-700">{{ $o->provider_reference ?? '-' }}</td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="6" class="px-3 py-4 text-gray-500">Bado hujafanya malipo.</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </div>
-</x-app-layout>
+
+<!-- Modal: Ingiza Namba ya Simu -->
+<div id="payModal" class="fixed inset-0 bg-black/40 hidden items-center justify-center z-50">
+    <div class="bg-white w-full max-w-md rounded-lg shadow-lg p-6">
+        <div class="flex items-start justify-between mb-3">
+            <h3 class="text-lg font-semibold">Ingiza Namba ya Simu</h3>
+            <button id="closePayModal" class="text-gray-500 hover:text-gray-700">&times;</button>
+        </div>
+        <p class="text-sm text-gray-600 mb-4">Weka namba utakayopokea ombi la malipo (mf. 07XXXXXXXX au 2557XXXXXXXX). Mfumo utatuma ombi la USSD/Push.</p>
+        <form id="pushForm" method="POST" action="{{ route('payment.push') }}" class="space-y-4">
+            @csrf
+            <div>
+                <label for="phone" class="block text-sm font-medium text-gray-700">Namba ya Simu</label>
+                <input id="phone" name="phone" type="text" inputmode="tel" placeholder="07XXXXXXXX au 2557XXXXXXXX" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500" required>
+            </div>
+            @error('phone')
+                <p class="text-sm text-red-600">{{ $message }}</p>
+            @enderror
+            <div class="flex items-center justify-end gap-3">
+                <button type="button" id="cancelPayModal" class="px-4 py-2 rounded-md border text-gray-700">Ghairi</button>
+                <button id="pushBtn" type="submit" class="inline-flex items-center px-4 py-2 bg-primary-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-primary-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-25 transition">Tuma Ombi</button>
+            </div>
+        </form>
+    </div>
+    <div class="absolute inset-0 -z-10" aria-hidden="true"></div>
+  </div>
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
@@ -100,6 +156,18 @@ document.addEventListener('DOMContentLoaded', function () {
     const show = (el) => { el.classList.remove('hidden'); };
     const hide = (el) => { el.classList.add('hidden'); };
 
+    // Modal controls
+    const modal = document.getElementById('payModal');
+    const openBtn = document.getElementById('openPayModal');
+    const closeBtn = document.getElementById('closePayModal');
+    const cancelBtn = document.getElementById('cancelPayModal');
+    const showModal = () => { if (modal) { modal.classList.remove('hidden'); modal.classList.add('flex'); } };
+    const hideModal = () => { if (modal) { modal.classList.add('hidden'); modal.classList.remove('flex'); } };
+    if (openBtn) openBtn.addEventListener('click', showModal);
+    if (closeBtn) closeBtn.addEventListener('click', hideModal);
+    if (cancelBtn) cancelBtn.addEventListener('click', hideModal);
+
+    if (!form) return;
     form.addEventListener('submit', async function (e) {
         e.preventDefault();
         if (btn) { btn.disabled = true; btn.textContent = 'Inatuma...'; }
@@ -129,6 +197,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 orderIdSpan.textContent = data.order_id;
                 currentOrderId = data.order_id;
             }
+            hideModal();
             if (statusBox) {
                 statusBox.textContent = 'Ombi limetumwa. Inasubiri uthibitisho kwenye simu yako...';
             }
