@@ -136,10 +136,12 @@ document.addEventListener('DOMContentLoaded', function () {
                 const result = await response.json();
 
                 if (result.ok) {
-                    // The polling will handle the UI update
-                    statusBadge.innerHTML = `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                        Tafadhali thibitisha kwenye simu yako...
-                    </span>`;
+                    statusBadge.innerHTML = `<div class="flex items-center text-sm text-blue-600">
+                        <svg class="animate-spin h-4 w-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path></svg>
+                        <span>Ombi limetumwa. Tafadhali thibitisha kwenye simu yako.</span>
+                    </div>`;
+                    // Keep the button disabled but change text
+                    btnText.textContent = 'Inasubiri Uthibitisho...';
                 } else {
                     statusBadge.innerHTML = `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
                         ${result.message || 'Imeshindikana kutuma ombi.'}

@@ -27,13 +27,11 @@ class PaymentController extends Controller
      */
     public function pay(Request $request)
     {
-
         $user = $request->user();
 
         // Automatically trigger push payment
         $pushRequest = new Request([
             'phone' => $request->string('phone'),
-            // Amount is now fetched from config in the requestPush method
         ]);
         $pushRequest->setUserResolver(function() use ($user) {
             return $user;
