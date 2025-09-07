@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Payment;
 use App\Services\SmsService;
-use App\Jobs\SendSms;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Auth;
@@ -18,7 +17,7 @@ class PaymentController extends Controller
     public function index(Request $request)
     {
         $user = $request->user();
-        $amount = (int) (config('services.elanswap.payment_amount', 500)); // TZS
+        $amount = (int) (config('services.elanswap.payment_amount', 2500)); // TZS
         $latest = $user->payments()->latest('id')->first();
         return view('payment.index', compact('user','latest','amount'));
     }
@@ -33,7 +32,7 @@ class PaymentController extends Controller
         ]);
 
         $user = $request->user();
-        $amount = (int) (config('services.elanswap.payment_amount', 500));
+        $amount = (int) (config('services.elanswap.payment_amount', 2500));
 
         // Create a payment record. Do NOT force a specific status value to avoid
         // violating existing SQLite CHECK constraints from previous schemas.
@@ -64,7 +63,7 @@ class PaymentController extends Controller
         ]);
 
         $user = $request->user();
-        $amount = (int) (config('services.elanswap.payment_amount', 500));
+        $amount = (int) (config('services.elanswap.payment_amount', 2500));
 
         // Normalize phone to TZ E.164 without plus (e.g., 2557XXXXXXXX)
         $rawPhone = preg_replace('/[^0-9+]/', '', (string) $request->string('phone'));
@@ -106,7 +105,6 @@ class PaymentController extends Controller
                 'Content-Type' => 'application/x-www-form-urlencoded',
                 'Accept' => 'application/json',
                 'X-Requested-With' => 'XMLHttpRequest',
-                'Authorization' => 'Bearer ' . config('services.selcom.api_key', ''),
             ])
             ->asForm();
 
@@ -122,27 +120,9 @@ class PaymentController extends Controller
             'order_item_cont'    => 1,
             'service_name'       => 'subscription',
             'is_reference_payment' => 1,
-            'timestamp'          => now()->toIso8601String(),
-            'signature'          => $this->generateSignature($appId, $orderId, $amount, $phone)
         ];
 
-        \Log::info('Creating MNO order', [
-            'url' => $base . 'api/v1/create_mno_order',
-            'payload' => $createPayload
-        ]);
-        
-        try {
-            $createRes = $http->post($base . 'api/v1/create_mno_order', $createPayload);
-        } catch (\Exception $e) {
-            \Log::error('Failed to create MNO order', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-            return response()->json([
-                'ok' => false,
-                'message' => 'Failed to connect to payment gateway. Please try again later.'
-            ], 502);
-        }
+        $createRes = $http->post($base . 'api/v1/create_mno_order', $createPayload);
         if ($createRes->status() === 415) {
             $createRes = $baseClient
                 ->withHeaders([
@@ -216,26 +196,13 @@ class PaymentController extends Controller
             'project_id' => $appId,
             'phone' => $phone,
             'order_id' => $orderId,
-            'reference' => $reference,
-            'is_reference_payment' => 1,
-            'timestamp' => now()->toIso8601String(),
-            'signature' => $this->generateSignature($appId, $orderId, $amount, $phone)
+            'is_reference_payment' => 0,
         ];
-        // Try different push endpoints
-        $pushPaths = [
-            'api/v1/initiatePushUSSD',
-            'initiatePushUSSD',
-            'api/v1/initiatePush',
-            'initiatePush'
-        ];
+        // Some gateways expose initiatePushUSSD without the api/v1 prefix.
+        // Try with api/v1 first, then without if we get a 404.
+        $pushPaths = ['initiatePushUSSD', 'initiatePushUSSD'];
         $pushRes = null;
-        $lastError = null;
-        
-        foreach ($pushPaths as $path) {
-            \Log::info('Attempting push notification', [
-                'endpoint' => $base . $path,
-                'payload' => $pushPayload
-            ]);
+        foreach ($pushPaths as $idx => $path) {
             $pushRes = $baseClient
                 ->withHeaders([
                     'Content-Type' => 'application/x-www-form-urlencoded',
@@ -266,56 +233,20 @@ class PaymentController extends Controller
                 }
                 $pushRes = $req2->post($base . $path);
             }
-            // If successful, use this response
-            if ($pushRes->successful()) {
-                $lastError = null;
+            // If not a 404, accept this response; otherwise try next path
+            if ($pushRes->status() !== 404) {
                 break;
             }
-            
-            // Log the error and try next endpoint
-            $lastError = [
-                'path' => $path,
-                'status' => $pushRes->status(),
-                'response' => $pushRes->json() ?? $pushRes->body()
-            ];
-            
-            \Log::warning('Push notification attempt failed', $lastError);
+            \Log::warning('initiatePushUSSD 404 on path, trying alternative', ['path' => $path, 'base' => $base]);
         }
-        $push = $pushRes->successful() ? $pushRes->json() : null;
-        
-        if (!$pushRes->successful()) {
-            $errorMessage = 'Failed to initiate payment request';
-            $errorMessage = 'Imeshindikana kutuma ombi la malipo.';
-            
-            // Try to get a more specific error message
-            $response = $pushRes->json();
-            if (is_array($response)) {
-                if (!empty($response['message'])) {
-                    $errorMessage = (string)$response['message'];
-                } elseif (!empty($response['error'])) {
-                    $errorMessage = (string)$response['error'];
-                } elseif (!empty($response['resultcode']) && $response['resultcode'] !== '000') {
-                    $errorMessage = 'Hitilafu ya mfumo wa malipo: ' . ($response['resultcode'] ?? 'unknown');
-                }
-            }
-            
+        $push = $pushRes->ok() ? $pushRes->json() : null;
+        if (!$pushRes->ok()) {
             \Log::error('Selcom initiatePushUSSD failed', [
                 'status' => $pushRes->status(),
-                'response' => $response ?? $pushRes->body(),
+                'body' => $pushRes->body(),
                 'payload' => $pushPayload,
                 'base' => $base,
-                'endpoint_tried' => $path ?? null,
-                'last_error' => $lastError
             ]);
-            
-            return response()->json([
-                'ok' => false,
-                'message' => $errorMessage,
-                'debug' => app()->environment('local') ? [
-                    'status' => $pushRes->status(),
-                    'response' => $response ?? $pushRes->body()
-                ] : null
-            ], 502);
         }
 
         // Save push response in meta
@@ -325,30 +256,22 @@ class PaymentController extends Controller
         $ok = ($push && isset($push['resultcode']) && (string)$push['resultcode'] === '000');
 
         // If HTTP succeeded but provider result code is not success, log it for diagnostics
-        if ($pushRes->successful() && !$ok) {
-            $errorMessage = 'Ombi la malipo halijafanikiwa.';
-            if (!empty($push['message'])) {
-                $errorMessage = (string)$push['message'];
-            } elseif (!empty($push['resultcode']) && $push['resultcode'] !== '000') {
-                $errorMessage = 'Hitilafu ya mfumo wa malipo: ' . $push['resultcode'];
-            }
-            
+        if ($pushRes->ok() && !$ok) {
             \Log::warning('Selcom push responded with non-success resultcode', [
                 'http_status' => $pushRes->status(),
                 'provider_result' => $push,
                 'payload' => $pushPayload,
             ]);
-            
-            return response()->json([
-                'ok' => false,
-                'message' => $errorMessage,
-                'debug' => app()->environment('local') ? [
-                    'result' => $push
-                ] : null
-            ], 502);
         }
 
-        $errorMessage = 'Tafadhali jaribu tena baadaye. Shida imetokea wakati wa kutuma ombi la malipo.';
+        $errorMessage = 'Imeshindikana kutuma ombi';
+        if (!$ok) {
+            if (is_array($push) && isset($push['message']) && $push['message']) {
+                $errorMessage = (string) $push['message'];
+            } elseif (!$pushRes->ok()) {
+                $errorMessage = 'Push haikufaulu (' . $pushRes->status() . ')';
+            }
+        }
 
         $response = [
             'ok' => $ok,
@@ -375,39 +298,14 @@ class PaymentController extends Controller
      * Provider webhook to listen for payment result [Mock].
      * POST /payment/webhook
      */
-    /**
-     * Generate signature for Selcom API requests
-     */
-    private function generateSignature($appId, $orderId, $amount, $phone)
-    {
-        $apiKey = config('services.selcom.api_key');
-        $data = $appId . $orderId . $amount . $phone . now()->toIso8601String();
-        return hash_hmac('sha256', $data, $apiKey);
-    }
-
-    /**
-     * Provider webhook to listen for payment result.
-     * POST /payment/webhook
-     */
     public function webhook(Request $request, SmsService $sms)
     {
         // In production: verify signature / token from provider
         $data = $request->all();
-        if (empty($data)) {
-            // Fallback to raw JSON (providers sometimes send with non-standard headers)
-            $raw = @file_get_contents('php://input');
-            if ($raw) {
-                $decoded = json_decode($raw, true);
-                if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
-                    $data = $decoded;
-                }
-            }
-        }
         $reference = (string) ($data['reference'] ?? $data['provider_reference'] ?? '');
         $orderId   = (string) ($data['order_id'] ?? '');
-        $status    = (string) ($data['status'] ?? $data['payment_status'] ?? ''); // e.g., 'paid', 'COMPLETED'
+        $status    = (string) ($data['status'] ?? ''); // Selcom may send 'paid'
         $transid   = (string) ($data['transid'] ?? '');
-        $channel   = (string) ($data['channel'] ?? '');
 
         $payment = null;
         if ($reference !== '') {
@@ -427,15 +325,11 @@ class PaymentController extends Controller
         $meta = (array) $payment->meta;
         $meta['webhook'] = $data;
         if ($transid !== '') { $meta['transid'] = $transid; }
-        if ($channel !== '') { $meta['channel'] = $channel; }
 
         $updates = [ 'meta' => $meta ];
         $setPaid = in_array(strtolower($status), ['success','completed','paid'], true);
         if ($setPaid) {
             $updates['paid_at'] = now();
-            // Also reflect completion in status/meta for reporting compatibility
-            $updates['status'] = 'paid';
-            $updates['meta'] = array_merge($meta, ['payment_status' => 'COMPLETED']);
         }
 
         $payment->fill($updates)->save();
@@ -444,22 +338,8 @@ class PaymentController extends Controller
         if ($setPaid && $payment->user_id) {
             $amount = number_format((int) $payment->amount);
             $ref = $payment->provider_reference ?: ($meta['order_id'] ?? '');
-            // User-requested SMS format beginning with transid
-            $message = trim(($transid !== '' ? ($transid.' ') : '') . "Tumepokea malipo yako ya Tsh {$amount}. Rejea: {$ref}");
-            try { SendSms::dispatch($payment->user_id, null, $message); } catch (\Throwable $e) { /* log silently */ }
-
-            // Also trigger domain-specific notification as requested
-            $this->onPaymentNotification((string) ($meta['order_id'] ?? $orderId), $payment, $sms);
-
-            // Notify admins
-            try {
-                $user = \App\Models\User::find($payment->user_id);
-                $uname = $user?->name ?: 'Mtumiaji';
-                $uphone = $user?->phone ? ('+'. $user->phone) : '';
-                $adminMsg = "ElanSwap: Malipo mapya yamepokelewa.\nJina: {$uname}\nSimu: {$uphone}\nKiasi: TZS {$amount}\nRejea: {$ref}";
-                SendSms::dispatch(null, '+255 757 756 184', $adminMsg);
-                SendSms::dispatch(null, '0742710054', $adminMsg);
-            } catch (\Throwable $e) { /* silent */ }
+            $message = "Malipo yako ya TZS {$amount} yamefanikiwa. Rejea: {$ref}. Asante kwa kutumia ElanSwap.";
+            try { $sms->sendSms($payment->user_id, $message); } catch (\Throwable $e) { /* log silently */ }
         }
 
         return response()->json(['ok' => true, 'message' => 'Webhook processed']);
@@ -472,31 +352,14 @@ class PaymentController extends Controller
     public function status(Request $request)
     {
         $user = $request->user();
-        $orderId = (string) $request->query('order_id', '');
-
-        $payment = null;
-        if ($user) {
-            if ($orderId !== '') {
-                // Try to find the specific payment for this user by meta->order_id or provider_reference
-                foreach ($user->payments()->orderByDesc('id')->get() as $p) {
-                    $meta = (array) $p->meta;
-                    if ((($meta['order_id'] ?? null) === $orderId) || ($p->provider_reference === $orderId)) {
-                        $payment = $p; break;
-                    }
-                }
-            }
-            if (!$payment) {
-                $payment = $user->payments()->latest('id')->first();
-            }
-        }
-
+        $latest = $user?->payments()->latest('id')->first();
         return response()->json([
             'ok' => true,
-            'paid' => (bool) ($payment && $payment->paid_at),
-            'status' => $payment?->status,
-            'paid_at' => optional($payment?->paid_at)->toIso8601String(),
-            'method' => $payment?->method,
-            'reference' => $payment?->provider_reference,
+            'paid' => (bool) ($latest && $latest->paid_at),
+            'status' => $latest?->status,
+            'paid_at' => optional($latest?->paid_at)->toIso8601String(),
+            'method' => $latest?->method,
+            'reference' => $latest?->provider_reference,
         ]);
     }
 }
