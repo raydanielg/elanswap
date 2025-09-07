@@ -108,6 +108,26 @@ class RegisteredUserController extends Controller
             // Log the user in directly
             Auth::login($user);
 
+            // SMS notifications: welcome user + notify admins
+            try {
+                // Welcome SMS to the user
+                $welcome = "Karibu ElanSwap, {$user->name}! Akaunti yako imesajiliwa kikamilifu. Unaweza kuanza kutumia mfumo sasa.";
+                if (function_exists('sendsms')) {
+                    @sendsms($user->id, $welcome);
+                }
+
+                // Notify admins about new registration
+                $admins = ['+255 757 756 184', '0742710054'];
+                $adminMsg = "ElanSwap: Mtumiaji mpya amejisajili.\nJina: {$user->name}\nSimu: {$normalizedPhone}\nMuda: " . now()->format('Y-m-d H:i');
+                if (function_exists('sendsms_to_number')) {
+                    foreach ($admins as $adminPhone) {
+                        @sendsms_to_number($adminPhone, $adminMsg, $user->id);
+                    }
+                }
+            } catch (\Throwable $e) {
+                \Log::warning('SMS notification failed on register: ' . $e->getMessage());
+            }
+
             // Redirect based on role
             if ($user->role === 'superadmin') {
                 return redirect()->route('superadmin.dashboard');
