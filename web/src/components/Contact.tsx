@@ -22,8 +22,9 @@ export default function Contact() {
     try {
       const res = await fetch("https://swap.elanbrands.net/api/contact", {
         method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ name, email, message, company: "" }), // company = honeypot
+        headers: { Accept: "application/json" },
+        // Send as application/x-www-form-urlencoded (browser sets the Content-Type)
+        body: new URLSearchParams({ name, email, message, company: "" }) as any,
       });
       const json = await res.json();
       if (!res.ok || !json?.ok) throw new Error(json?.error || `HTTP ${res.status}`);
@@ -46,8 +47,8 @@ export default function Contact() {
     try {
       const res = await fetch("https://swap.elanbrands.net/api/newsletter", {
         method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ email: nlEmail, website: "" }), // website = honeypot
+        headers: { Accept: "application/json" },
+        body: new URLSearchParams({ email: nlEmail, website: "" }) as any,
       });
       const json = await res.json();
       if (!res.ok || !json?.ok) throw new Error(json?.error || `HTTP ${res.status}`);
