@@ -23,33 +23,35 @@ class PaymentController extends Controller
     }
 
     /**
-     * Mock pay handler. In production, integrate real provider (M-Pesa/TigoPesa/Airtel/Card).
+     * Initiate payment by automatically sending push notification to user's phone.
      */
     public function pay(Request $request)
     {
         $request->validate([
             'method' => ['required','in:mpesa,tigopesa,airtel,card'],
+            'phone' => ['required','string','min:9','max:15'],
         ]);
 
         $user = $request->user();
-        $amount = (int) (config('services.elanswap.payment_amount', 2500));
+        $phone = $request->string('phone');
 
-        // Create a payment record. Do NOT force a specific status value to avoid
-        // violating existing SQLite CHECK constraints from previous schemas.
-        // We mark paid via paid_at and leave status to its default ('pending') for safety.
-        $payment = Payment::create([
-            'user_id' => $user->id,
-            'method' => (string) $request->string('method'),
-            'amount' => $amount,
-            'currency' => 'TZS',
-            'paid_at' => now(),
-            'meta' => [
-                'mock' => true,
-                'note' => 'Marked as paid for testing. Replace with real provider integration.',
-            ],
+        // Automatically trigger push payment instead of mock payment
+        $pushRequest = new Request([
+            'phone' => $phone
         ]);
+        $pushRequest->setUserResolver(function() use ($user) {
+            return $user;
+        });
 
-        return Redirect::route('payment.index')->with('status', 'Malipo yamekamilika. Asante!');
+        // Call the requestPush method directly
+        $pushResponse = $this->requestPush($pushRequest);
+        $pushData = $pushResponse->getData(true);
+
+        if ($pushData['ok']) {
+            return Redirect::route('payment.index')->with('status', 'Ombi la malipo limetumwa kwenye simu yako. Tafadhali thibitisha.');
+        } else {
+            return Redirect::route('payment.index')->with('error', $pushData['message'] ?? 'Imeshindikana kutuma ombi la malipo.');
+        }
     }
 
     /**

@@ -46,26 +46,43 @@
             @if(!auth()->user()->hasPaid())
                 <div class="p-6 bg-white shadow sm:rounded-lg">
                     <h3 class="text-lg font-semibold mb-1">Lipa Sasa</h3>
-                    <p class="text-sm text-gray-600 mb-3">Ingiza namba utakayopokea ombi la malipo (mf. 07XXXXXXXX au 2557XXXXXXXX). Mfumo utatuma ombi la USSD/Push.</p>
-                    <form id="pushForm" method="POST" action="{{ route('payment.push') }}" class="space-y-4">
+                    <p class="text-sm text-gray-600 mb-3">Chagua njia ya malipo na ingiza namba ya simu. Mfumo utatuma ombi la malipo moja kwa moja kwenye simu yako.</p>
+                    
+                    @if(session('error'))
+                        <div class="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-800 text-sm">
+                            {{ session('error') }}
+                        </div>
+                    @endif
+
+                    <form method="POST" action="{{ route('payment.pay') }}" class="space-y-4">
                         @csrf
+                        <div>
+                            <label for="method" class="block text-sm font-medium text-gray-700">Njia ya Malipo</label>
+                            <select id="method" name="method" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500" required>
+                                <option value="">Chagua njia ya malipo</option>
+                                <option value="mpesa">M-Pesa</option>
+                                <option value="tigopesa">Tigo Pesa</option>
+                                <option value="airtel">Airtel Money</option>
+                            </select>
+                        </div>
                         <div>
                             <label for="phone" class="block text-sm font-medium text-gray-700">Namba ya Simu</label>
                             <input id="phone" name="phone" type="tel" inputmode="numeric" pattern="[0-9+]{9,15}" maxlength="15" placeholder="07XXXXXXXX au 2557XXXXXXXX" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500" required>
-                            <p id="phoneHint" class="mt-1 text-xs text-gray-500">Ruhusu tarakimu na + pekee. Mfano: 0712XXXXXX au 2557XXXXXXX.</p>
+                            <p class="mt-1 text-xs text-gray-500">Ingiza namba utakayopokea ombi la malipo. Mfano: 0712XXXXXX au 2557XXXXXXX.</p>
                         </div>
                         @error('phone')
                             <p class="text-sm text-red-600">{{ $message }}</p>
                         @enderror
+                        @error('method')
+                            <p class="text-sm text-red-600">{{ $message }}</p>
+                        @enderror
                         <div class="flex items-center justify-end gap-3">
-                            <button id="pushBtn" type="submit" class="inline-flex items-center px-4 py-2 bg-primary-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-primary-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 transition">
-                                <svg id="btnSpinner" class="hidden animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path></svg>
-                                <span id="btnText">Tuma Ombi la Malipo</span>
+                            <button type="submit" class="inline-flex items-center px-4 py-2 bg-primary-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-primary-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition">
+                                Tuma Ombi la Malipo
                             </button>
                         </div>
                     </form>
-                    <div id="pushStatus" class="mt-3 text-sm text-gray-700 hidden"></div>
-                    <p class="mt-2 text-xs text-gray-500">Baada ya kutuma, thibitisha ombi la malipo kwenye simu yako.</p>
+                    <p class="mt-2 text-xs text-gray-500">Baada ya kubonyeza, utapokea ombi la malipo moja kwa moja kwenye simu yako. Thibitisha ombi hilo ili kukamilisha malipo.</p>
                 </div>
             @else
                 <div class="p-6 bg-green-50 border border-green-200 rounded-lg">
@@ -119,22 +136,8 @@
         </div>
     </div>
 
-<!-- Removed modal; inline form is shown above -->
-
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    const form = document.getElementById('pushForm');
-    const btn = document.getElementById('pushBtn');
-    const btnText = document.getElementById('btnText');
-    const btnSpinner = document.getElementById('btnSpinner');
-    const statusBox = document.getElementById('pushStatus');
-    const pushUrl = form.getAttribute('action');
-    const statusUrlBase = '{{ route('payment.status') }}';
-    const dashboardUrl = '{{ route('dashboard') }}';
-
-    const show = (el) => { el.classList.remove('hidden'); };
-    const hide = (el) => { el.classList.add('hidden'); };
-
     // Phone input: allow digits and plus, strip others
     const phoneInput = document.getElementById('phone');
     if (phoneInput) {
@@ -143,21 +146,6 @@ document.addEventListener('DOMContentLoaded', function () {
             if (cleaned !== phoneInput.value) phoneInput.value = cleaned;
         });
     }
-
-    if (!form) return;
-    form.addEventListener('submit', async function (e) {
-        e.preventDefault();
-        if (btn) {
-            btn.disabled = true;
-            if (btnText) btnText.textContent = 'Inatuma...';
-            if (btnSpinner) btnSpinner.classList.remove('hidden');
-        }
-        if (statusBox) { statusBox.textContent = 'Inatuma ombi la malipo...'; show(statusBox); }
-
-        try {
-            const formData = new FormData(form);
-            });
-        });
 
         // Summary card live status
         document.addEventListener('DOMContentLoaded', function () {
