@@ -17,7 +17,7 @@ class PaymentController extends Controller
     public function index(Request $request)
     {
         $user = $request->user();
-        $amount = (int) (config('services.elanswap.payment_amount', 2500)); // TZS
+        $amount = (int) (config('services.elanswap.payment_amount', 500)); // TZS
         $latest = $user->payments()->latest('id')->first();
         return view('payment.index', compact('user','latest','amount'));
     }
@@ -32,7 +32,7 @@ class PaymentController extends Controller
         ]);
 
         $user = $request->user();
-        $amount = (int) (config('services.elanswap.payment_amount', 2500));
+        $amount = (int) (config('services.elanswap.payment_amount', 500));
 
         // Create a payment record. Do NOT force a specific status value to avoid
         // violating existing SQLite CHECK constraints from previous schemas.
@@ -63,7 +63,7 @@ class PaymentController extends Controller
         ]);
 
         $user = $request->user();
-        $amount = (int) (config('services.elanswap.payment_amount', 2500));
+        $amount = (int) (config('services.elanswap.payment_amount', 500));
 
         // Normalize phone to TZ E.164 without plus (e.g., 2557XXXXXXXX)
         $rawPhone = preg_replace('/[^0-9+]/', '', (string) $request->string('phone'));

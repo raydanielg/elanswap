@@ -24,6 +24,7 @@
                         </div>
                         <h3 class="text-lg font-semibold mb-2">Muhtasari</h3>
                         <p class="text-gray-700">Kiasi: <span class="font-medium">TZS {{ number_format($amount) }}</span></p>
+                        <p class="text-gray-700 mt-1">Order ID: <span id="orderIdVal">{{ ($latest && is_array($latest->meta ?? null) && isset(($latest->meta)['order_id'])) ? ($latest->meta)['order_id'] : '-' }}</span></p>
 
                         <div class="mt-4 text-sm" id="summaryCard" data-has-latest="{{ $latest ? '1' : '0' }}" data-paid="{{ $latest && $latest->paid_at ? '1' : '0' }}">
                             <p class="text-gray-600 mb-2">Hali ya malipo yako ya karibuni:</p>
@@ -93,6 +94,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const pushUrl = form.getAttribute('action');
     const statusUrl = '{{ route('payment.status') }}';
     const dashboardUrl = '{{ route('dashboard') }}';
+    const orderIdSpan = document.getElementById('orderIdVal');
 
     const show = (el) => { el.classList.remove('hidden'); };
     const hide = (el) => { el.classList.add('hidden'); };
@@ -122,6 +124,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 throw new Error(msg);
             }
 
+            if (orderIdSpan && data.order_id) {
+                orderIdSpan.textContent = data.order_id;
+            }
             if (statusBox) {
                 statusBox.textContent = 'Ombi limetumwa. Inasubiri uthibitisho kwenye simu yako...';
             }
