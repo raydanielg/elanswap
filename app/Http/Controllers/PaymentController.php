@@ -72,35 +72,13 @@ class PaymentController extends Controller
             $phone = '255'.$rawPhone;
         }
 
-        // Prepare Selcom config
-        $base = rtrim((string) config('services.selcom.base_url'), '/') . '/';
-        $appId = (string) config('services.selcom.app_id');
-        $timeout = (int) config('services.selcom.timeout', 15);
-        $verify = config('services.selcom.verify', true);
-        $caPath = config('services.selcom.ca_path');
-        // Build a base HTTP client with SSL options
-        $baseClient = Http::timeout($timeout);
-        if ($caPath) {
-            // When a CA bundle is provided, use it (keeps verification on)
-            $baseClient = $baseClient->withOptions(['verify' => $caPath]);
-        } else {
-            // Otherwise honor the verify boolean (can be false for local/cPanel workaround)
-            $baseClient = $baseClient->withOptions(['verify' => (bool) $verify]);
-        }
-
-        // Build order details
+        // Use cURL implementation based on user's script
         $orderId = 'ORD_' . now()->format('YmdHis') . '_' . $user->id;
+        $appId = (string) config('services.selcom.app_id', '104');
+        $apiUrl = rtrim((string) config('services.selcom.base_url'), '/');
 
-        // 1) Create MNO order (send as form-encoded; retry JSON if 415)
-        $http = $baseClient
-            ->withHeaders([
-                'Content-Type' => 'application/x-www-form-urlencoded',
-                'Accept' => 'application/json',
-                'X-Requested-With' => 'XMLHttpRequest',
-            ])
-            ->asForm();
-
-        $createPayload = [
+        // 1. Create MNO order
+        $createPayload = http_build_query([
             'app_id'             => $appId,
             'order_firstname'    => $user->name ?? 'Customer',
             'order_lastname'     => 'Customer',
@@ -111,63 +89,31 @@ class PaymentController extends Controller
             'currency'           => 'TZS',
             'order_item_cont'    => 1,
             'service_name'       => 'subscription',
-            'is_reference_payment' => 1,
-        ];
+            'is_reference_payment' => 1
+        ]);
 
-        $createRes = $http->post($base . 'api/v1/create_mno_order', $createPayload);
-        if ($createRes->status() === 415) {
-            $createRes = $baseClient
-                ->withHeaders([
-                    'Content-Type' => 'application/json; charset=UTF-8',
-                    'Accept' => 'application/json',
-                    'X-Requested-With' => 'XMLHttpRequest',
-                ])
-                ->asJson()
-                ->post($base . 'api/v1/create_mno_order', $createPayload);
-        }
-        if ($createRes->status() === 415) {
-            // Fallback: multipart/form-data
-            $req = $baseClient
-                ->withHeaders([
-                    'Accept' => 'application/json',
-                    'X-Requested-With' => 'XMLHttpRequest',
-                ]);
-            foreach ($createPayload as $k => $v) {
-                $req = $req->attach($k, (string) $v);
-            }
-            $createRes = $req->post($base . 'api/v1/create_mno_order');
+        $ch = curl_init($apiUrl . '/api/v1/create_mno_order');
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $createPayload);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        $createResponse = curl_exec($ch);
+
+        if ($createResponse === false) {
+            return response()->json(['ok' => false, 'message' => 'cURL Error: ' . curl_error($ch)], 500);
         }
 
-        if (!$createRes->ok()) {
-            \Log::error('Selcom create_mno_order failed', [
-                'status' => $createRes->status(),
-                'body' => $createRes->body(),
-                'payload' => $createPayload,
-                'base' => $base,
-            ]);
-            return response()->json([
-                'ok' => false,
-                'message' => 'Imeshindikana kuanzisha oda (' . $createRes->status() . ').',
-                'status' => $createRes->status(),
-                'body' => $createRes->body(),
-            ], 502);
-        }
-        $create = $createRes->json();
-        $reference = (string) ($create['reference'] ?? '');
-        $paymentUrl = (string) ($create['payment_url'] ?? '');
-        if ($reference === '' || !is_numeric($reference)) {
-            return response()->json(['ok' => false, 'message' => 'Jibu batili kutoka Selcom.'], 502);
+        $createData = json_decode($createResponse);
+        $reference = $createData->reference ?? null;
+
+        if (empty($reference) || !is_numeric($reference)) {
+            return response()->json(['ok' => false, 'message' => 'Failed to create order. Invalid reference from provider.'], 502);
         }
 
-        // Detect provider label for record keeping (optional)
-        $method = 'mpesa';
-        if (preg_match('/^25565|^25567|^25568|^25569/', $phone)) {
-            $method = 'tigopesa';
-        } elseif (preg_match('/^25574|^25575|^25576|^25578/', $phone)) {
-            $method = 'airtel';
-        }
+        // Create local payment record
+        $method = 'mpesa'; // Default
+        if (preg_match('/^25565|^25567|^25568|^25569/', $phone)) $method = 'tigopesa';
+        elseif (preg_match('/^25574|^25575|^25576|^25578/', $phone)) $method = 'airtel';
 
-        // Create local payment record as pending
         $payment = Payment::create([
             'user_id' => $user->id,
             'method' => $method,
@@ -177,113 +123,43 @@ class PaymentController extends Controller
             'meta' => [
                 'order_id' => $orderId,
                 'phone' => $phone,
-                'payment_url' => $paymentUrl,
+                'payment_url' => $createData->payment_url ?? '',
                 'provider' => 'selcom',
-                'create_response' => $create,
+                'create_response' => $createData,
             ],
         ]);
 
-        // 2) Initiate Push USSD (send as form-encoded; retry JSON if 415)
-        $pushPayload = [
+        // 2. Initiate Push USSD
+        $pushPayload = http_build_query([
             'project_id' => $appId,
             'phone' => $phone,
             'order_id' => $orderId,
-            'is_reference_payment' => 0,
-        ];
-        // Some gateways expose initiatePushUSSD without the api/v1 prefix.
-        // Try with api/v1 first, then without if we get a 404.
-        $pushPaths = ['initiatePushUSSD', 'initiatePushUSSD'];
-        $pushRes = null;
-        foreach ($pushPaths as $idx => $path) {
-            $pushRes = $baseClient
-                ->withHeaders([
-                    'Content-Type' => 'application/x-www-form-urlencoded',
-                    'Accept' => 'application/json',
-                    'X-Requested-With' => 'XMLHttpRequest',
-                ])
-                ->asForm()
-                ->post($base . $path, $pushPayload);
-            if ($pushRes->status() === 415) {
-                $pushRes = $baseClient
-                    ->withHeaders([
-                        'Content-Type' => 'application/json; charset=UTF-8',
-                        'Accept' => 'application/json',
-                        'X-Requested-With' => 'XMLHttpRequest',
-                    ])
-                    ->asJson()
-                    ->post($base . $path, $pushPayload);
-            }
-            if ($pushRes->status() === 415) {
-                // Fallback: multipart/form-data
-                $req2 = $baseClient
-                    ->withHeaders([
-                        'Accept' => 'application/json',
-                        'X-Requested-With' => 'XMLHttpRequest',
-                    ]);
-                foreach ($pushPayload as $k => $v) {
-                    $req2 = $req2->attach($k, (string) $v);
-                }
-                $pushRes = $req2->post($base . $path);
-            }
-            // If not a 404, accept this response; otherwise try next path
-            if ($pushRes->status() !== 404) {
-                break;
-            }
-            \Log::warning('initiatePushUSSD 404 on path, trying alternative', ['path' => $path, 'base' => $base]);
-        }
-        $push = $pushRes->ok() ? $pushRes->json() : null;
-        if (!$pushRes->ok()) {
-            \Log::error('Selcom initiatePushUSSD failed', [
-                'status' => $pushRes->status(),
-                'body' => $pushRes->body(),
-                'payload' => $pushPayload,
-                'base' => $base,
-            ]);
+            'is_reference_payment' => 0
+        ]);
+
+        curl_setopt($ch, CURLOPT_URL, $apiUrl . '/initiatePushUSSD');
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $pushPayload);
+        $pushResponse = curl_exec($ch);
+        curl_close($ch);
+
+        if ($pushResponse === false) {
+            return response()->json(['ok' => false, 'message' => 'Push request failed via cURL.'], 500);
         }
 
-        // Save push response in meta
-        $payment->meta = array_merge((array) $payment->meta, ['push_response' => $push]);
+        $pushData = json_decode($pushResponse);
+        $ok = (!empty($pushData->resultcode) && $pushData->resultcode == '000');
+
+        // Save push response
+        $payment->meta = array_merge((array) $payment->meta, ['push_response' => $pushData]);
         $payment->save();
 
-        $ok = ($push && isset($push['resultcode']) && (string)$push['resultcode'] === '000');
-
-        // If HTTP succeeded but provider result code is not success, log it for diagnostics
-        if ($pushRes->ok() && !$ok) {
-            \Log::warning('Selcom push responded with non-success resultcode', [
-                'http_status' => $pushRes->status(),
-                'provider_result' => $push,
-                'payload' => $pushPayload,
-            ]);
-        }
-
-        $errorMessage = 'Imeshindikana kutuma ombi';
-        if (!$ok) {
-            if (is_array($push) && isset($push['message']) && $push['message']) {
-                $errorMessage = (string) $push['message'];
-            } elseif (!$pushRes->ok()) {
-                $errorMessage = 'Push haikufaulu (' . $pushRes->status() . ')';
-            }
-        }
-
-        $response = [
+        return response()->json([
             'ok' => $ok,
-            'message' => $ok ? 'Tafadhali thibitisha kwenye simu yako.' : $errorMessage,
+            'message' => $ok ? 'Tafadhali thibitisha kwenye simu yako.' : ($pushData->message ?? 'Unknown error'),
             'reference' => $reference,
             'payment_id' => $payment->id,
-            'method' => $method,
-            'phone' => $phone,
             'order_id' => $orderId,
-            'payment_url' => $paymentUrl,
-            'status' => $ok ? 200 : $pushRes->status(),
-        ];
-        // In local environment, include provider debug details to surface exact cause
-        if (app()->environment('local')) {
-            $response['debug'] = [
-                'push_http_status' => $pushRes->status(),
-                'push_body' => $push,
-            ];
-        }
-        return response()->json($response, $ok ? 200 : 502);
+        ], $ok ? 200 : 502);
     }
 
     /**
