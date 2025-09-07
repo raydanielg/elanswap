@@ -15,7 +15,7 @@ class PaymentController extends Controller
     public function index(Request $request)
     {
         $user = $request->user();
-        $amount = (int) (config('services.elanswap.payment_amount', 2500)); // TZS
+        $amount = (int) (config('services.elanswap.payment_amount', 100)); // TZS
         $latest = $user->payments()->latest('id')->first();
         return view('payment.index', compact('user','latest','amount'));
     }
@@ -33,7 +33,7 @@ class PaymentController extends Controller
         ]);
 
         $user = $request->user();
-        $amount = (int) (config('services.elanswap.payment_amount', 2500));
+        $amount = (int) (config('services.elanswap.payment_amount', 100));
 
         // Normalize phone to TZ E.164 without plus (e.g., 2557XXXXXXXX)
         $rawPhone = preg_replace('/[^0-9+]/', '', (string) $request->string('phone'));
@@ -382,7 +382,7 @@ class PaymentController extends Controller
 
         $username = (string) $request->input('username', $request->user()?->name ?? 'Customer');
         $phoneIn  = (string) $request->input('phone', '');
-        $amount   = (int) ($request->input('amount', config('services.elanswap.payment_amount', 2500)));
+        $amount   = (int) ($request->input('amount', config('services.elanswap.payment_amount', 100)));
         $orderId  = (string) $request->input('order_id', 'ORD_' . now()->format('YmdHis') . '_' . ($request->user()?->id ?? 'guest'));
         if ($phoneIn === '') {
             return response()->json(['status' => false, 'message' => 'Phone is required'], 422);
