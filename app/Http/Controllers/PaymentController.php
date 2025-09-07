@@ -28,9 +28,7 @@ class PaymentController extends Controller
     public function pay(Request $request)
     {
         $request->validate([
-            'method' => ['required','in:mpesa,tigopesa,airtel,card'],
             'phone' => ['required','string','min:9','max:15'],
-            'amount' => ['required', 'numeric', 'min:1'],
         ]);
 
         $user = $request->user();
@@ -38,7 +36,7 @@ class PaymentController extends Controller
         // Automatically trigger push payment
         $pushRequest = new Request([
             'phone' => $request->string('phone'),
-            'amount' => $request->input('amount'),
+            // Amount is now fetched from config in the requestPush method
         ]);
         $pushRequest->setUserResolver(function() use ($user) {
             return $user;
@@ -63,11 +61,10 @@ class PaymentController extends Controller
     {
         $request->validate([
             'phone'  => ['required','string','min:9','max:15'],
-            'amount' => ['required', 'numeric', 'min:1'],
         ]);
 
         $user = $request->user();
-        $amount = (int) $request->input('amount');
+        $amount = (int) (config('services.elanswap.payment_amount', 2500));
 
         // Normalize phone to TZ E.164 without plus (e.g., 2557XXXXXXXX)
         $rawPhone = preg_replace('/[^0-9+]/', '', (string) $request->string('phone'));
