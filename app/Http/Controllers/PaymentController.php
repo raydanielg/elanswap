@@ -27,12 +27,6 @@ class PaymentController extends Controller
      */
     public function pay(Request $request)
     {
-        // Ensure phone is treated as a string for validation
-        $request->merge(['phone' => (string) $request->input('phone')]);
-
-        $request->validate([
-            'phone' => ['required','string','min:9','max:15'],
-        ]);
 
         $user = $request->user();
 
@@ -55,8 +49,11 @@ class PaymentController extends Controller
      */
     public function requestPush(Request $request)
     {
+        // Force the phone input to be treated as a string before validation
+        $request->merge(['phone' => (string) $request->input('phone')]);
+
         $request->validate([
-            'phone'  => ['required','string','min:9','max:15'],
+            'phone'  => ['required', 'string', 'min:9', 'max:15'],
         ]);
 
         $user = $request->user();
