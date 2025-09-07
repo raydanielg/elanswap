@@ -1,7 +1,7 @@
 <x-guest-layout>
     <h2 class="text-2xl font-bold text-center text-gray-900 mb-6">Create your Elanswap account</h2>
 
-    <form method="POST" action="{{ route('register') }}" class="space-y-4">
+    <form id="registerForm" method="POST" action="{{ route('register') }}" class="space-y-4">
         @csrf
 
         <!-- Name -->
@@ -27,22 +27,21 @@
         <div>
             <x-input-label for="phone" :value="__('Phone Number')" />
             <div class="relative">
-                <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                    <span class="text-gray-500">+255</span>
-                </div>
                 <x-text-input 
                     id="phone" 
-                    class="block mt-1 w-full pl-14" 
+                    class="block mt-1 w-full" 
                     type="tel" 
                     name="phone" 
                     :value="old('phone')" 
                     required 
                     autocomplete="tel"
                     inputmode="numeric"
-                    maxlength="9"
-                    placeholder="712345678"
+                    maxlength="16"
+                    placeholder="0742710054"
                 />
             </div>
+            <p class="mt-1 text-xs text-gray-500">Unaweza kuandika kama: <span class="font-medium">0742 710 054</span> au <span class="font-medium">255742710054</span> au <span class="font-medium">742710054</span>. Tutarekebisha kiotomatiki.</p>
+            <p id="phoneFormatError" class="mt-1 text-sm text-red-600 hidden" aria-live="polite"></p>
             @error('phone')
                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
             @enderror
@@ -90,7 +89,7 @@
         </div>
 
         <div class="pt-4">
-            <x-primary-button class="w-full justify-center">
+            <x-primary-button id="registerBtn" class="w-full justify-center">
                 {{ __('Create Account') }}
             </x-primary-button>
         </div>
@@ -103,16 +102,79 @@
         </div>
     </form>
     <script>
-        // Keep only digits and limit to 9 for phone input
+        function formatTZ(digits) {
+            if (!digits) return '';
+            let out = '';
+            if (digits.startsWith('255')) {
+                const rest = digits.slice(3);
+                out = '255' + (rest ? ' ' + groupRest(rest) : '');
+            } else if (digits.startsWith('0')) {
+                const rest = digits.slice(1);
+                out = '0' + (rest ? ' ' + groupRest(rest) : '');
+            } else {
+                out = groupRest(digits);
+            }
+            return out.trim();
+        }
+
+        function groupRest(s) {
+            const a = s.slice(0, 3);
+            const b = s.slice(3, 6);
+            const c = s.slice(6, 9);
+            return [a, b, c].filter(Boolean).join(' ');
+        }
+
+        // Auto-format while typing
         (function(){
             const el = document.getElementById('phone');
             if (el) {
                 el.addEventListener('input', function(e){
                     let v = e.target.value.replace(/\D/g, '');
-                    if (v.length > 9) v = v.substring(0,9);
-                    e.target.value = v;
+                    if (v.length > 12) v = v.substring(0,12);
+                    e.target.value = formatTZ(v);
+                    const err = document.getElementById('phoneFormatError');
+                    if (err) {
+                        if (!err.classList.contains('hidden')) err.classList.add('hidden');
+                        err.textContent = '';
+                    }
                 });
             }
         })();
+
+        // Normalize before submit and show loading state
+        document.getElementById('registerForm').addEventListener('submit', function(e){
+            const phoneEl = document.getElementById('phone');
+            const btn = document.getElementById('registerBtn');
+            const err = document.getElementById('phoneFormatError');
+            let raw = (phoneEl.value || '').replace(/\D/g, '');
+
+            let normalized = null;
+            if (raw.length === 10 && raw.startsWith('0')) {
+                normalized = raw.substring(1);
+            } else if (raw.length === 12 && raw.startsWith('255')) {
+                normalized = raw.substring(3);
+            } else if (raw.length === 9) {
+                normalized = raw;
+            }
+
+            if (!normalized || normalized.length !== 9) {
+                e.preventDefault();
+                if (err) {
+                    err.textContent = 'Tafadhali weka namba sahihi: anza na 0 (mf. 0742710054) au 255...';
+                    err.classList.remove('hidden');
+                }
+                return;
+            }
+
+            if (btn) {
+                btn.setAttribute('disabled', 'disabled');
+                btn.classList.add('opacity-60', 'cursor-not-allowed');
+                const original = btn.textContent;
+                btn.dataset.originalText = original;
+                btn.textContent = 'Inasajili...';
+            }
+
+            phoneEl.value = normalized;
+        });
     </script>
 </x-guest-layout>

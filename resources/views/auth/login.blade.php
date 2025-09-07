@@ -24,44 +24,17 @@
         <p class="text-gray-600">Sign in to your ElanSwap account</p>
     </div>
 
-    <!-- Social Login Buttons -->
-    <div class="space-y-4 mb-8">
-        <a href="#" class="w-full flex items-center justify-center px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors">
-            <svg class="w-5 h-5 mr-2" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
-                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-            </svg>
-            Continue with Google
-        </a>
-        <a href="#" class="w-full flex items-center justify-center px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors">
-            <svg class="w-5 h-5 mr-2" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.012 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.94 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.428-2.065-3.623-2.3-4.397-2.338-1.99-.156-3.7 1.09-4.64 1.09zm-1.52-3.09c.786-1.027 1.26-2.48 1.092-3.906-1.013.065-2.298.725-3.04 1.626-.715.855-1.289 2.2-1.105 3.479 1.105.078 2.262-.68 3.053-1.199z"/>
-            </svg>
-            Continue with Apple
-        </a>
-    </div>
 
-    <div class="flex items-center my-6">
-        <div class="flex-grow border-t border-gray-300"></div>
-        <span class="px-3 text-sm text-gray-500">Or continue with</span>
-        <div class="flex-grow border-t border-gray-300"></div>
-    </div>
-
-    <form method="POST" action="{{ route('login') }}" class="space-y-6">
+    <form id="loginForm" method="POST" action="{{ route('login') }}" class="space-y-6">
         @csrf
 
         <!-- Phone Number -->
         <div>
             <x-input-label for="phone" :value="__('Phone Number')" class="sr-only" />
             <div class="relative">
-                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <span class="text-gray-500">+255</span>
-                </div>
                 <x-text-input 
                     id="phone" 
-                    class="block w-full pl-14" 
+                    class="block w-full" 
                     type="tel" 
                     name="phone" 
                     :value="old('phone')" 
@@ -69,11 +42,13 @@
                     autofocus 
                     autocomplete="tel" 
                     inputmode="numeric"
-                    maxlength="9"
-                    placeholder="712345678"
+                    maxlength="16"
+                    placeholder="0742710054"
                     :hasError="$errors->has('phone')"
                 />
             </div>
+            <p class="mt-1 text-xs text-gray-500">Unaweza kuandika kama: <span class="font-medium">0742 710 054</span> au <span class="font-medium">255742710054</span> au <span class="font-medium">742710054</span>. Tutarekebisha kiotomatiki.</p>
+            <p id="phoneFormatError" class="mt-1 text-sm text-red-600 hidden" aria-live="polite"></p>
             @error('phone')
                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
             @enderror
@@ -119,7 +94,7 @@
         </div>
 
         <div>
-            <x-primary-button class="w-full justify-center">
+            <x-primary-button id="loginBtn" class="w-full justify-center">
                 {{ __('Sign in') }}
             </x-primary-button>
         </div>
@@ -141,11 +116,76 @@
             passwordInput.setAttribute('type', type);
         }
 
-        // Keep only digits and limit to 9
+        function formatTZ(digits) {
+            // digits: only numbers, max 12
+            if (!digits) return '';
+            let out = '';
+            if (digits.startsWith('255')) {
+                const rest = digits.slice(3);
+                out = '255' + (rest ? ' ' + groupRest(rest) : '');
+            } else if (digits.startsWith('0')) {
+                const rest = digits.slice(1);
+                out = '0' + (rest ? ' ' + groupRest(rest) : '');
+            } else {
+                out = groupRest(digits);
+            }
+            return out.trim();
+        }
+
+        function groupRest(s) {
+            // Group as 3-3-3 from start
+            const a = s.slice(0, 3);
+            const b = s.slice(3, 6);
+            const c = s.slice(6, 9);
+            return [a, b, c].filter(Boolean).join(' ');
+        }
+
+        // Auto-format while typing, allow up to 12 digits; reset validation message when typing
         document.getElementById('phone').addEventListener('input', function(e) {
-            let value = e.target.value.replace(/\D/g, '');
-            if (value.length > 9) value = value.substring(0, 9);
-            e.target.value = value;
+            let digits = e.target.value.replace(/\D/g, '');
+            if (digits.length > 12) digits = digits.substring(0, 12);
+            e.target.value = formatTZ(digits);
+            const err = document.getElementById('phoneFormatError');
+            if (!err.classList.contains('hidden')) err.classList.add('hidden');
+            err.textContent = '';
+        });
+
+        // Normalize before submit and show loading state
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            const phoneEl = document.getElementById('phone');
+            const btn = document.getElementById('loginBtn');
+            const err = document.getElementById('phoneFormatError');
+            let raw = (phoneEl.value || '').replace(/\D/g, '');
+
+            // Determine acceptable formats and normalize to 9-digit local expected by backend
+            // Accepted: 0XXXXXXXXX (10) -> drop leading 0
+            //           255XXXXXXXXX (12) -> drop 255
+            //           XXXXXXXXX (9) -> as-is
+            let normalized = null;
+            if (raw.length === 10 && raw.startsWith('0')) {
+                normalized = raw.substring(1);
+            } else if (raw.length === 12 && raw.startsWith('255')) {
+                normalized = raw.substring(3);
+            } else if (raw.length === 9) {
+                normalized = raw;
+            }
+
+            if (!normalized || normalized.length !== 9) {
+                e.preventDefault();
+                err.textContent = 'Tafadhali weka namba sahihi: anza na 0 (mf. 0742710054) au 255...';
+                err.classList.remove('hidden');
+                return;
+            }
+
+            // Loading state
+            btn.setAttribute('disabled', 'disabled');
+            btn.classList.add('opacity-60', 'cursor-not-allowed');
+            const original = btn.textContent;
+            btn.dataset.originalText = original;
+            btn.textContent = 'Inapakia...';
+
+            // Put normalized value back before submit
+            phoneEl.value = normalized;
         });
     </script>
 </x-guest-layout>
