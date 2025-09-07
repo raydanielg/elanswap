@@ -66,12 +66,8 @@ export default function Hero() {
             <form
               onSubmit={(e) => {
                 e.preventDefault();
-                const form = e.currentTarget as HTMLFormElement;
-                const data = new FormData(form);
-                const id = String(data.get("trackingId") || "").trim();
-                if (!id) return;
-                // TODO: replace with actual route e.g., router.push(`/track/${id}`)
-                window.location.href = `#track-${encodeURIComponent(id)}`;
+                // Redirect user to login before tracking
+                window.location.href = "https://swap.elanbrands.net/login";
               }}
               className="w-full max-w-xl"
             >
