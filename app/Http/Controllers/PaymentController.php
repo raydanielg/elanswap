@@ -197,13 +197,23 @@ class PaymentController extends Controller
             'project_id' => $appId,
             'phone' => $phone,
             'order_id' => $orderId,
-            'is_reference_payment' => 0,
+            'is_reference_payment' => 1,  // Changed to 1 since we're using reference payment
         ];
-        // Some gateways expose initiatePushUSSD without the api/v1 prefix.
-        // Try with api/v1 first, then without if we get a 404.
-        $pushPaths = ['initiatePushUSSD', 'initiatePushUSSD'];
+        // Try different push endpoints
+        $pushPaths = [
+            'api/v1/initiatePushUSSD',
+            'initiatePushUSSD',
+            'api/v1/initiatePush',
+            'initiatePush'
+        ];
         $pushRes = null;
-        foreach ($pushPaths as $idx => $path) {
+        $lastError = null;
+        
+        foreach ($pushPaths as $path) {
+            \Log::info('Trying push endpoint: ' . $path, [
+                'base' => $base,
+                'payload' => $pushPayload
+            ]);
             $pushRes = $baseClient
                 ->withHeaders([
                     'Content-Type' => 'application/x-www-form-urlencoded',
@@ -234,20 +244,54 @@ class PaymentController extends Controller
                 }
                 $pushRes = $req2->post($base . $path);
             }
-            // If not a 404, accept this response; otherwise try next path
-            if ($pushRes->status() !== 404) {
+            // If successful, use this response
+            if ($pushRes->successful()) {
+                $lastError = null;
                 break;
             }
-            \Log::warning('initiatePushUSSD 404 on path, trying alternative', ['path' => $path, 'base' => $base]);
+            
+            $lastError = [
+                'path' => $path,
+                'status' => $pushRes->status(),
+                'response' => $pushRes->json() ?? $pushRes->body()
+            ];
+            
+            \Log::warning('Push request failed', $lastError);
         }
-        $push = $pushRes->ok() ? $pushRes->json() : null;
-        if (!$pushRes->ok()) {
+        $push = $pushRes->successful() ? $pushRes->json() : null;
+        
+        if (!$pushRes->successful()) {
+            $errorMessage = 'Imeshindikana kutuma ombi la malipo.';
+            
+            // Try to get a more specific error message
+            $response = $pushRes->json();
+            if (is_array($response)) {
+                if (!empty($response['message'])) {
+                    $errorMessage = (string)$response['message'];
+                } elseif (!empty($response['error'])) {
+                    $errorMessage = (string)$response['error'];
+                } elseif (!empty($response['resultcode']) && $response['resultcode'] !== '000') {
+                    $errorMessage = 'Hitilafu ya mfumo wa malipo: ' . ($response['resultcode'] ?? 'unknown');
+                }
+            }
+            
             \Log::error('Selcom initiatePushUSSD failed', [
                 'status' => $pushRes->status(),
-                'body' => $pushRes->body(),
+                'response' => $response ?? $pushRes->body(),
                 'payload' => $pushPayload,
                 'base' => $base,
+                'endpoint_tried' => $path ?? null,
+                'last_error' => $lastError
             ]);
+            
+            return response()->json([
+                'ok' => false,
+                'message' => $errorMessage,
+                'debug' => app()->environment('local') ? [
+                    'status' => $pushRes->status(),
+                    'response' => $response ?? $pushRes->body()
+                ] : null
+            ], 502);
         }
 
         // Save push response in meta
@@ -257,22 +301,30 @@ class PaymentController extends Controller
         $ok = ($push && isset($push['resultcode']) && (string)$push['resultcode'] === '000');
 
         // If HTTP succeeded but provider result code is not success, log it for diagnostics
-        if ($pushRes->ok() && !$ok) {
+        if ($pushRes->successful() && !$ok) {
+            $errorMessage = 'Ombi la malipo halijafanikiwa.';
+            if (!empty($push['message'])) {
+                $errorMessage = (string)$push['message'];
+            } elseif (!empty($push['resultcode']) && $push['resultcode'] !== '000') {
+                $errorMessage = 'Hitilafu ya mfumo wa malipo: ' . $push['resultcode'];
+            }
+            
             \Log::warning('Selcom push responded with non-success resultcode', [
                 'http_status' => $pushRes->status(),
                 'provider_result' => $push,
                 'payload' => $pushPayload,
             ]);
+            
+            return response()->json([
+                'ok' => false,
+                'message' => $errorMessage,
+                'debug' => app()->environment('local') ? [
+                    'result' => $push
+                ] : null
+            ], 502);
         }
 
-        $errorMessage = 'Imeshindikana kutuma ombi';
-        if (!$ok) {
-            if (is_array($push) && isset($push['message']) && $push['message']) {
-                $errorMessage = (string) $push['message'];
-            } elseif (!$pushRes->ok()) {
-                $errorMessage = 'Push haikufaulu (' . $pushRes->status() . ')';
-            }
-        }
+        $errorMessage = 'Tafadhali jaribu tena baadaye. Shida imetokea wakati wa kutuma ombi la malipo.';
 
         $response = [
             'ok' => $ok,
