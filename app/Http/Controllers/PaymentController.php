@@ -268,67 +268,152 @@ class PaymentController extends Controller
      */
     public function webhook()
     {
-        // NOTE: Parameters (Request $request, SmsService $sms) intentionally removed.
+        
+        header('Content-Type: application/json');
+$input = json_decode(file_get_contents('php://input'), true);
+
+if (isset($input['order_id'], $input['status'], $input['transid'], $input['reference'])) {
+    // Process the transaction (e.g., save to database)
+    http_response_code(200);
+    echo json_encode([
+        'status' => 'success',
+        'message' => 'Transaction processed successfully',
+        'transaction_id' => $input['transid']
+    ]);
+} else {
+    http_response_code(400);
+    echo json_encode([
+        'status' => 'error',
+        'message' => 'Missing required fields'
+    ]);
+}
+       // $raw = file_get_contents('php://input');
+    
+        // // Decode JSON as associative array
+        // $data = json_decode($raw, true);
+    
+        // // Ensure required fields are available
+        // $order_id = $data['order_id'] ?? null;
+        // $status = $data['status'] ?? null;
+        // $transid = $data['transid'] ?? null;
+        // $reference = $data['reference'] ?? null;
+    
+        // if (!$order_id || !$status || !$transid || !$reference) {
+        //     $url = 'https://messaging-service.co.tz/link/sms/v1/text/single?username=elanbrands&password=Eliyaamos1@&from=Elan+Brands&to=255757756184&text=' . urlencode("Nothing received");
+        //     $response = Http::get($url);
+    
+        //     return response()->json(['error' => 'Missing required fields'], 400);
+        // }
+    
+        // $text = "Malipo yako ya Tsh 1000 yenye kumbukumbu namba $reference Yamefanikiwa";
+        // $url = 'https://messaging-service.co.tz/link/sms/v1/text/single?username=elanbrands&password=Eliyaamos1@&from=Elan+Brands&to=255757756184&text=' . urlencode($text);
+        // $response = Http::get($url);
+    
+        // return response()->json(['message' => 'Webhook processed successfully']);
+    }
+
+
+    
+
+public function twebhook()
+    {
+        
+        
+        $result = json_decode(file_get_contents('php://input'));
+      $order_id = $result->order_id;
+        $status = $result->status;
+        $transid = $result->transid;
+        $reference = $result->reference;
+       
+		// URL to fetch
+$url = 'https://messaging-service.co.tz/link/sms/v1/text/single?username=elanbrands&password=Eliyaamos1@&from=Elan+Brands&to=255757756184&text=$transid+Malipo+yako+ya+Tsh+1000+yenye+kumbukumbu+namba+$reference+Yamefanikiwa';
+
+// Initialize cURL session
+$ch = curl_init();
+
+// Set the URL and other options
+curl_setopt($ch, CURLOPT_URL, $url);
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true); // Return the response as a string
+curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true); // Follow redirects (if any)
+curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false); // Disable SSL verification (not recommended for production)
+curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // Disable SSL verification (not recommended for production)
+
+// Execute the cURL request
+$response = curl_exec($ch);
+
+// Check for errors
+if($response === false) {
+    echo 'cURL Error: ' . curl_error($ch);
+} else {
+    echo $response;
+}
+
+// Close the cURL session
+curl_close($ch);
+
+
+		
+		// NOTE: Parameters (Request $request, SmsService $sms) intentionally removed.
         // We use Laravel helpers to access the current request and resolve services when needed.
-        $request = request();
+        // $request = request();
         
-        // Handle GET requests (for testing/verification)
-        if ($request->isMethod('GET')) {
-            return response()->json([
-                'ok' => true,
-                'message' => 'Webhook endpoint is active',
-                'method' => 'GET',
-                'timestamp' => now()->toIso8601String(),
-            ]);
-        }
+        // // Handle GET requests (for testing/verification)
+        // if ($request->isMethod('GET')) {
+        //     return response()->json([
+        //         'ok' => true,
+        //         'message' => 'Webhook endpoint is active',
+        //         'method' => 'GET',
+        //         'timestamp' => now()->toIso8601String(),
+        //     ]);
+        // }
         
-        // Handle POST requests (actual webhook processing)
-        // In production: verify signature / token from provider
-        $data = $request->all();
-        $reference = (string) ($data['reference'] ?? $data['provider_reference'] ?? '');
-        $orderId   = (string) ($data['order_id'] ?? '');
-        $status    = (string) ($data['status'] ?? ''); // Selcom may send 'paid'
-        $transid   = (string) ($data['transid'] ?? '');
+        // // Handle POST requests (actual webhook processing)
+        // // In production: verify signature / token from provider
+        // $data = $request->all();
+        // $reference = (string) ($data['reference'] ?? $data['provider_reference'] ?? '');
+        // $orderId   = (string) ($data['order_id'] ?? '');
+        // $status    = (string) ($data['status'] ?? ''); // Selcom may send 'paid'
+        // $transid   = (string) ($data['transid'] ?? '');
 
-        $payment = null;
-        if ($reference !== '') {
-            $payment = Payment::where('provider_reference', $reference)->latest('id')->first();
-        }
-        if (!$payment && $orderId !== '') {
-            // Fallback: match via meta->order_id (works on SQLite with JSON casting)
-            foreach (Payment::orderByDesc('id')->get() as $p) {
-                $meta = (array) $p->meta;
-                if (($meta['order_id'] ?? null) === $orderId) { $payment = $p; break; }
-            }
-        }
-        if (!$payment) {
-            return response()->json(['ok' => false, 'message' => 'Payment not found'], 404);
-        }
+        // $payment = null;
+        // if ($reference !== '') {
+        //     $payment = Payment::where('provider_reference', $reference)->latest('id')->first();
+        // }
+        // if (!$payment && $orderId !== '') {
+        //     // Fallback: match via meta->order_id (works on SQLite with JSON casting)
+        //     foreach (Payment::orderByDesc('id')->get() as $p) {
+        //         $meta = (array) $p->meta;
+        //         if (($meta['order_id'] ?? null) === $orderId) { $payment = $p; break; }
+        //     }
+        // }
+        // if (!$payment) {
+        //     return response()->json(['ok' => false, 'message' => 'Payment not found'], 404);
+        // }
 
-        $meta = (array) $payment->meta;
-        $meta['webhook'] = $data;
-        if ($transid !== '') { $meta['transid'] = $transid; }
+        // $meta = (array) $payment->meta;
+        // $meta['webhook'] = $data;
+        // if ($transid !== '') { $meta['transid'] = $transid; }
 
-        $updates = [ 'meta' => $meta ];
-        $setPaid = in_array(strtolower($status), ['success','completed','paid'], true);
-        if ($setPaid) {
-            $updates['paid_at'] = now();
-        }
+        // $updates = [ 'meta' => $meta ];
+        // $setPaid = in_array(strtolower($status), ['success','completed','paid'], true);
+        // if ($setPaid) {
+        //     $updates['paid_at'] = now();
+        // }
 
-        $payment->fill($updates)->save();
+        // $payment->fill($updates)->save();
 
-        // Send SMS notification upon successful payment
-        if ($setPaid && $payment->user_id) {
-            $amount = number_format((int) $payment->amount);
-            $ref = $payment->provider_reference ?: ($meta['order_id'] ?? '');
-            $message = "Malipo yako ya TZS {$amount} yamefanikiwa. Rejea: {$ref}. Asante kwa kutumia ElanSwap.";
-            try {
-                // Resolve SmsService on demand since it's no longer injected
-                app(\App\Services\SmsService::class)->sendSms($payment->user_id, $message);
-            } catch (\Throwable $e) { /* log silently */ }
-        }
+        // // Send SMS notification upon successful payment
+        // if ($setPaid && $payment->user_id) {
+        //     $amount = number_format((int) $payment->amount);
+        //     $ref = $payment->provider_reference ?: ($meta['order_id'] ?? '');
+        //     $message = "Malipo yako ya TZS {$amount} yamefanikiwa. Rejea: {$ref}. Asante kwa kutumia ElanSwap.";
+        //     try {
+        //         // Resolve SmsService on demand since it's no longer injected
+        //         app(\App\Services\SmsService::class)->sendSms($payment->user_id, $message);
+        //     } catch (\Throwable $e) { /* log silently */ }
+        // }
 
-        return response()->json(['ok' => true, 'message' => 'Webhook processed']);
+        // return response()->json(['ok' => true, 'message' => 'Webhook processed']);
     }
 
     /**
