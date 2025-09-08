@@ -181,17 +181,27 @@ class PaymentController extends Controller
 
         // Small delay to allow provider to index the order before push
         \Log::info('PAYMENT: Sleeping briefly before push to allow provider indexing');
-        usleep(600000); // 600ms
+        usleep(1500000); // 1.5s
 
         // 2. Initiate Push USSD
-        $pushFields = [
-            'project_id' => $appId,
-            'phone' => $phoneLocal,
-            'order_id' => $orderId,
-            'is_reference_payment' => 0,
-            // include reference for gateways that accept either order_id or reference
-            'reference' => $reference,
-        ];
+        // Build push payload: if we have a numeric reference, prefer it
+        $hasNumericRef = is_numeric($reference) && (string)$reference !== (string)$orderId;
+        if ($hasNumericRef) {
+            $pushFields = [
+                'project_id' => $appId,
+                'phone' => $phoneLocal,
+                'reference' => (string)$reference,
+                'is_reference_payment' => 1,
+            ];
+        } else {
+            $pushFields = [
+                'project_id' => $appId,
+                'phone' => $phoneLocal,
+                'order_id' => $orderId,
+                'is_reference_payment' => 0,
+            ];
+        }
+        \Log::info('PAYMENT: initiatePushUSSD payload', ['payload' => $pushFields]);
         $pushUrl = rtrim($apiUrl, '/') . '/initiatePushUSSD'; // e.g. https://elan.co.tz/api/payments/selcom/initiatePushUSSD
 
         // Prepare headers and retry a few times in case order is not yet indexed provider-side
@@ -201,7 +211,7 @@ class PaymentController extends Controller
             'X-Requested-With: XMLHttpRequest',
         ];
 
-        $maxAttempts = 3;
+        $maxAttempts = 5;
         $attempt = 0;
         $pushResponse = null;
         $pushErr = null;
@@ -215,16 +225,16 @@ class PaymentController extends Controller
 
             if ($pushResponse === false) {
                 \Log::error('PAYMENT: initiatePushUSSD cURL failed', ['attempt' => $attempt, 'error' => $pushErr]);
-                // if network error, small delay then retry
-                usleep(400000); // 400ms
+                // if network error, small delay then retry (exponential)
+                usleep(300000 * $attempt); // 300ms * attempt
                 continue;
             }
 
             \Log::info('PAYMENT: initiatePushUSSD response', ['attempt' => $attempt, 'response' => $pushResponse]);
             $tmp = json_decode($pushResponse);
             if ($tmp && isset($tmp->resultcode) && (string)$tmp->resultcode === '403' && stripos((string)($tmp->message ?? ''), 'No order') !== false) {
-                // provider not ready: wait briefly and retry
-                usleep(700000); // 700ms
+                // provider not ready: wait briefly and retry with backoff
+                usleep(600000 * $attempt); // backoff
                 continue;
             }
             break; // otherwise accept response
