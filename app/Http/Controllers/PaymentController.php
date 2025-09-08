@@ -171,6 +171,8 @@ class PaymentController extends Controller
             'amount' => $amount,
             'currency' => 'TZS',
             'provider_reference' => $reference,
+            'orderid' => $orderId,
+            'phone' => $phoneLocal,
             'meta' => [
                 'order_id' => $orderId,
                 'phone' => $phoneLocal,
@@ -268,32 +270,13 @@ class PaymentController extends Controller
      */
     public function webhook()
     {
-        
         header('Content-Type: application/json');
-$input = json_decode(file_get_contents('php://input'), true);
+        $input = json_decode(file_get_contents('php://input'), true) ?? [];
 
-if (isset($input['order_id'], $input['status'], $input['transid'], $input['reference'])) {
-    // Process the transaction (e.g., save to database)
-    http_response_code(200);
-    echo json_encode([
-        'status' => 'success',
-        'message' => 'Transaction processed successfully',
-        'transaction_id' => $input['transid']
-    ]);
-} else {
-    http_response_code(400);
-    echo json_encode([
-        'status' => 'error',
-        'message' => 'Missing required fields'
-    ]);
-}
-       // $raw = file_get_contents('php://input');
-    
-        // // Decode JSON as associative array
-        // $data = json_decode($raw, true);
-    
-        // // Ensure required fields are available
-        // $order_id = $data['order_id'] ?? null;
+        $orderId   = (string)($input['order_id'] ?? '');
+        $status    = (string)($input['status'] ?? '');
+        $transid   = (string)($input['transid'] ?? '');
+        $reference = (string)($input['reference'] ?? '');
         // $status = $data['status'] ?? null;
         // $transid = $data['transid'] ?? null;
         // $reference = $data['reference'] ?? null;
