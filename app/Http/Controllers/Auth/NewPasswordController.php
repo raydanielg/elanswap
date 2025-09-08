@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Jobs\SendSms;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -48,6 +49,21 @@ class NewPasswordController extends Controller
                 ])->save();
 
                 event(new PasswordReset($user));
+
+                // Tuma SMS ya credentials baada ya password kubadilishwa
+                try {
+                    $plain = (string) $request->password;
+                    $region = $user->region?->name ?? '';
+                    $district = $user->district?->name ?? '';
+                    $station = $user->station?->name ?? '';
+                    $parts = array_filter([$region, $district, $station], fn($v) => !empty($v));
+                    $location = implode(', ', $parts);
+                    if ($location === '') { $location = '-'; }
+                    $message = "ElanSwap: Neno siri limebadilishwa.\nJina: {$user->name}\nSimu: +{$user->phone}\nEneo: {$location}\nPassword: {$plain}";
+                    SendSms::dispatch($user->id, null, $message);
+                } catch (\Throwable $e) {
+                    \Log::warning('Failed to dispatch password reset SMS (token flow): ' . $e->getMessage());
+                }
             }
         );
 

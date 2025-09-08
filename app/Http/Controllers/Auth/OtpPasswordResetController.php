@@ -47,15 +47,10 @@ class OtpPasswordResetController extends Controller
         $user->password = Hash::make($plain);
         $user->save();
 
-        // Queue SMS with credentials (name, phone, location, password)
+        // Queue SMS with credentials (name, phone, password, region only)
         try {
-            $region = $user->region?->name ?? '';
-            $district = $user->district?->name ?? '';
-            $station = $user->station?->name ?? '';
-            $parts = array_filter([$region, $district, $station], fn($v) => !empty($v));
-            $location = implode(', ', $parts);
-            if ($location === '') { $location = '-'; }
-            $message = "ElanSwap: Neno siri limebadilishwa.\nJina: {$user->name}\nSimu: +{$user->phone}\nEneo: {$location}\nPassword: {$plain}";
+            $region = $user->region?->name ?? '-';
+            $message = "ElanSwap: Neno siri limebadilishwa.\nJina: {$user->name}\nSimu: +{$user->phone}\nMkoa: {$region}\nPassword: {$plain}";
             // Dispatch queued SMS to the user's phone using user_id
             SendSms::dispatch($user->id, null, $message);
         } catch (\Throwable $e) {

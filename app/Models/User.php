@@ -229,9 +229,12 @@ class User extends Authenticatable
      */
     public function hasPaid(): bool
     {
-        // Prefer paid_at presence which is gateway-agnostic and avoids enum/check mismatches
+        // Consider paid if paid_at is present OR status reflects a successful payment
         return $this->payments()
-            ->whereNotNull('paid_at')
+            ->where(function($q) {
+                $q->whereNotNull('paid_at')
+                  ->orWhereIn('status', ['success','paid','completed']);
+            })
             ->exists();
     }
 
