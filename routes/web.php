@@ -236,7 +236,7 @@ Route::middleware(['auth', \App\Http\Middleware\EnsureProfileCompleted::class])-
 });
 
 // Webhook listener (public, CSRF-exempt via middleware config)
-Route::post('/payment/webhook', [PaymentController::class, 'webhook'])->name('payment.webhook');
+Route::match(['GET', 'POST'], '/payment/webhook', [PaymentController::class, 'webhook'])->name('payment.webhook');
 // Alternate status callback listener compatible with raw php://input JSON
 Route::post('/payment/status-notify', [PaymentController::class, 'statusNotify'])->name('payment.status.notify');
 

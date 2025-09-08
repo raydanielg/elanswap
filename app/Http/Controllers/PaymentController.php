@@ -270,8 +270,20 @@ class PaymentController extends Controller
     {
         // NOTE: Parameters (Request $request, SmsService $sms) intentionally removed.
         // We use Laravel helpers to access the current request and resolve services when needed.
-        // In production: verify signature / token from provider
         $request = request();
+        
+        // Handle GET requests (for testing/verification)
+        if ($request->isMethod('GET')) {
+            return response()->json([
+                'ok' => true,
+                'message' => 'Webhook endpoint is active',
+                'method' => 'GET',
+                'timestamp' => now()->toIso8601String(),
+            ]);
+        }
+        
+        // Handle POST requests (actual webhook processing)
+        // In production: verify signature / token from provider
         $data = $request->all();
         $reference = (string) ($data['reference'] ?? $data['provider_reference'] ?? '');
         $orderId   = (string) ($data['order_id'] ?? '');
