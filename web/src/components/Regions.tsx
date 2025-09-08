@@ -10,7 +10,7 @@ export default function Regions() {
 
   useEffect(() => {
     let mounted = true;
-    fetch("https://swap.elanbrands.net/api/regions")
+    fetch("/api/regions")
       .then((r) => r.json())
       .then((data) => {
         if (!mounted) return;
@@ -32,7 +32,7 @@ export default function Regions() {
             <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-gray-900">Mikoa</h2>
             <p className="mt-2 text-gray-600">Gundua fursa kwa mujibu wa mkoa.</p>
           </div>
-          <a href="/regions" className="text-sm text-gray-600 hover:text-[var(--color-secondary)]">Tazama zote</a>
+          <a href="/out/regions" className="text-sm text-gray-600 hover:text-[var(--color-secondary)]">Tazama zote</a>
         </div>
 
         {loading ? (
@@ -49,7 +49,7 @@ export default function Regions() {
             {items.map((r) => (
               <a
                 key={r.slug}
-                href={`https://swap.elanbrands.net/login`}
+                href={`/login`}
                 aria-label={`Vinjari mkoa ${r.name}`}
                 className="group rounded-xl border border-gray-200 bg-white p-5 shadow-sm hover:shadow-md transition shadow-gray-100 hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-secondary)]/50"
               >

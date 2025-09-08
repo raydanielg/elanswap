@@ -20,7 +20,7 @@ export default function Contact() {
     setSent(null);
     setErrText(null);
     try {
-      const res = await fetch("https://swap.elanbrands.net/api/contact", {
+      const res = await fetch("https://elanswap.com/api/contact", {
         method: "POST",
         headers: {
           Accept: "application/json",
@@ -47,7 +47,7 @@ export default function Contact() {
     setNlBusy(true);
     setNlDone(null);
     try {
-      const res = await fetch("https://swap.elanbrands.net/api/newsletter", {
+      const res = await fetch("https://elanswap.com/api/newsletter", {
         method: "POST",
         headers: {
           Accept: "application/json",
