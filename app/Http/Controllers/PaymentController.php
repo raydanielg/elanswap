@@ -148,11 +148,12 @@ class PaymentController extends Controller
         }
 
         if (empty($reference)) {
-            return response()->json([
-                'ok' => false,
-                'message' => $provMsg ?: 'Failed to create order. Invalid reference from provider.',
-                'provider' => $createData,
-            ], 502);
+            \Log::warning('PAYMENT: Missing reference from provider; proceeding with order_id fallback', [
+                'order_id' => $orderId,
+                'provider_payload' => $createData,
+                'provider_message' => $provMsg,
+            ]);
+            $reference = $orderId;
         }
 
         // Create local payment record
