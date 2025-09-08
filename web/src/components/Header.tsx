@@ -5,7 +5,7 @@ export default function Header() {
       <nav className="bg-white/90 backdrop-blur border-b border-gray-200">
         <div className="flex flex-wrap justify-between items-center mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 h-16">
           <a href="/out/" className="flex items-center gap-2">
-            <img src="/logo.png" alt="Elan Swap" className="h-8 w-8" />
+            <img src="/out/logo.png" alt="Elan Swap" className="h-8 w-8" />
             <span className="self-center text-lg sm:text-xl font-semibold text-gray-900">Elan Swap</span>
           </a>
           <div className="flex items-center gap-3">
@@ -43,7 +43,7 @@ export default function Header() {
               </li>
               <li>
                 <a
-                  href="/out/about"
+                  href="/out/about/"
                   className="relative inline-flex items-center rounded-md px-3 py-2 text-gray-700 hover:text-gray-900 hover:bg-white shadow-sm/0 hover:shadow-sm transition-all duration-200 group"
                 >
                   Kuhusu Sisi
@@ -52,7 +52,7 @@ export default function Header() {
               </li>
               <li>
                 <a
-                  href="/out/regions"
+                  href="/out/regions/"
                   className="relative inline-flex items-center rounded-md px-3 py-2 text-gray-700 hover:text-gray-900 hover:bg-white shadow-sm/0 hover:shadow-sm transition-all duration-200 group"
                 >
                   Mikoa
@@ -61,7 +61,7 @@ export default function Header() {
               </li>
               <li>
                 <a
-                  href="/out/features"
+                  href="/out/features/"
                   className="relative inline-flex items-center rounded-md px-3 py-2 text-gray-700 hover:text-gray-900 hover:bg-white shadow-sm/0 hover:shadow-sm transition-all duration-200 group"
                 >
                   Vipengele
@@ -70,7 +70,7 @@ export default function Header() {
               </li>
               <li>
                 <a
-                  href="/out/contact"
+                  href="/out/contact/"
                   className="relative inline-flex items-center rounded-md px-3 py-2 text-gray-700 hover:text-gray-900 hover:bg-white shadow-sm/0 hover:shadow-sm transition-all duration-200 group"
                 >
                   Mawasiliano

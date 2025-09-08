@@ -41,7 +41,7 @@ export default function Categories() {
             <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-gray-900">Jamii</h2>
             <p className="mt-2 text-gray-600">Vinjari kwa mujibu wa jamii.</p>
           </div>
-          <a href="/categories" className="text-sm text-gray-600 hover:text-[var(--color-secondary)]">Tazama zote</a>
+          <a href="/out/categories/" className="text-sm text-gray-600 hover:text-[var(--color-secondary)]">Tazama zote</a>
         </div>
 
         {loading ? (
@@ -65,7 +65,7 @@ export default function Categories() {
             {items.map((c) => (
               <a
                 key={c.slug}
-                href={`/categories#${c.slug}`}
+                href={`/out/categories/#${c.slug}`}
                 aria-label={`Vinjari jamii ${c.name}`}
                 className="group rounded-xl border border-gray-200 bg-white p-5 shadow-sm hover:shadow-md transition shadow-gray-100 hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-secondary)]/50"
               >

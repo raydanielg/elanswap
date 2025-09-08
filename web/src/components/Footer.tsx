@@ -7,8 +7,8 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Brand */}
           <div>
-            <a href="/" className="inline-flex items-center gap-2">
-              <img src="/logo.png" alt="Elan Swap" className="h-8 w-8 rounded" />
+            <a href="/out/" className="inline-flex items-center gap-2">
+              <img src="/out/logo.png" alt="Elan Swap" className="h-8 w-8 rounded" />
               <span className="text-white font-semibold">Elan Swap</span>
             </a>
             <p className="mt-3 text-sm text-white/75 leading-relaxed">
@@ -31,11 +31,11 @@ export default function Footer() {
           <div>
             <div className="text-white font-semibold">Viungo vya Haraka</div>
             <ul className="mt-3 space-y-2 text-sm">
-              <li><a className="text-white/80 hover:text-white transition" href="/">Nyumbani</a></li>
-              <li><a className="text-white/80 hover:text-white transition" href="/about">Kuhusu Sisi</a></li>
-              <li><a className="text-white/80 hover:text-white transition" href="/regions">Mikoa</a></li>
-              <li><a className="text-white/80 hover:text-white transition" href="/features">Vipengele</a></li>
-              <li><a className="text-white/80 hover:text-white transition" href="/contact">Mawasiliano</a></li>
+              <li><a className="text-white/80 hover:text-white transition" href="/out/">Nyumbani</a></li>
+              <li><a className="text-white/80 hover:text-white transition" href="/out/about/">Kuhusu Sisi</a></li>
+              <li><a className="text-white/80 hover:text-white transition" href="/out/regions/">Mikoa</a></li>
+              <li><a className="text-white/80 hover:text-white transition" href="/out/features/">Vipengele</a></li>
+              <li><a className="text-white/80 hover:text-white transition" href="/out/contact/">Mawasiliano</a></li>
             </ul>
           </div>
 
@@ -43,9 +43,9 @@ export default function Footer() {
           <div>
             <div className="text-white font-semibold">Rasilimali</div>
             <ul className="mt-3 space-y-2 text-sm">
-              <li><a className="text-white/80 hover:text-white transition" href="/privacy">Sera ya Faragha</a></li>
-              <li><a className="text-white/80 hover:text-white transition" href="/terms">Masharti ya Huduma</a></li>
-              <li><a className="text-white/80 hover:text-white transition" href="/help">Kituo cha Msaada</a></li>
+              <li><a className="text-white/80 hover:text-white transition" href="/out/privacy/">Sera ya Faragha</a></li>
+              <li><a className="text-white/80 hover:text-white transition" href="/out/terms/">Masharti ya Huduma</a></li>
+              <li><a className="text-white/80 hover:text-white transition" href="/out/help/">Kituo cha Msaada</a></li>
             </ul>
           </div>
 
