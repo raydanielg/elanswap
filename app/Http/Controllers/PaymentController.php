@@ -72,7 +72,13 @@ class PaymentController extends Controller
             // last-resort sanitize to local style if possible
             $phoneLocal = '0' . ltrim($raw, '0');
         }
-        \Log::info('PAYMENT: Normalized phone', ['input' => (string) $request->string('phone'), 'local' => $phoneLocal]);
+        // Additionally compute E.164 format without plus: 2557XXXXXXXX
+        $phoneE164 = '255' . ltrim($phoneLocal, '0');
+        \Log::info('PAYMENT: Normalized phone', [
+            'input' => (string) $request->string('phone'),
+            'local' => $phoneLocal,
+            'e164'  => $phoneE164,
+        ]);
 
         // Use cURL implementation based on user's script
         $orderId = 'ORD_' . now()->format('YmdHis') . '_' . $user->id;
@@ -172,10 +178,12 @@ class PaymentController extends Controller
             'currency' => 'TZS',
             'provider_reference' => $reference,
             'orderid' => $orderId,
-            'phone' => $phoneLocal,
+            // Store in DB strictly as 255XXXXXXXXX
+            'phone' => $phoneE164,
             'meta' => [
                 'order_id' => $orderId,
-                'phone' => $phoneLocal,
+                'phone_local' => $phoneLocal,
+                'phone_e164' => $phoneE164,
                 'payment_url' => $paymentUrl ?? ($createData['payment_url'] ?? ''),
                 'provider' => 'selcom',
                 'create_response' => $createData,

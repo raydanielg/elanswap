@@ -18,7 +18,7 @@ return new class extends Migration {
         // 2) Add indexes if they don't already exist (works across drivers)
         $driver = DB::getDriverName();
         $existingIndexes = [];
-        if (in_array($driver, ['mysql', 'mariadb'])) {
+        if (in_array($driver, ['mysql', 'mysqli'])) {
             $existingIndexes = collect(DB::select('SHOW INDEX FROM payments'))
                 ->pluck('Key_name')
                 ->map(fn($n) => strtolower((string) $n))
