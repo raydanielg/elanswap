@@ -266,27 +266,165 @@ class PaymentController extends Controller
      * Provider webhook to listen for payment result [Mock].
      * POST /payment/webhook
      */
-    public function webhook()
+    /**
+     * Send SMS notification for successful payment
+     * 
+     * @param Payment $payment The payment record
+     * @return void
+     */
+    protected function sendPaymentConfirmationSms($payment)
     {
-        
-        header('Content-Type: application/json');
-$input = json_decode(file_get_contents('php://input'), true);
+        try {
+            $user = $payment->user;
+            if (!$user) {
+                \Log::warning('SMS: User not found for payment', ['payment_id' => $payment->id]);
+                return false;
+            }
+            
+            $amount = number_format((float) $payment->amount);
+            $ref = $payment->provider_reference ?: ($payment->meta['order_id'] ?? '');
+            $message = "Malipo yako ya TZS {$amount} imefanikiwa. Namba ya kumbukumbu: {$ref}. Asante kwa kutumia ElanSwap.";
+            
+            // Get phone number from payment meta or user profile
+            $phone = $payment->meta['phone'] ?? $user->phone ?? null;
+            
+            if (!$phone) {
+                \Log::warning('SMS: No phone number available', ['payment_id' => $payment->id, 'user_id' => $user->id]);
+                return false;
+            }
+            
+            // Format phone number (remove any non-numeric characters except +)
+            $phone = preg_replace('/[^0-9+]/', '', $phone);
+            
+            // Send SMS via external service
+            $url = 'https://messaging-service.co.tz/link/sms/v1/text/single';
+            $params = [
+                'username' => 'elanbrands',
+                'password' => 'Eliyaamos1@',
+                'from' => 'ElanBrands',
+                'to' => $phone,
+                'text' => $message
+            ];
+            
+            $fullUrl = $url . '?' . http_build_query($params);
+            
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, $fullUrl);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+            
+            $response = curl_exec($ch);
+            $error = curl_error($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            
+            curl_close($ch);
+            
+            // Log the SMS sending attempt
+            \Log::info('SMS: Payment confirmation sent', [
+                'payment_id' => $payment->id,
+                'phone' => $phone,
+                'message' => $message,
+                'http_code' => $httpCode,
+                'response' => $response,
+                'error' => $error
+            ]);
+            
+            return $httpCode === 200;
+            
+        } catch (\Exception $e) {
+            \Log::error('SMS: Failed to send payment confirmation', [
+                'payment_id' => $payment->id ?? null,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return false;
+        }
+    }
+    
+    /**
+     * Test webhook endpoint (for development only)
+     */
+    /**
+     * Verify payment status
+     * 
+     * @param string $orderId The order ID to verify
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function verifyPayment($orderId)
+    {
+        try {
+            // Find payment by order_id
+            $payment = Payment::whereHas('meta', function($q) use ($orderId) {
+                $q->where('meta->order_id', $orderId);
+            })->first();
 
-if (isset($input['order_id'], $input['status'], $input['transid'], $input['reference'])) {
-    // Process the transaction (e.g., save to database)
-    http_response_code(200);
-    echo json_encode([
-        'status' => 'success',
-        'message' => 'Transaction processed successfully',
-        'transaction_id' => $input['transid']
-    ]);
-} else {
-    http_response_code(400);
-    echo json_encode([
-        'status' => 'error',
-        'message' => 'Missing required fields'
-    ]);
-}
+            if (!$payment) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Payment not found',
+                    'order_id' => $orderId
+                ], 404);
+            }
+
+            // If payment is already marked as paid, return success
+            if ($payment->paid_at) {
+                return response()->json([
+                    'status' => 'success',
+                    'message' => 'Payment already verified',
+                    'payment_status' => 'paid',
+                    'paid_at' => $payment->paid_at,
+                    'amount' => $payment->amount,
+                    'currency' => $payment->currency
+                ]);
+            }
+
+            // If payment is not marked as paid, check with payment provider
+            // This is where you would typically make an API call to your payment provider
+            // For demonstration, we'll simulate a successful verification
+            
+            // Simulate payment verification (replace with actual provider API call)
+            $isVerified = true; // Replace with actual verification logic
+            
+            if ($isVerified) {
+                // Update payment status
+                $payment->update([
+                    'paid_at' => now(),
+                    'status' => 'completed'
+                ]);
+
+                // Send confirmation SMS
+                $this->sendPaymentConfirmationSms($payment);
+
+                return response()->json([
+                    'status' => 'success',
+                    'message' => 'Payment verified successfully',
+                    'payment_status' => 'paid',
+                    'paid_at' => $payment->paid_at,
+                    'amount' => $payment->amount,
+                    'currency' => $payment->currency
+                ]);
+            }
+
+            return response()->json([
+                'status' => 'pending',
+                'message' => 'Payment is still pending',
+                'payment_status' => 'pending'
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Payment verification failed', [
+                'order_id' => $orderId,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Failed to verify payment',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
        // $raw = file_get_contents('php://input');
     
         // // Decode JSON as associative array
