@@ -89,6 +89,9 @@
 
                     <div class="p-4 sm:p-8">
                         @include('profile.partials.user-summary-card')
+                        <div class="mt-4">
+                            @include('profile.partials.payment-receipt')
+                        </div>
                     </div>
                 @endif
             @endif

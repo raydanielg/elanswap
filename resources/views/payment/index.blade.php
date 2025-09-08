@@ -22,7 +22,12 @@
             <div class="p-6 bg-white shadow sm:rounded-lg">
                 <div class="flex items-center justify-between mb-4">
                     <h3 class="text-lg font-semibold">Hali ya Malipo</h3>
-                    <div id="status-badge"></div>
+                    <div class="flex items-center gap-2">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200">
+                            Kiasi: TZS {{ number_format($amount) }}
+                        </span>
+                        <div id="status-badge"></div>
+                    </div>
                 </div>
 
                 <div id="payment-form-container">
