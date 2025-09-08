@@ -99,6 +99,7 @@ class PaymentController extends Controller
             'order_id'           => $orderId,
             'currency'           => 'TZS',
             'order_item_cont'    => 1,
+            'order_item_count'   => 1,
             'service_name'       => 'subscription',
             'is_reference_payment' => 1
         ]);
@@ -106,6 +107,11 @@ class PaymentController extends Controller
         $ch = curl_init(rtrim($apiUrl, '/') . '/create_mno_order');
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_POSTFIELDS, $createPayload);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Content-Type: application/x-www-form-urlencoded',
+            'Accept: application/json',
+            'X-Requested-With: XMLHttpRequest',
+        ]);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_TIMEOUT, $timeout);
         if ($caPath !== '') {
@@ -122,11 +128,31 @@ class PaymentController extends Controller
         }
         \Log::info('PAYMENT: create_mno_order response', ['response' => $createResponse]);
 
-        $createData = json_decode($createResponse);
-        $reference = $createData->reference ?? null;
+        $createData = json_decode($createResponse, true);
+        // Try multiple locations/keys for reference
+        $reference = $createData['reference']
+            ?? ($createData['ref'] ?? null)
+            ?? ($createData['data']['reference'] ?? null);
+        $resultCode = (string)($createData['resultcode'] ?? '');
+        $result     = (string)($createData['result'] ?? '');
+        $provMsg    = (string)($createData['message'] ?? '');
+        $paymentUrl = (string)($createData['payment_url'] ?? '');
 
-        if (empty($reference) || !is_numeric($reference)) {
-            return response()->json(['ok' => false, 'message' => 'Failed to create order. Invalid reference from provider.'], 502);
+        // If provider indicates success but reference missing, fallback to order_id
+        if ((strtoupper($result) === 'SUCCESS' || $resultCode === '000' || $paymentUrl !== '') && empty($reference)) {
+            \Log::warning('PAYMENT: Provider success but missing reference; falling back to order_id', [
+                'order_id' => $orderId,
+                'provider_payload' => $createData,
+            ]);
+            $reference = $orderId; // push can work with order_id; we keep reference for record
+        }
+
+        if (empty($reference)) {
+            return response()->json([
+                'ok' => false,
+                'message' => $provMsg ?: 'Failed to create order. Invalid reference from provider.',
+                'provider' => $createData,
+            ], 502);
         }
 
         // Create local payment record
