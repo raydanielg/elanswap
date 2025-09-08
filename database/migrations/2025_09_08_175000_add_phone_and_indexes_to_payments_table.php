@@ -15,11 +15,27 @@ return new class extends Migration {
             }
         });
 
-        // 2) Add indexes if they don't already exist (SQLite-friendly)
-        $existingIndexes = collect(DB::select("PRAGMA index_list('payments')"))
-            ->pluck('name')
-            ->map(fn($n) => strtolower((string) $n))
-            ->all();
+        // 2) Add indexes if they don't already exist (works across drivers)
+        $driver = DB::getDriverName();
+        $existingIndexes = [];
+        if (in_array($driver, ['mysql', 'mariadb'])) {
+            $existingIndexes = collect(DB::select('SHOW INDEX FROM payments'))
+                ->pluck('Key_name')
+                ->map(fn($n) => strtolower((string) $n))
+                ->unique()
+                ->values()
+                ->all();
+        } elseif ($driver === 'sqlite') {
+            $existingIndexes = collect(DB::select("PRAGMA index_list('payments')"))
+                ->pluck('name')
+                ->map(fn($n) => strtolower((string) $n))
+                ->all();
+        } elseif ($driver === 'pgsql') {
+            $existingIndexes = collect(DB::select("SELECT indexname FROM pg_indexes WHERE tablename = 'payments'"))
+                ->pluck('indexname')
+                ->map(fn($n) => strtolower((string) $n))
+                ->all();
+        }
 
         $ensureIndex = function (string $column, string $indexName) use ($existingIndexes) {
             if (!in_array(strtolower($indexName), $existingIndexes, true) && Schema::hasColumn('payments', $column)) {
