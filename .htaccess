@@ -5,6 +5,11 @@
   Options -Indexes
   RewriteEngine On
 
+  # Redirect any explicit /public/... URL to hide /public from the address bar
+  # Example: /public/site/... -> /site/...
+  RewriteCond %{REQUEST_URI} ^/public/(.*)$ [NC]
+  RewriteRule ^public/(.*)$ /$1 [L,R=301]
+
   # If the requested resource doesn't exist as a file or directory,
   # forward the request to /public preserving the path
   RewriteCond %{REQUEST_URI} !^/public/
