@@ -41,6 +41,11 @@
                 </div>
 
                 <div id="paid-container" class="hidden text-center">
+                    <div class="mx-auto mb-3 w-14 h-14 rounded-full bg-green-50 flex items-center justify-center">
+                        <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+                        </svg>
+                    </div>
                     <p class="text-green-700 font-semibold mb-4">Asante! Malipo yako yamekamilika.</p>
                     <a href="{{ route('dashboard') }}" class="inline-flex items-center px-4 py-2 bg-green-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-green-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
                         Endelea Kwenye Dashboard
@@ -157,7 +162,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                     // MAELEZO: Kuanza kuangalia hali ya malipo kila sekunde 3 kwa dakika 2
                     const start = Date.now();
-                    const timeoutMs = 2 * 60 * 1000; // Dakika 2
+                    const timeoutMs = 3 * 60 * 1000; // Dakika 3
                     const intervalMs = 3000; // Sekunde 3
                     const poll = async () => {
                         try {
@@ -165,12 +170,15 @@ document.addEventListener('DOMContentLoaded', function () {
                             const res = await fetch(`{{ url('/payment/status') }}${orderId ? ('?order_id=' + encodeURIComponent(orderId)) : ''}`, { headers: { 'Accept': 'application/json' } });
                             const st = await res.json();
                             if (st && st.paid) { // Ikiwa malipo yamekamilika
-                                // MAELEZO: Kuonyesha ujumbe wa mafanikio
-                                statusBadge.innerHTML = `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Malipo yamekamilika</span>`;
+                                // MAELEZO: Kuonyesha ujumbe wa mafanikio na kutoa chaguo la kuendelea
+                                statusBadge.innerHTML = `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                    <svg class="-ml-0.5 mr-1.5 h-2 w-2 text-green-400" fill="currentColor" viewBox="0 0 8 8"><circle cx="4" cy="4" r="3" /></svg>
+                                    PAID
+                                </span>`;
                                 btnSpinner.classList.add('hidden');
                                 btnText.textContent = 'Imelipwa';
-                                // MAELEZO: Kuhamisha mtumiaji kwenye ukurasa wa nyumbani baada ya sekunde 1.2
-                                setTimeout(() => { window.location.href = '{{ url('/') }}'; }, 1200);
+                                paymentFormContainer.classList.add('hidden');
+                                paidContainer.classList.remove('hidden');
                                 return; // Acha kuangalia
                             }
                             if (Date.now() - start < timeoutMs) { // Ikiwa bado kuna muda
