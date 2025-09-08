@@ -25,20 +25,18 @@ use App\Http\Controllers\PaymentController;
 use App\Models\Feature;
 use Illuminate\Http\Request;
 
-// Serve the exported Next.js frontend as the public homepage
-Route::get('/', function () {
-    return redirect('/site/');
-})->name('home.public');
+// Serve the exported Next.js frontend as the public homepage (permanent)
+Route::permanentRedirect('/', '/site/')->name('home.public');
 
-// Redirect clean paths to exported static pages under /site/
-Route::get('/about', fn() => redirect('/site/about/'));
-Route::get('/regions', fn() => redirect('/site/regions/'));
-Route::get('/features', fn() => redirect('/site/features/'));
-Route::get('/contact', fn() => redirect('/site/contact/'));
-Route::get('/categories', fn() => redirect('/site/categories/'));
-Route::get('/privacy', fn() => redirect('/site/privacy/'));
-Route::get('/terms', fn() => redirect('/site/terms/'));
-Route::get('/help', fn() => redirect('/site/help/'));
+// Redirect clean paths to exported static pages under /site/ (permanent)
+Route::permanentRedirect('/about', '/site/about/');
+Route::permanentRedirect('/regions', '/site/regions/');
+Route::permanentRedirect('/features', '/site/features/');
+Route::permanentRedirect('/contact', '/site/contact/');
+Route::permanentRedirect('/categories', '/site/categories/');
+Route::permanentRedirect('/privacy', '/site/privacy/');
+Route::permanentRedirect('/terms', '/site/terms/');
+Route::permanentRedirect('/help', '/site/help/');
 
 // Keep the previous homepage available at /landing
 Route::get('/landing', function () {
