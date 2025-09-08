@@ -2,6 +2,15 @@
 
 @section('content')
 <div class="max-w-3xl mx-auto">
+    @if ($errors->any())
+        <div class="mb-4 p-3 rounded border border-red-200 bg-red-50 text-sm text-red-800">
+            <ul class="list-disc pl-5">
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
     <div class="mb-6">
         <h1 class="text-2xl font-bold text-gray-900">New Application</h1>
         <p class="text-sm text-gray-600">Jaza maombi kwa hatua mbili: Thibitisha taarifa zako kisha chagua kituo unachotaka kwenda.</p>
@@ -17,7 +26,7 @@
             </div>
         </div>
 
-        <form method="POST" action="{{ route('applications.store') }}" class="p-4">
+        <form method="POST" action="{{ route('applications.store') }}" class="p-4" x-on:submit="submitting=true">
             @csrf
 
             <!-- Step 1: current profile snapshot -->
@@ -56,7 +65,7 @@
                     <div>
                         <label class="block text-sm text-gray-600">Mkoa Unaoenda</label>
                         <select x-model.number="to_region_id" @change="loadDistricts()" name="to_region_id" class="mt-1 w-full border rounded px-3 py-2" required>
-                            <option value="" disabled selected>Chagua mkoa...</option>
+                            <option value="" disabled :selected="!to_region_id">Chagua mkoa...</option>
                             <template x-for="r in regions" :key="r.id">
                                 <option :value="r.id" x-text="r.name"></option>
                             </template>
@@ -65,7 +74,7 @@
                     <div>
                         <label class="block text-sm text-gray-600">Wilaya Unaoenda</label>
                         <select x-model.number="to_district_id" name="to_district_id" class="mt-1 w-full border rounded px-3 py-2" required :disabled="!to_region_id">
-                            <option value="" disabled selected>Chagua wilaya...</option>
+                            <option value="" disabled :selected="!to_district_id">Chagua wilaya...</option>
                             <template x-for="d in districts" :key="d.id">
                                 <option :value="d.id" x-text="d.name"></option>
                             </template>
@@ -76,9 +85,13 @@
                         <textarea name="reason" rows="4" class="mt-1 w-full border rounded px-3 py-2" placeholder="Andika sababu kama ipo..."></textarea>
                     </div>
                 </div>
-                <div class="mt-6 flex justify-between gap-3">
+                <div class="mt-6 flex justify-between gap-3 items-center">
                     <button type="button" @click="prev()" class="px-4 py-2 border rounded text-gray-700 hover:bg-gray-50">Back</button>
-                    <button type="submit" class="px-4 py-2 bg-primary-600 text-white rounded hover:bg-primary-700">Submit</button>
+                    <div class="text-sm text-gray-500" x-show="submitting" x-cloak>
+                        <svg class="animate-spin inline h-4 w-4 mr-1 text-gray-500" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path></svg>
+                        Inatuma...
+                    </div>
+                    <button type="submit" :disabled="!to_region_id || !to_district_id || submitting" class="px-4 py-2 bg-primary-600 text-white rounded hover:bg-primary-700 disabled:opacity-50">Submit</button>
                 </div>
             </div>
         </form>
@@ -93,6 +106,7 @@ function applicationWizard(){
         districts: [],
         to_region_id: null,
         to_district_id: null,
+        submitting: false,
         init(){ this.fetchRegions(); },
         next(){ this.step = 2; },
         prev(){ this.step = 1; },
@@ -100,6 +114,10 @@ function applicationWizard(){
             try{
                 const res = await fetch('{{ route('profile.regions') }}');
                 this.regions = await res.json();
+                // Preserve old input if present
+                @if(old('to_region_id')) this.to_region_id = Number({{ (int) old('to_region_id') }}); @endif
+                @if(old('to_district_id')) this.to_district_id = Number({{ (int) old('to_district_id') }}); @endif
+                if(this.to_region_id){ await this.loadDistricts(); }
             }catch(e){ console.error(e); }
         },
         async loadDistricts(){
@@ -111,6 +129,8 @@ function applicationWizard(){
                 url.searchParams.set('region_id', this.to_region_id);
                 const res = await fetch(url);
                 this.districts = await res.json();
+                // Reapply old district if any
+                @if(old('to_district_id')) this.to_district_id = Number({{ (int) old('to_district_id') }}); @endif
             }catch(e){ console.error(e); }
         }
     }
