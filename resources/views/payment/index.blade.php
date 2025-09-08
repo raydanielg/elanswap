@@ -136,12 +136,44 @@ document.addEventListener('DOMContentLoaded', function () {
                 const result = await response.json();
 
                 if (result.ok) {
+                    const orderId = result.order_id || '';
                     statusBadge.innerHTML = `<div class="flex items-center text-sm text-blue-600">
                         <svg class="animate-spin h-4 w-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path></svg>
                         <span>Ombi limetumwa. Tafadhali thibitisha kwenye simu yako.</span>
                     </div>`;
                     // Keep the button disabled but change text
                     btnText.textContent = 'Inasubiri Uthibitisho...';
+
+                    // Begin polling for payment status
+                    const start = Date.now();
+                    const timeoutMs = 2 * 60 * 1000; // 2 minutes
+                    const intervalMs = 3000; // 3 seconds
+                    const poll = async () => {
+                        try {
+                            const res = await fetch(`{{ url('/payment/status') }}${orderId ? ('?order_id=' + encodeURIComponent(orderId)) : ''}`, { headers: { 'Accept': 'application/json' } });
+                            const st = await res.json();
+                            if (st && st.paid) {
+                                statusBadge.innerHTML = `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Malipo yamekamilika</span>`;
+                                btnSpinner.classList.add('hidden');
+                                btnText.textContent = 'Imelipwa';
+                                // Optionally redirect after a short delay
+                                setTimeout(() => { window.location.href = '{{ url('/') }}'; }, 1200);
+                                return; // stop polling
+                            }
+                            if (Date.now() - start < timeoutMs) {
+                                setTimeout(poll, intervalMs);
+                            } else {
+                                // Timeout – re-enable button
+                                statusBadge.innerHTML = `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">Bado haijathibitishwa. Jaribu tena au angalia baadaye.</span>`;
+                                paymentButton.disabled = false;
+                                btnSpinner.classList.add('hidden');
+                                btnText.textContent = 'Lipa Sasa';
+                            }
+                        } catch (e) {
+                            setTimeout(poll, intervalMs);
+                        }
+                    };
+                    setTimeout(poll, 2500); // give user a moment to confirm
                 } else {
                     statusBadge.innerHTML = `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
                         ${result.message || 'Imeshindikana kutuma ombi.'}

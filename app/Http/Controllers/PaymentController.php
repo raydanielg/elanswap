@@ -320,14 +320,75 @@ class PaymentController extends Controller
     public function status(Request $request)
     {
         $user = $request->user();
-        $latest = $user?->payments()->latest('id')->first();
+        $orderId = (string) $request->query('order_id', '');
+
+        $payment = null;
+        if ($orderId !== '') {
+            foreach ($user?->payments()->orderByDesc('id')->get() ?? [] as $p) {
+                $meta = (array) $p->meta;
+                if (($meta['order_id'] ?? null) === $orderId) { $payment = $p; break; }
+            }
+        }
+        if (!$payment) {
+            $payment = $user?->payments()->latest('id')->first();
+        }
+
         return response()->json([
             'ok' => true,
-            'paid' => (bool) ($latest && $latest->paid_at),
-            'status' => $latest?->status,
-            'paid_at' => optional($latest?->paid_at)->toIso8601String(),
-            'method' => $latest?->method,
-            'reference' => $latest?->provider_reference,
+            'paid' => (bool) ($payment && $payment->paid_at),
+            'status' => $payment?->status,
+            'paid_at' => optional($payment?->paid_at)->toIso8601String(),
+            'method' => $payment?->method,
+            'reference' => $payment?->provider_reference,
+            'order_id' => (string) (($payment?->meta['order_id'] ?? '') ?: ''),
         ]);
+    }
+
+    /**
+     * Manual verification endpoint: user enters reference or order_id to confirm payment.
+     * POST /payment/verify
+     */
+    public function verify(Request $request)
+    {
+        $data = $request->validate([
+            'reference' => ['nullable','string','max:64'],
+            'order_id'  => ['nullable','string','max:64'],
+        ]);
+
+        if (($data['reference'] ?? '') === '' && ($data['order_id'] ?? '') === '') {
+            return response()->json(['ok' => false, 'message' => 'Weka Reference au Order ID'], 422);
+        }
+
+        $user = $request->user();
+        $payment = null;
+        if (!empty($data['reference'])) {
+            $payment = $user?->payments()->where('provider_reference', $data['reference'])->latest('id')->first();
+        }
+        if (!$payment && !empty($data['order_id'])) {
+            foreach ($user?->payments()->orderByDesc('id')->get() ?? [] as $p) {
+                $meta = (array) $p->meta;
+                if (($meta['order_id'] ?? null) === $data['order_id']) { $payment = $p; break; }
+            }
+        }
+        if (!$payment) {
+            return response()->json(['ok' => false, 'message' => 'Hatukupata malipo yanayolingana.'], 404);
+        }
+
+        if ($payment->paid_at) {
+            return response()->json(['ok' => true, 'paid' => true, 'message' => 'Malipo tayari yamekamilika.']);
+        }
+
+        $meta = (array) $payment->meta;
+        $webhook = (array) ($meta['webhook'] ?? []);
+        $status  = strtolower((string) ($webhook['status'] ?? ''));
+        $hasTrans = !empty($meta['transid']);
+
+        if (in_array($status, ['success','completed','paid'], true) || $hasTrans) {
+            $payment->paid_at = now();
+            $payment->save();
+            return response()->json(['ok' => true, 'paid' => true, 'message' => 'Malipo yamedhibitishwa. Asante!']);
+        }
+
+        return response()->json(['ok' => true, 'paid' => false, 'message' => 'Malipo bado hayajathibitishwa. Tafadhali jaribu tena baadaye.']);
     }
 }
