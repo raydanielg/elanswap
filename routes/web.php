@@ -233,8 +233,6 @@ Route::middleware(['auth', \App\Http\Middleware\EnsureProfileCompleted::class])-
     Route::post('/payment/push', [PaymentController::class, 'requestPush'])->name('payment.push');
     // Poll latest payment status for current user
     Route::get('/payment/status', [PaymentController::class, 'status'])->name('payment.status');
-    // Verify payment status by order ID
-    Route::get('/payment/verify/{orderId}', [PaymentController::class, 'verifyPayment'])->name('payment.verify');
 });
 
 // Webhook listener (public, CSRF-exempt via middleware config)
