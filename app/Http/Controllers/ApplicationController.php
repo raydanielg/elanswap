@@ -27,33 +27,59 @@ class ApplicationController extends Controller
     // Store application
     public function store(Request $request)
     {
-        $user = auth()->user();
-        $data = $request->validate([
-            'to_region_id'   => ['required','integer','exists:regions,id'],
-            'to_district_id' => ['required','integer','exists:districts,id'],
-            'reason'         => ['nullable','string','max:2000'],
-        ]);
+        try {
+            \Log::info('APPLICATION: store() invoked', [
+                'user_id' => auth()->id(),
+                'payload' => $request->only(['to_region_id','to_district_id','reason'])
+            ]);
 
-        $app = Application::create([
-            'user_id'         => $user->id,
-            'from_region_id'  => $user->region_id,
-            'from_district_id'=> $user->district_id,
-            'from_station_id' => $user->station_id,
-            'to_region_id'    => $data['to_region_id'],
-            'to_district_id'  => $data['to_district_id'],
-            'reason'          => $data['reason'] ?? null,
-            'status'          => 'pending',
-            'submitted_at'    => now(),
-        ]);
+            $user = auth()->user();
+            if (!$user) {
+                return redirect()->route('login');
+            }
 
-        // Generate tracking code e.g., ELS0023
-        if (empty($app->code)) {
-            $app->code = 'ELS' . str_pad((string) $app->id, 4, '0', STR_PAD_LEFT);
-            $app->save();
+            $data = $request->validate([
+                'to_region_id'   => ['required','integer','exists:regions,id'],
+                'to_district_id' => ['required','integer','exists:districts,id'],
+                'reason'         => ['nullable','string','max:2000'],
+            ]);
+
+            $app = Application::create([
+                'user_id'         => $user->id,
+                'from_region_id'  => $user->region_id,
+                'from_district_id'=> $user->district_id,
+                'from_station_id' => $user->station_id,
+                'to_region_id'    => $data['to_region_id'],
+                'to_district_id'  => $data['to_district_id'],
+                'reason'          => $data['reason'] ?? null,
+                'status'          => 'pending',
+                'submitted_at'    => now(),
+            ]);
+
+            // Generate tracking code e.g., ELS0023
+            if (empty($app->code)) {
+                $app->code = 'ELS' . str_pad((string) $app->id, 4, '0', STR_PAD_LEFT);
+                $app->save();
+            }
+
+            \Log::info('APPLICATION: created', ['id' => $app->id, 'code' => $app->code]);
+
+            return redirect()->route('applications.index')
+                ->with('status', 'Application submitted successfully.');
+        } catch (\Illuminate\Validation\ValidationException $ve) {
+            \Log::warning('APPLICATION: validation failed', [
+                'errors' => $ve->errors(),
+            ]);
+            throw $ve; // Let Laravel redirect back with errors
+        } catch (\Throwable $e) {
+            \Log::error('APPLICATION: store() failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return redirect()->back()->withInput()->withErrors([
+                'general' => 'Imeshindikana kuhifadhi maombi kwa sasa. Tafadhali jaribu tena.',
+            ]);
         }
-
-        return redirect()->route('applications.index')
-            ->with('status', 'Application submitted successfully.');
     }
 
     // AJAX: search and list application requests
