@@ -30,7 +30,7 @@ class OtpPasswordResetController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $request->validate([
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
+            'password' => ['required', 'string', 'min:4', 'confirmed'],
         ]);
 
         $userId = $request->session()->get('password_reset_user_id');

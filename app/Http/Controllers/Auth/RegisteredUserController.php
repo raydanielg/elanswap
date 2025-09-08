@@ -41,7 +41,8 @@ class RegisteredUserController extends Controller
             // Accept common TZ formats: 0712xxxxxxx, 712xxxxxx, +2557xxxxxxx, 2557xxxxxxx
             'phone' => ['required', 'string', 'min:9'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:'.User::class],
-            'password' => ['required', 'confirmed', Rules\Password::defaults()],
+            // Password: allow any characters, minimum 4
+            'password' => ['required', 'string', 'min:4', 'confirmed'],
         ], [
             'name.required' => 'The name field is required.',
             'phone.required' => 'The phone number is required.',
