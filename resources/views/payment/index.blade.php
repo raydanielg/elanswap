@@ -152,13 +152,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 if (result.ok) { // Ikiwa ombi limefanikiwa
                     const orderId = result.order_id || '';
-                    // MAELEZO: Kuonyesha ujumbe wa Processing... na spinner
+                    // MAELEZO: Kuonyesha ujumbe wa Verifying... na spinner
                     statusBadge.innerHTML = `<div class="flex items-center text-sm text-blue-600">
                         <svg class="animate-spin h-4 w-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path></svg>
-                        <span>Processing...</span>
+                        <span>Verifying...</span>
                     </div>`;
                     // MAELEZO: Kubadilisha maandishi ya kitufe
-                    btnText.textContent = 'Processing...';
+                    btnText.textContent = 'Verifying...';
 
                     // MAELEZO: Kuanza kuangalia hali ya malipo kila sekunde 3 kwa dakika 2
                     const start = Date.now();
@@ -179,30 +179,53 @@ document.addEventListener('DOMContentLoaded', function () {
                                 btnText.textContent = 'Imelipwa';
                                 paymentFormContainer.classList.add('hidden');
 
-                                // Tengeneza muhtasari wa malipo kwa kadi
                                 const phone = (st.phone || '').toString();
                                 const phoneLocal = phone.startsWith('255') ? ('0' + phone.slice(3)) : phone;
                                 const amountFmt = (st.amount ? new Intl.NumberFormat('en-US').format(st.amount) : '');
                                 const method = (st.method || '').toUpperCase();
                                 const reference = st.reference || '';
                                 paidContainer.innerHTML = `
-                                    <div class=\"mx-auto mb-3 w-14 h-14 rounded-full bg-green-50 flex items-center justify-center\">
-                                        <svg class=\"w-8 h-8 text-green-600\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" viewBox=\"0 0 24 24\">\n                                          <path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M5 13l4 4L19 7\"/>\n                                        </svg>
-                                    </div>
-                                    <h3 class=\"text-green-700 font-semibold mb-2\">Hongera! Malipo yako yamekamilika.</h3>
-                                    <div class=\"mb-4 text-sm text-gray-700 bg-gray-50 border border-gray-200 rounded-md p-3 text-left\">
-                                        <div class=\"grid grid-cols-1 gap-1\">
-                                            <div><span class=\"text-gray-500\">Method:</span> <span class=\"font-medium\">${method || '—'}</span></div>
-                                            <div><span class=\"text-gray-500\">Phone:</span> <span class=\"font-medium\">${phoneLocal || '—'}</span></div>
-                                            <div><span class=\"text-gray-500\">Amount:</span> <span class=\"font-medium\">${st.currency || ''} ${amountFmt || ''}</span></div>
-                                            <div><span class=\"text-gray-500\">Reference:</span> <span class=\"font-medium\">${reference || '—'}</span></div>
+                                    <div id="successAnim" class="mx-auto mb-3 w-24 h-24"></div>
+                                    <h3 class="text-green-700 font-semibold mb-2">Hongera! Malipo yako yamekamilika.</h3>
+                                    <div class="mb-4 text-sm text-gray-700 bg-gray-50 border border-gray-200 rounded-md p-3 text-left">
+                                        <div class="grid grid-cols-1 gap-1">
+                                            <div><span class="text-gray-500">Method:</span> <span class="font-medium">${method || '—'}</span></div>
+                                            <div><span class="text-gray-500">Phone:</span> <span class="font-medium">${phoneLocal || '—'}</span></div>
+                                            <div><span class="text-gray-500">Amount:</span> <span class="font-medium">${st.currency || ''} ${amountFmt || ''}</span></div>
+                                            <div><span class="text-gray-500">Reference:</span> <span class="font-medium">${reference || '—'}</span></div>
                                         </div>
                                     </div>
-                                    <a href=\"{{ route('dashboard') }}\" class=\"inline-flex items-center px-4 py-2 bg-green-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-green-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500\">
+                                    <a href="{{ route('dashboard') }}" class="inline-flex items-center px-4 py-2 bg-green-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-green-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
                                         Endelea Kwenye Dashboard
                                     </a>
                                 `;
                                 paidContainer.classList.remove('hidden');
+                                // Cheza Lottie success animation kutoka /success.json
+                                try {
+                                    if (!window.lottie) {
+                                        // load lottie library on-demand
+                                        const script = document.createElement('script');
+                                        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js';
+                                        script.onload = () => {
+                                            window.lottie.loadAnimation({
+                                                container: document.getElementById('successAnim'),
+                                                renderer: 'svg',
+                                                loop: false,
+                                                autoplay: true,
+                                                path: '/success.json'
+                                            });
+                                        };
+                                        document.body.appendChild(script);
+                                    } else {
+                                        window.lottie.loadAnimation({
+                                            container: document.getElementById('successAnim'),
+                                            renderer: 'svg',
+                                            loop: false,
+                                            autoplay: true,
+                                            path: '/success.json'
+                                        });
+                                    }
+                                } catch (e) { /* ignore animation errors */ }
                                 return; // Acha kuangalia
                             }
                             if (Date.now() - start < timeoutMs) { // Ikiwa bado kuna muda
