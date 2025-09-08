@@ -25,9 +25,9 @@ use App\Http\Controllers\PaymentController;
 use App\Models\Feature;
 use Illuminate\Http\Request;
 
-// Make login the first page
+// Serve the exported Next.js frontend as the public homepage
 Route::get('/', function () {
-    return redirect()->route('login');
+    return redirect('/out/');
 })->name('home.public');
 
 // Keep the previous homepage available at /landing
