@@ -30,6 +30,16 @@ Route::get('/', function () {
     return redirect('/out/');
 })->name('home.public');
 
+// Redirect clean paths to exported static pages under /out/
+Route::get('/about', fn() => redirect('/out/about/'));
+Route::get('/regions', fn() => redirect('/out/regions/'));
+Route::get('/features', fn() => redirect('/out/features/'));
+Route::get('/contact', fn() => redirect('/out/contact/'));
+Route::get('/categories', fn() => redirect('/out/categories/'));
+Route::get('/privacy', fn() => redirect('/out/privacy/'));
+Route::get('/terms', fn() => redirect('/out/terms/'));
+Route::get('/help', fn() => redirect('/out/help/'));
+
 // Keep the previous homepage available at /landing
 Route::get('/landing', function () {
     $features = Feature::active()->orderBy('sort_order')->orderBy('id')->get();

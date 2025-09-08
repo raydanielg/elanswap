@@ -41,7 +41,7 @@ export default function Categories() {
             <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-gray-900">Jamii</h2>
             <p className="mt-2 text-gray-600">Vinjari kwa mujibu wa jamii.</p>
           </div>
-          <a href="/out/categories/" className="text-sm text-gray-600 hover:text-[var(--color-secondary)]">Tazama zote</a>
+          <a href="/categories" className="text-sm text-gray-600 hover:text-[var(--color-secondary)]">Tazama zote</a>
         </div>
 
         {loading ? (
