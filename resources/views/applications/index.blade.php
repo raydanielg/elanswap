@@ -81,8 +81,8 @@
             </select>
           </div>
           <div class="sm:col-span-2">
-            <label class="block text-sm text-gray-600">Sababu (hiari)</label>
-            <textarea id="ca-reason" name="reason" rows="3" class="mt-1 w-full border rounded px-3 py-2" placeholder="Andika sababu kama ipo..."></textarea>
+            <label class="block text-sm text-gray-600">Uzoefu (lazima)</label>
+            <textarea id="ca-reason" name="reason" rows="3" class="mt-1 w-full border rounded px-3 py-2" placeholder="Mfano: Mwalimu wa Hisabati na Kompyuta kwa miaka 3" required></textarea>
           </div>
         </div>
         <div id="ca-errors" class="mt-3 hidden p-2 rounded border border-red-200 bg-red-50 text-sm text-red-700"></div>

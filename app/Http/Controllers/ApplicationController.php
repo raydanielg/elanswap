@@ -41,7 +41,8 @@ class ApplicationController extends Controller
             $data = $request->validate([
                 'to_region_id'   => ['required','integer','exists:regions,id'],
                 'to_district_id' => ['required','integer','exists:districts,id'],
-                'reason'         => ['nullable','string','max:2000'],
+                // Reason field now represents required experience description
+                'reason'         => ['required','string','max:2000'],
             ]);
 
             $app = Application::create([
