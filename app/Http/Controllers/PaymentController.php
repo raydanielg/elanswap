@@ -427,14 +427,33 @@ curl_close($ch);
             $payment = $user?->payments()->latest('id')->first();
         }
 
+        // Consider paid when paid_at is set OR status is exactly 'success'
+        $isPaid = false;
+        $isPending = false;
+        $isFailed = false;
+        $isCancelled = false;
+        if ($payment) {
+            $st = strtolower((string) $payment->status);
+            $isPaid = (bool) ($payment->paid_at || $st === 'success');
+            $isPending = ($st === 'pending');
+            $isFailed = ($st === 'failed' || $st === 'fail');
+            $isCancelled = ($st === 'cancelled' || $st === 'canceled');
+        }
+
         return response()->json([
             'ok' => true,
-            'paid' => (bool) ($payment && $payment->paid_at),
+            'paid' => $isPaid,
             'status' => $payment?->status,
             'paid_at' => optional($payment?->paid_at)->toIso8601String(),
             'method' => $payment?->method,
             'reference' => $payment?->provider_reference,
             'order_id' => (string) (($payment?->meta['order_id'] ?? '') ?: ''),
+            'amount' => $payment?->amount,
+            'currency' => $payment?->currency,
+            'phone' => $payment?->phone,
+            'is_pending' => $isPending,
+            'is_failed' => $isFailed,
+            'is_cancelled' => $isCancelled,
         ]);
     }
 }

@@ -172,12 +172,36 @@ document.addEventListener('DOMContentLoaded', function () {
                             if (st && st.paid) { // Ikiwa malipo yamekamilika
                                 // MAELEZO: Kuonyesha ujumbe wa mafanikio na kutoa chaguo la kuendelea
                                 statusBadge.innerHTML = `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                    <svg class="-ml-0.5 mr-1.5 h-2 w-2 text-green-400" fill="currentColor" viewBox="0 0 8 8"><circle cx="4" cy="4" r="3" /></svg>
+                                    <svg class=\"-ml-0.5 mr-1.5 h-2 w-2 text-green-400\" fill=\"currentColor\" viewBox=\"0 0 8 8\"><circle cx=\"4\" cy=\"4\" r=\"3\" /></svg>
                                     PAID
                                 </span>`;
                                 btnSpinner.classList.add('hidden');
                                 btnText.textContent = 'Imelipwa';
                                 paymentFormContainer.classList.add('hidden');
+
+                                // Tengeneza muhtasari wa malipo kwa kadi
+                                const phone = (st.phone || '').toString();
+                                const phoneLocal = phone.startsWith('255') ? ('0' + phone.slice(3)) : phone;
+                                const amountFmt = (st.amount ? new Intl.NumberFormat('en-US').format(st.amount) : '');
+                                const method = (st.method || '').toUpperCase();
+                                const reference = st.reference || '';
+                                paidContainer.innerHTML = `
+                                    <div class=\"mx-auto mb-3 w-14 h-14 rounded-full bg-green-50 flex items-center justify-center\">
+                                        <svg class=\"w-8 h-8 text-green-600\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" viewBox=\"0 0 24 24\">\n                                          <path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M5 13l4 4L19 7\"/>\n                                        </svg>
+                                    </div>
+                                    <h3 class=\"text-green-700 font-semibold mb-2\">Hongera! Malipo yako yamekamilika.</h3>
+                                    <div class=\"mb-4 text-sm text-gray-700 bg-gray-50 border border-gray-200 rounded-md p-3 text-left\">
+                                        <div class=\"grid grid-cols-1 gap-1\">
+                                            <div><span class=\"text-gray-500\">Method:</span> <span class=\"font-medium\">${method || '—'}</span></div>
+                                            <div><span class=\"text-gray-500\">Phone:</span> <span class=\"font-medium\">${phoneLocal || '—'}</span></div>
+                                            <div><span class=\"text-gray-500\">Amount:</span> <span class=\"font-medium\">${st.currency || ''} ${amountFmt || ''}</span></div>
+                                            <div><span class=\"text-gray-500\">Reference:</span> <span class=\"font-medium\">${reference || '—'}</span></div>
+                                        </div>
+                                    </div>
+                                    <a href=\"{{ route('dashboard') }}\" class=\"inline-flex items-center px-4 py-2 bg-green-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-green-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500\">
+                                        Endelea Kwenye Dashboard
+                                    </a>
+                                `;
                                 paidContainer.classList.remove('hidden');
                                 return; // Acha kuangalia
                             }
