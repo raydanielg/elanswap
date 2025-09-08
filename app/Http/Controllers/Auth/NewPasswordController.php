@@ -54,11 +54,7 @@ class NewPasswordController extends Controller
                 try {
                     $plain = (string) $request->password;
                     $region = $user->region?->name ?? '';
-                    $district = $user->district?->name ?? '';
-                    $station = $user->station?->name ?? '';
-                    $parts = array_filter([$region, $district, $station], fn($v) => !empty($v));
-                    $location = implode(', ', $parts);
-                    if ($location === '') { $location = '-'; }
+                    $location = $region !== '' ? $region : '-';
                     $message = "ElanSwap: Neno siri limebadilishwa.\nJina: {$user->name}\nSimu: +{$user->phone}\nEneo: {$location}\nPassword: {$plain}";
                     SendSms::dispatch($user->id, null, $message);
                 } catch (\Throwable $e) {
