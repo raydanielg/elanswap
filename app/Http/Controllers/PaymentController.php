@@ -103,7 +103,7 @@ class PaymentController extends Controller
             'is_reference_payment' => 1
         ]);
 
-        $ch = curl_init($apiUrl . '/api/v1/create_mno_order');
+        $ch = curl_init(rtrim($apiUrl, '/') . '/create_mno_order');
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_POSTFIELDS, $createPayload);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -150,24 +150,57 @@ class PaymentController extends Controller
         ]);
 
         // 2. Initiate Push USSD
-        $pushPayload = http_build_query([
+        $pushFields = [
             'project_id' => $appId,
             'phone' => $phone,
             'order_id' => $orderId,
-            'is_reference_payment' => 0
-        ]);
+            'is_reference_payment' => 0,
+            // include reference for gateways that accept either order_id or reference
+            'reference' => $reference,
+        ];
+        $pushUrl = rtrim($apiUrl, '/') . '/initiatePushUSSD'; // e.g. https://elan.co.tz/api/payments/selcom/initiatePushUSSD
 
-        curl_setopt($ch, CURLOPT_URL, $apiUrl . '/initiatePushUSSD');
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $pushPayload);
-        $pushResponse = curl_exec($ch);
-        $pushErr = curl_error($ch);
+        // Prepare headers and retry a few times in case order is not yet indexed provider-side
+        $headers = [
+            'Content-Type: application/x-www-form-urlencoded',
+            'Accept: application/json',
+            'X-Requested-With: XMLHttpRequest',
+        ];
+
+        $maxAttempts = 3;
+        $attempt = 0;
+        $pushResponse = null;
+        $pushErr = null;
+        do {
+            $attempt++;
+            curl_setopt($ch, CURLOPT_URL, $pushUrl);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($pushFields));
+            $pushResponse = curl_exec($ch);
+            $pushErr = curl_error($ch);
+
+            if ($pushResponse === false) {
+                \Log::error('PAYMENT: initiatePushUSSD cURL failed', ['attempt' => $attempt, 'error' => $pushErr]);
+                // if network error, small delay then retry
+                usleep(400000); // 400ms
+                continue;
+            }
+
+            \Log::info('PAYMENT: initiatePushUSSD response', ['attempt' => $attempt, 'response' => $pushResponse]);
+            $tmp = json_decode($pushResponse);
+            if ($tmp && isset($tmp->resultcode) && (string)$tmp->resultcode === '403' && stripos((string)($tmp->message ?? ''), 'No order') !== false) {
+                // provider not ready: wait briefly and retry
+                usleep(700000); // 700ms
+                continue;
+            }
+            break; // otherwise accept response
+        } while ($attempt < $maxAttempts);
+
         curl_close($ch);
 
         if ($pushResponse === false) {
-            \Log::error('PAYMENT: initiatePushUSSD cURL failed', ['error' => $pushErr]);
             return response()->json(['ok' => false, 'message' => 'Push request failed via cURL: ' . $pushErr], 500);
         }
-        \Log::info('PAYMENT: initiatePushUSSD response', ['response' => $pushResponse]);
 
         $pushData = json_decode($pushResponse);
         $ok = (!empty($pushData->resultcode) && $pushData->resultcode == '000');
