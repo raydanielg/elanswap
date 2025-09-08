@@ -106,7 +106,8 @@ class PaymentController extends Controller
             'is_reference_payment' => 1
         ]);
 
-        $ch = curl_init(rtrim($apiUrl, '/') . '/create_mno_order');
+        // Follow script: use /api/v1/create_mno_order
+        $ch = curl_init(rtrim($apiUrl, '/') . '/api/v1/create_mno_order');
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_POSTFIELDS, $createPayload);
         curl_setopt($ch, CURLOPT_HTTPHEADER, [
@@ -181,27 +182,16 @@ class PaymentController extends Controller
 
         // Small delay to allow provider to index the order before push
         \Log::info('PAYMENT: Sleeping briefly before push to allow provider indexing');
-        usleep(1500000); // 1.5s
+        usleep(2500000); // 2.5s
 
-        // 2. Initiate Push USSD
-        // Build push payload: if we have a numeric reference, prefer it
-        $hasNumericRef = is_numeric($reference) && (string)$reference !== (string)$orderId;
-        if ($hasNumericRef) {
-            $pushFields = [
-                'project_id' => $appId,
-                'phone' => $phoneLocal,
-                'reference' => (string)$reference,
-                'is_reference_payment' => 1,
-            ];
-        } else {
-            $pushFields = [
-                'project_id' => $appId,
-                'phone' => $phoneLocal,
-                'order_id' => $orderId,
-                'is_reference_payment' => 0,
-            ];
-        }
-        \Log::info('PAYMENT: initiatePushUSSD payload', ['payload' => $pushFields]);
+        // 2. Initiate Push USSD (exactly as the working script)
+        $pushFields = [
+            'project_id' => $appId,
+            'phone' => $phoneLocal,
+            'order_id' => $orderId,
+            'is_reference_payment' => 0,
+        ];
+        \Log::info('PAYMENT: initiatePushUSSD payload (script fidelity)', ['payload' => $pushFields]);
         $pushUrl = rtrim($apiUrl, '/') . '/initiatePushUSSD'; // e.g. https://elan.co.tz/api/payments/selcom/initiatePushUSSD
 
         // Prepare headers and retry a few times in case order is not yet indexed provider-side
@@ -211,17 +201,27 @@ class PaymentController extends Controller
             'X-Requested-With: XMLHttpRequest',
         ];
 
-        $maxAttempts = 5;
+        $maxAttempts = 7;
         $attempt = 0;
         $pushResponse = null;
         $pushErr = null;
         do {
             $attempt++;
-            curl_setopt($ch, CURLOPT_URL, $pushUrl);
-            curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($pushFields));
-            $pushResponse = curl_exec($ch);
-            $pushErr = curl_error($ch);
+            // Fresh cURL handle for each attempt to avoid stale options
+            $pch = curl_init($pushUrl);
+            curl_setopt($pch, CURLOPT_POST, true);
+            curl_setopt($pch, CURLOPT_HTTPHEADER, $headers);
+            curl_setopt($pch, CURLOPT_POSTFIELDS, http_build_query($pushFields));
+            curl_setopt($pch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($pch, CURLOPT_TIMEOUT, $timeout);
+            if ($caPath !== '') {
+                curl_setopt($pch, CURLOPT_CAINFO, $caPath);
+            } else {
+                curl_setopt($pch, CURLOPT_SSL_VERIFYPEER, $verify);
+            }
+            $pushResponse = curl_exec($pch);
+            $pushErr = curl_error($pch);
+            curl_close($pch);
 
             if ($pushResponse === false) {
                 \Log::error('PAYMENT: initiatePushUSSD cURL failed', ['attempt' => $attempt, 'error' => $pushErr]);
