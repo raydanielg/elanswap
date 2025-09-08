@@ -152,13 +152,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 if (result.ok) { // Ikiwa ombi limefanikiwa
                     const orderId = result.order_id || '';
-                    // MAELEZO: Kuonyesha ujumbe wa kusubiri uthibitisho
+                    // MAELEZO: Kuonyesha ujumbe wa Processing... na spinner
                     statusBadge.innerHTML = `<div class="flex items-center text-sm text-blue-600">
                         <svg class="animate-spin h-4 w-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path></svg>
-                        <span>Ombi limetumwa. Tafadhali thibitisha kwenye simu yako.</span>
+                        <span>Processing...</span>
                     </div>`;
                     // MAELEZO: Kubadilisha maandishi ya kitufe
-                    btnText.textContent = 'Inasubiri Uthibitisho...';
+                    btnText.textContent = 'Processing...';
 
                     // MAELEZO: Kuanza kuangalia hali ya malipo kila sekunde 3 kwa dakika 2
                     const start = Date.now();
