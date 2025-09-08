@@ -57,20 +57,22 @@ class PaymentController extends Controller
         $user = $request->user();
         $amount = (int) (config('services.elanswap.payment_amount', 2500));
 
-        // Normalize phone to TZ E.164 without plus (e.g., 2557XXXXXXXX)
-        $rawPhone = preg_replace('/[^0-9+]/', '', (string) $request->string('phone'));
-        $phone = $rawPhone;
-        if (str_starts_with($rawPhone, '+')) {
-            $rawPhone = substr($rawPhone, 1);
-        }
-        if (str_starts_with($rawPhone, '0')) {
-            $phone = '255'.substr($rawPhone, 1);
-        } elseif (str_starts_with($rawPhone, '255')) {
-            $phone = $rawPhone;
+        // Normalize phone to LOCAL format (leading 0), as required by your API
+        $raw = preg_replace('/[^0-9+]/', '', (string) $request->string('phone'));
+        if (str_starts_with($raw, '+')) { $raw = substr($raw, 1); }
+        $phoneLocal = $raw;
+        if (str_starts_with($raw, '255') && strlen($raw) >= 12) {
+            // 2557XXXXXXXX -> 07XXXXXXXX
+            $phoneLocal = '0' . substr($raw, 3);
+        } elseif (str_starts_with($raw, '0')) {
+            $phoneLocal = $raw;
+        } elseif (preg_match('/^[67][0-9]{8}$/', $raw)) {
+            $phoneLocal = '0' . $raw;
         } else {
-            // Fallback: assume local without leading zero
-            $phone = '255'.$rawPhone;
+            // last-resort sanitize to local style if possible
+            $phoneLocal = '0' . ltrim($raw, '0');
         }
+        \Log::info('PAYMENT: Normalized phone', ['input' => (string) $request->string('phone'), 'local' => $phoneLocal]);
 
         // Use cURL implementation based on user's script
         $orderId = 'ORD_' . now()->format('YmdHis') . '_' . $user->id;
@@ -83,7 +85,7 @@ class PaymentController extends Controller
         \Log::info('PAYMENT: Preparing create_mno_order', [
             'order_id' => $orderId,
             'app_id' => $appId,
-            'phone' => $phone,
+            'phone' => $phoneLocal,
             'amount' => $amount,
             'api_url' => $apiUrl,
         ]);
@@ -94,7 +96,7 @@ class PaymentController extends Controller
             'order_firstname'    => $user->name ?? 'Customer',
             'order_lastname'     => 'Customer',
             'order_email'        => $user->email ?? 'info@elanbrands.net',
-            'order_phone'        => $phone,
+            'order_phone'        => $phoneLocal,
             'amount'             => $amount,
             'order_id'           => $orderId,
             'currency'           => 'TZS',
@@ -158,8 +160,9 @@ class PaymentController extends Controller
 
         // Create local payment record
         $method = 'mpesa'; // Default
-        if (preg_match('/^25565|^25567|^25568|^25569/', $phone)) $method = 'tigopesa';
-        elseif (preg_match('/^25574|^25575|^25576|^25578/', $phone)) $method = 'airtel';
+        // Detect method by local MSISDN prefix
+        if (preg_match('/^06(5|7|8|9)/', $phoneLocal)) $method = 'tigopesa';
+        elseif (preg_match('/^07(4|5|6|8)/', $phoneLocal)) $method = 'airtel';
 
         $payment = Payment::create([
             'user_id' => $user->id,
@@ -169,17 +172,21 @@ class PaymentController extends Controller
             'provider_reference' => $reference,
             'meta' => [
                 'order_id' => $orderId,
-                'phone' => $phone,
-                'payment_url' => $createData->payment_url ?? '',
+                'phone' => $phoneLocal,
+                'payment_url' => $paymentUrl ?? ($createData['payment_url'] ?? ''),
                 'provider' => 'selcom',
                 'create_response' => $createData,
             ],
         ]);
 
+        // Small delay to allow provider to index the order before push
+        \Log::info('PAYMENT: Sleeping briefly before push to allow provider indexing');
+        usleep(600000); // 600ms
+
         // 2. Initiate Push USSD
         $pushFields = [
             'project_id' => $appId,
-            'phone' => $phone,
+            'phone' => $phoneLocal,
             'order_id' => $orderId,
             'is_reference_payment' => 0,
             // include reference for gateways that accept either order_id or reference
