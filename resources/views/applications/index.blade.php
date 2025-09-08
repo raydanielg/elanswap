@@ -16,7 +16,7 @@
             <input id="app-search" type="text" placeholder="Search applications..." class="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500" />
         </div>
         <div class="md:ml-4 w-full md:w-auto">
-            <a href="{{ route('applications.create') }}" data-requires-payment class="w-full md:w-auto inline-flex items-center justify-center px-4 py-2 bg-primary-600 text-white rounded hover:bg-primary-700">
+            <a href="#" data-open-create data-requires-payment class="w-full md:w-auto inline-flex items-center justify-center px-4 py-2 bg-primary-600 text-white rounded hover:bg-primary-700">
                 + Add
             </a>
         </div>
@@ -54,6 +54,52 @@
             </div>
         </div>
     </div>
+</div>
+
+<!-- Create Application Modal -->
+<div id="create-app-modal" class="fixed inset-0 z-50 hidden" aria-hidden="true">
+  <div class="absolute inset-0 bg-gray-900/60"></div>
+  <div class="relative mx-auto mt-16 w-full max-w-xl px-4">
+    <div class="bg-white rounded-lg shadow-xl overflow-hidden" data-panel>
+      <div class="px-4 py-3 border-b flex items-center justify-between">
+        <h3 class="text-lg font-semibold">Create Application</h3>
+        <button type="button" data-close-create class="text-gray-500 hover:text-gray-700">&times;</button>
+      </div>
+      <form id="create-app-form" class="p-4">
+        @csrf
+        <div class="grid sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm text-gray-600">Mkoa Unaoenda</label>
+            <select id="ca-region" name="to_region_id" class="mt-1 w-full border rounded px-3 py-2" required>
+              <option value="" disabled selected>Chagua mkoa...</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm text-gray-600">Wilaya Unaoenda</label>
+            <select id="ca-district" name="to_district_id" class="mt-1 w-full border rounded px-3 py-2" required disabled>
+              <option value="" disabled selected>Chagua wilaya...</option>
+            </select>
+          </div>
+          <div class="sm:col-span-2">
+            <label class="block text-sm text-gray-600">Sababu (hiari)</label>
+            <textarea id="ca-reason" name="reason" rows="3" class="mt-1 w-full border rounded px-3 py-2" placeholder="Andika sababu kama ipo..."></textarea>
+          </div>
+        </div>
+        <div id="ca-errors" class="mt-3 hidden p-2 rounded border border-red-200 bg-red-50 text-sm text-red-700"></div>
+        <div class="mt-5 flex items-center justify-end gap-2">
+          <button type="button" data-close-create class="px-4 py-2 border rounded text-gray-700 hover:bg-gray-50">Cancel</button>
+          <button id="ca-submit" type="submit" class="px-4 py-2 bg-primary-600 text-white rounded hover:bg-primary-700 inline-flex items-center">
+            <svg id="ca-spinner" class="hidden animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path></svg>
+            <span>Create</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+  <style>
+    #create-app-modal [data-panel]{ transform: translateY(10px); opacity: 0; transition: all .2s ease; }
+    #create-app-modal.show [data-panel]{ transform: translateY(0); opacity: 1; }
+  </style>
 </div>
 
 <script>
@@ -179,6 +225,98 @@
     // No modal; view via show page
 
     fetchData();
+
+    // Create Modal Logic
+    const modal = document.getElementById('create-app-modal');
+    const openCreate = document.querySelector('[data-open-create]');
+    const closeBtns = modal.querySelectorAll('[data-close-create]');
+    const regionSel = document.getElementById('ca-region');
+    const districtSel = document.getElementById('ca-district');
+    const reasonEl = document.getElementById('ca-reason');
+    const form = document.getElementById('create-app-form');
+    const errorsBox = document.getElementById('ca-errors');
+    const submitBtn = document.getElementById('ca-submit');
+    const spinner = document.getElementById('ca-spinner');
+
+    function openModal(){ modal.classList.remove('hidden'); requestAnimationFrame(()=>modal.classList.add('show')); }
+    function closeModal(){ modal.classList.remove('show'); setTimeout(()=>modal.classList.add('hidden'), 180); }
+    closeBtns.forEach(b=>b.addEventListener('click', (e)=>{ e.preventDefault(); closeModal(); }));
+    modal.addEventListener('click', (e)=>{ if(e.target===modal) closeModal(); });
+
+    // Intercept Add click: if UNPAID show payment modal (handled globally). If paid, open create modal.
+    if (openCreate) {
+        openCreate.addEventListener('click', function(e){
+            // If unpaid, payment-required-modal script will catch and open its own modal; we still prevent navigation here.
+            e.preventDefault();
+            if (window.UNPAID === true) return; // payment modal shows from global listener
+            // Paid: open our create modal
+            openCreateModal();
+        });
+    }
+
+    async function openCreateModal(){
+        errorsBox.classList.add('hidden');
+        submitBtn.disabled = false; spinner.classList.add('hidden');
+        reasonEl.value = '';
+        await loadRegions();
+        districtSel.innerHTML = '<option value="" disabled selected>Chagua wilaya...</option>';
+        districtSel.disabled = true;
+        openModal();
+    }
+
+    async function loadRegions(){
+        regionSel.innerHTML = '<option value="" disabled selected>Inapakia...</option>';
+        try{
+            const res = await fetch('{{ route('profile.regions') }}');
+            const regions = await res.json();
+            regionSel.innerHTML = '<option value="" disabled selected>Chagua mkoa...</option>' +
+                regions.map(r=>`<option value="${r.id}">${r.name}</option>`).join('');
+        }catch(e){ regionSel.innerHTML = '<option value="" disabled selected>Imeshindikana kupakia</option>'; }
+    }
+
+    regionSel.addEventListener('change', async function(){
+        const id = this.value;
+        districtSel.disabled = true;
+        districtSel.innerHTML = '<option value="" disabled selected>Inapakia...</option>';
+        try{
+            const url = new URL('{{ route('profile.districts') }}', window.location.origin);
+            url.searchParams.set('region_id', id);
+            const res = await fetch(url.toString());
+            const districts = await res.json();
+            districtSel.innerHTML = '<option value="" disabled selected>Chagua wilaya...</option>' +
+                districts.map(d=>`<option value="${d.id}">${d.name}</option>`).join('');
+            districtSel.disabled = false;
+        }catch(e){ districtSel.innerHTML = '<option value="" disabled selected>Imeshindikana kupakia</option>'; }
+    });
+
+    form.addEventListener('submit', async function(e){
+        e.preventDefault();
+        errorsBox.classList.add('hidden');
+        submitBtn.disabled = true; spinner.classList.remove('hidden');
+        try{
+            const fd = new FormData(form);
+            const res = await fetch('{{ route('applications.store') }}', {
+                method: 'POST',
+                body: fd,
+                headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+            });
+            if (res.ok) {
+                closeModal();
+                fetchData();
+                return;
+            }
+            // Handle validation or redirect JSON
+            let msg = 'Imeshindikana kuhifadhi maombi. Hakikisha umejaza taarifa zote.';
+            try { const json = await res.json(); if (json && json.errors) { msg = Object.values(json.errors).flat().join(' '); } } catch(_){ /* ignore */ }
+            errorsBox.textContent = msg;
+            errorsBox.classList.remove('hidden');
+        }catch(err){
+            errorsBox.textContent = 'Tatizo la mtandao. Jaribu tena.';
+            errorsBox.classList.remove('hidden');
+        } finally {
+            submitBtn.disabled = false; spinner.classList.add('hidden');
+        }
+    });
 })();
 </script>
 @php($unpaid = auth()->check() ? !auth()->user()->hasPaid() : false)
