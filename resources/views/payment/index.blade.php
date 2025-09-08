@@ -114,6 +114,30 @@ document.addEventListener('DOMContentLoaded', function () {
     // MAELEZO: Kuanzisha mazingira ya ukurasa mara ya kwanza
     updateUI(isPaid);
     
+    // MAELEZO: Helper: hakikisha lottie imepakiwa kisha icheze animation
+    const ensureLottieThenPlay = (containerId, jsonPath, options={}) => {
+        const play = () => {
+            try {
+                window.lottie.loadAnimation({
+                    container: document.getElementById(containerId),
+                    renderer: options.renderer || 'svg',
+                    loop: options.loop ?? false,
+                    autoplay: options.autoplay ?? true,
+                    path: jsonPath,
+                    rendererSettings: options.rendererSettings || {}
+                });
+            } catch (_) {}
+        };
+        if (!window.lottie) {
+            const script = document.createElement('script');
+            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js';
+            script.onload = play;
+            document.body.appendChild(script);
+        } else {
+            play();
+        }
+    };
+
     // MAELEZO: Kuanza kuangalia hali ya malipo ikiwa bado hajalipa
     if (!isPaid) {
         setTimeout(pollStatus, 1000); // Anza kuangalia baada ya sekunde 1
@@ -171,10 +195,11 @@ document.addEventListener('DOMContentLoaded', function () {
                             const st = await res.json();
                             if (st && st.paid) { // Ikiwa malipo yamekamilika
                                 // MAELEZO: Kuonyesha ujumbe wa mafanikio na kutoa chaguo la kuendelea
-                                statusBadge.innerHTML = `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                    <svg class=\"-ml-0.5 mr-1.5 h-2 w-2 text-green-400\" fill=\"currentColor\" viewBox=\"0 0 8 8\"><circle cx=\"4\" cy=\"4\" r=\"3\" /></svg>
-                                    PAID
-                                </span>`;
+                                statusBadge.innerHTML = `
+                                    <span class=\"inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800\">
+                                        <span id=\"statusSuccessAnim\" class=\"w-4 h-4 mr-1\"></span>
+                                        PAID
+                                    </span>`;
                                 btnSpinner.classList.add('hidden');
                                 btnText.textContent = 'Imelipwa';
                                 paymentFormContainer.classList.add('hidden');
@@ -200,32 +225,9 @@ document.addEventListener('DOMContentLoaded', function () {
                                     </a>
                                 `;
                                 paidContainer.classList.remove('hidden');
-                                // Cheza Lottie success animation kutoka /success.json
-                                try {
-                                    if (!window.lottie) {
-                                        // load lottie library on-demand
-                                        const script = document.createElement('script');
-                                        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js';
-                                        script.onload = () => {
-                                            window.lottie.loadAnimation({
-                                                container: document.getElementById('successAnim'),
-                                                renderer: 'svg',
-                                                loop: false,
-                                                autoplay: true,
-                                                path: '/success.json'
-                                            });
-                                        };
-                                        document.body.appendChild(script);
-                                    } else {
-                                        window.lottie.loadAnimation({
-                                            container: document.getElementById('successAnim'),
-                                            renderer: 'svg',
-                                            loop: false,
-                                            autoplay: true,
-                                            path: '/success.json'
-                                        });
-                                    }
-                                } catch (e) { /* ignore animation errors */ }
+                                // Cheza Lottie success animation kutoka /success.json (badge na kadi)
+                                ensureLottieThenPlay('statusSuccessAnim', '/success.json', { loop: false, autoplay: true });
+                                ensureLottieThenPlay('successAnim', '/success.json', { loop: false, autoplay: true });
                                 return; // Acha kuangalia
                             }
                             if (Date.now() - start < timeoutMs) { // Ikiwa bado kuna muda
