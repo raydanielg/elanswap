@@ -266,9 +266,12 @@ class PaymentController extends Controller
      * Provider webhook to listen for payment result [Mock].
      * POST /payment/webhook
      */
-    public function webhook(Request $request, SmsService $sms)
+    public function webhook()
     {
+        // NOTE: Parameters (Request $request, SmsService $sms) intentionally removed.
+        // We use Laravel helpers to access the current request and resolve services when needed.
         // In production: verify signature / token from provider
+        $request = request();
         $data = $request->all();
         $reference = (string) ($data['reference'] ?? $data['provider_reference'] ?? '');
         $orderId   = (string) ($data['order_id'] ?? '');
@@ -307,7 +310,10 @@ class PaymentController extends Controller
             $amount = number_format((int) $payment->amount);
             $ref = $payment->provider_reference ?: ($meta['order_id'] ?? '');
             $message = "Malipo yako ya TZS {$amount} yamefanikiwa. Rejea: {$ref}. Asante kwa kutumia ElanSwap.";
-            try { $sms->sendSms($payment->user_id, $message); } catch (\Throwable $e) { /* log silently */ }
+            try {
+                // Resolve SmsService on demand since it's no longer injected
+                app(\App\Services\SmsService::class)->sendSms($payment->user_id, $message);
+            } catch (\Throwable $e) { /* log silently */ }
         }
 
         return response()->json(['ok' => true, 'message' => 'Webhook processed']);
@@ -342,53 +348,5 @@ class PaymentController extends Controller
             'reference' => $payment?->provider_reference,
             'order_id' => (string) (($payment?->meta['order_id'] ?? '') ?: ''),
         ]);
-    }
-
-    /**
-     * Manual verification endpoint: user enters reference or order_id to confirm payment.
-     * POST /payment/verify
-     */
-    public function verify(Request $request)
-    {
-        $data = $request->validate([
-            'reference' => ['nullable','string','max:64'],
-            'order_id'  => ['nullable','string','max:64'],
-        ]);
-
-        if (($data['reference'] ?? '') === '' && ($data['order_id'] ?? '') === '') {
-            return response()->json(['ok' => false, 'message' => 'Weka Reference au Order ID'], 422);
-        }
-
-        $user = $request->user();
-        $payment = null;
-        if (!empty($data['reference'])) {
-            $payment = $user?->payments()->where('provider_reference', $data['reference'])->latest('id')->first();
-        }
-        if (!$payment && !empty($data['order_id'])) {
-            foreach ($user?->payments()->orderByDesc('id')->get() ?? [] as $p) {
-                $meta = (array) $p->meta;
-                if (($meta['order_id'] ?? null) === $data['order_id']) { $payment = $p; break; }
-            }
-        }
-        if (!$payment) {
-            return response()->json(['ok' => false, 'message' => 'Hatukupata malipo yanayolingana.'], 404);
-        }
-
-        if ($payment->paid_at) {
-            return response()->json(['ok' => true, 'paid' => true, 'message' => 'Malipo tayari yamekamilika.']);
-        }
-
-        $meta = (array) $payment->meta;
-        $webhook = (array) ($meta['webhook'] ?? []);
-        $status  = strtolower((string) ($webhook['status'] ?? ''));
-        $hasTrans = !empty($meta['transid']);
-
-        if (in_array($status, ['success','completed','paid'], true) || $hasTrans) {
-            $payment->paid_at = now();
-            $payment->save();
-            return response()->json(['ok' => true, 'paid' => true, 'message' => 'Malipo yamedhibitishwa. Asante!']);
-        }
-
-        return response()->json(['ok' => true, 'paid' => false, 'message' => 'Malipo bado hayajathibitishwa. Tafadhali jaribu tena baadaye.']);
     }
 }
