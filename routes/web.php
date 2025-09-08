@@ -27,18 +27,18 @@ use Illuminate\Http\Request;
 
 // Serve the exported Next.js frontend as the public homepage
 Route::get('/', function () {
-    return redirect('/out/');
+    return redirect('/site/');
 })->name('home.public');
 
-// Redirect clean paths to exported static pages under /out/
-Route::get('/about', fn() => redirect('/out/about/'));
-Route::get('/regions', fn() => redirect('/out/regions/'));
-Route::get('/features', fn() => redirect('/out/features/'));
-Route::get('/contact', fn() => redirect('/out/contact/'));
-Route::get('/categories', fn() => redirect('/out/categories/'));
-Route::get('/privacy', fn() => redirect('/out/privacy/'));
-Route::get('/terms', fn() => redirect('/out/terms/'));
-Route::get('/help', fn() => redirect('/out/help/'));
+// Redirect clean paths to exported static pages under /site/
+Route::get('/about', fn() => redirect('/site/about/'));
+Route::get('/regions', fn() => redirect('/site/regions/'));
+Route::get('/features', fn() => redirect('/site/features/'));
+Route::get('/contact', fn() => redirect('/site/contact/'));
+Route::get('/categories', fn() => redirect('/site/categories/'));
+Route::get('/privacy', fn() => redirect('/site/privacy/'));
+Route::get('/terms', fn() => redirect('/site/terms/'));
+Route::get('/help', fn() => redirect('/site/help/'));
 
 // Keep the previous homepage available at /landing
 Route::get('/landing', function () {

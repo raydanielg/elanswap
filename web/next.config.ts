@@ -6,10 +6,10 @@ const nextConfig: NextConfig = {
     // your project has ESLint errors.
     ignoreDuringBuilds: true,
   },
-  // We serve the static export from Laravel at /out/, so make all asset URLs
-  // relative to /out to avoid broken CSS/JS when not hosted at domain root.
-  basePath: '/out',
-  assetPrefix: '/out',
+  // We serve the static export from Laravel at /site/, so make all asset URLs
+  // relative to /site to avoid broken CSS/JS when not hosted at domain root.
+  basePath: '/site',
+  assetPrefix: '/site',
   output: 'export',
   trailingSlash: true,
   images: {

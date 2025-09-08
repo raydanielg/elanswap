@@ -65,7 +65,7 @@ export default function Categories() {
             {items.map((c) => (
               <a
                 key={c.slug}
-                href={`/out/categories/#${c.slug}`}
+                href={`/site/categories/#${c.slug}`}
                 aria-label={`Vinjari jamii ${c.name}`}
                 className="group rounded-xl border border-gray-200 bg-white p-5 shadow-sm hover:shadow-md transition shadow-gray-100 hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-secondary)]/50"
               >
