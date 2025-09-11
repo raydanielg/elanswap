@@ -59,8 +59,7 @@
                     $__ann_latest = optional($__announcements->max('updated_at'))?->timestamp ?? 0;
                     $__user_id = auth()->id();
                 @endphp
-                @php($__ann_latest_id = $__announcements->max('id'))
-                <script>window.__ANN_LATEST_ID = @json($__ann_latest_id);</script>
+                <script>window.__ANN_LATEST_ID = @json($__announcements->max('id'));</script>
                 <div class="relative" x-data="annc({ count: {{ $__ann_count }}, latest: {{ $__ann_latest }}, userId: {{ $__user_id ?? '0' }} })">
                     <button @click="toggle()" class="relative p-2 rounded-full text-blue-200 hover:text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
                         <span class="sr-only">View announcements</span>
