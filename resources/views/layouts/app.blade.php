@@ -66,7 +66,7 @@
                 </div>
             </main>
 
-            @include('layouts.partials.footer-front')
+            
         </div>
         <script>
             // Expose unpaid status globally for modal trigger logic
