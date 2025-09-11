@@ -71,45 +71,55 @@
                               class="absolute -top-1 -right-1 sm:-top-2 sm:-right-2 min-w-[14px] h-[14px] sm:min-w-[18px] sm:h-[18px] px-1 text-[10px] sm:text-[11px] leading-[14px] sm:leading-[18px] text-black bg-yellow-400 rounded-full text-center font-semibold"></span>
                     </button>
                     <!-- Desktop Centered Modal -->
-                    <div x-show="open" x-transition.opacity class="fixed inset-0 bg-black/50 z-40 hidden md:block" @click="markRead()"></div>
-                    <div x-show="open" x-transition class="fixed inset-0 z-50 hidden md:flex items-center justify-center" aria-modal="true" role="dialog">
-                        <div class="w-full max-w-md bg-white rounded-lg shadow-xl ring-1 ring-black/10 overflow-hidden" @click.stop>
+                    <div x-show="open" x-transition.opacity class="fixed inset-0 z-40 hidden md:block bg-black/50 backdrop-blur-sm" @click="markRead()"></div>
+                    <div x-show="open" x-transition.opacity.scale.90 class="fixed inset-0 z-50 hidden md:flex items-center justify-center" aria-modal="true" role="dialog" aria-labelledby="annc-title" @keydown.window.escape.prevent="markRead()">
+                        <div class="w-full max-w-lg bg-white rounded-xl shadow-2xl ring-1 ring-black/10 overflow-hidden" @click.stop tabindex="-1">
                             <div class="px-5 py-4 border-b flex items-center justify-between">
                                 <div class="flex items-center gap-2">
-                                    <svg class="w-5 h-5 text-primary-700" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a7 7 0 00-7 7v3.586l-1.707 1.707A1 1 0 004 16h16a1 1 0 00.707-1.707L19 12.586V9a7 7 0 00-7-7zm0 20a3 3 0 003-3H9a3 3 0 003 3z"/></svg>
-                                    <span class="text-sm font-semibold text-gray-800">Notifications</span>
+                                    <span class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-primary-50 text-primary-700 ring-1 ring-primary-100">
+                                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a7 7 0 00-7 7v3.586l-1.707 1.707A1 1 0 004 16h16a1 1 0 00.707-1.707L19 12.586V9a7 7 0 00-7-7zm0 20a3 3 0 003-3H9a3 3 0 003 3z"/></svg>
+                                    </span>
+                                    <div class="flex flex-col">
+                                        <span id="annc-title" class="text-sm font-semibold text-gray-900">Notifications</span>
+                                        <span class="text-[11px] text-gray-500">Updated just now</span>
+                                    </div>
                                 </div>
-                                <button @click="markRead()" class="text-sm text-primary-600 hover:underline">Close</button>
+                                <button @click="markRead()" class="p-2 rounded-md hover:bg-gray-100 text-gray-600" aria-label="Close">
+                                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M6.225 4.811L4.81 6.225 10.586 12l-5.775 5.775 1.414 1.414L12 13.414l5.775 5.775 1.414-1.414L13.414 12l5.775-5.775-1.414-1.414L12 10.586 6.225 4.811z"/></svg>
+                                </button>
                             </div>
-                            <div class="p-5 space-y-3">
+                            <div class="p-5 space-y-4">
                                 <div class="flex items-center gap-2 text-sm text-gray-800">
-                                    <svg class="w-5 h-5 text-green-600" viewBox="0 0 24 24" fill="currentColor"><path d="M12 22a10 10 0 1110-10 10.011 10.011 0 01-10 10zm-1-6l7-7-1.414-1.414L11 13.172l-3.586-3.586L6 11z"/></svg>
-                                    <span>Notifications updated</span>
+                                    <span class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-green-50 text-green-700 ring-1 ring-green-200">
+                                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 22a10 10 0 1110-10 10.011 10.011 0 01-10 10zm-1-6l7-7-1.414-1.414L11 13.172l-3.586-3.586L6 11z"/></svg>
+                                    </span>
+                                    <span class="font-medium">Notifications updated</span>
                                 </div>
-                                <div class="max-h-64 overflow-auto border rounded">
+                                <div class="max-h-72 overflow-auto border rounded-lg divide-y">
                                     @forelse($__announcements as $item)
-                                        <div class="p-3 border-b last:border-b-0">
-                                            <div class="text-sm font-medium text-gray-900">{{ $item->title }}</div>
-                                            <div class="text-sm text-gray-600">{{ $item->description }}</div>
+                                        <div class="p-4">
+                                            <div class="text-sm font-semibold text-gray-900">{{ $item->title }}</div>
+                                            <div class="mt-0.5 text-sm text-gray-600 leading-relaxed">{{ $item->description }}</div>
                                         </div>
                                     @empty
-                                        <div class="p-4 text-center text-sm text-gray-500">No announcements</div>
+                                        <div class="p-6 text-center text-sm text-gray-500">No announcements</div>
                                     @endforelse
                                 </div>
-                                <div class="flex items-center justify-between">
+                                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                                     <div class="text-xs text-gray-500">How do you feel about the latest update?</div>
                                     <div class="flex items-center gap-2">
-                                        <button @click="react('like')" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-md bg-green-50 text-green-700 ring-1 ring-green-200 hover:bg-green-100 text-sm">
-                                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M2 21h4V9H2v12zM22 9c0-1.103-.897-2-2-2h-5.586l.293-1.293.007-.053c0-.256-.098-.512-.293-.707l-1-1-4.707 4.707A.996.996 0 008 8v12h10a2 2 0 001.789-1.106l2-4A2 2 0 0022 14v-5z"/></svg>
+                                        <button @click="react('like')" class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-50 text-gray-800 ring-1 ring-gray-200 hover:bg-gray-100 text-sm">
+                                            <svg class="w-4 h-4 text-green-600" viewBox="0 0 24 24" fill="currentColor"><path d="M2 21h4V9H2v12zM22 9c0-1.103-.897-2-2-2h-5.586l.293-1.293.007-.053c0-.256-.098-.512-.293-.707l-1-1-4.707 4.707A.996.996 0 008 8v12h10a2 2 0 001.789-1.106l2-4A2 2 0 0022 14v-5z"/></svg>
                                             Like
                                         </button>
-                                        <button @click="react('dislike')" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-md bg-rose-50 text-rose-700 ring-1 ring-rose-200 hover:bg-rose-100 text-sm">
-                                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M22 3h-4v12h4V3zM2 15c0 1.103.897 2 2 2h5.586l-.293 1.293-.007.053c0 .256.098.512.293.707l1 1 4.707-4.707A.996.996 0 0016 15V3H6a2 2 0 00-1.789 1.106l-2 4A2 2 0 002 9v6z"/></svg>
+                                        <button @click="react('dislike')" class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-50 text-gray-800 ring-1 ring-gray-200 hover:bg-gray-100 text-sm">
+                                            <svg class="w-4 h-4 text-rose-600" viewBox="0 0 24 24" fill="currentColor"><path d="M22 3h-4v12h4V3zM2 15c0 1.103.897 2 2 2h5.586l-.293 1.293-.007.053c0 .256.098.512.293.707l1 1 4.707-4.707A.996.996 0 0016 15V3H6a2 2 0 00-1.789 1.106l-2 4A2 2 0 002 9v6z"/></svg>
                                             Dislike
                                         </button>
                                     </div>
                                 </div>
                                 <div x-show="toast" x-transition.opacity class="text-center text-xs text-green-700 bg-green-50 ring-1 ring-green-200 rounded px-3 py-2">Thanks! Feedback saved.</div>
+                                <div class="pt-1 text-[11px] text-gray-400 text-center">Your feedback helps us improve ElanSwap updates for everyone.</div>
                             </div>
                         </div>
                     </div>
