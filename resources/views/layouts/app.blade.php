@@ -31,10 +31,14 @@
             }
             /* Global page loader styles */
             #page-loader { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: center; justify-content: center; background: rgba(12,74,110,.72); backdrop-filter: blur(2px); }
-            .loader { width: 48px; height: 48px; border: 5px solid #FFF; border-radius: 50%; display: inline-block; box-sizing: border-box; position: relative; animation: pulse 1s linear infinite; }
-            .loader:after { content: ''; position: absolute; width: 48px; height: 48px; border: 5px solid #FFF; border-radius: 50%; display: inline-block; box-sizing: border-box; left: 50%; top: 50%; transform: translate(-50%, -50%); animation: scaleUp 1s linear infinite; }
-            @keyframes scaleUp { 0% { transform: translate(-50%, -50%) scale(0) } 60%, 100% { transform: translate(-50%, -50%) scale(1) } }
-            @keyframes pulse { 0%, 60%, 100% { transform: scale(1) } 80% { transform: scale(1.2) } }
+            .loader { width: 48px; height: 48px; display: inline-block; position: relative; }
+            .loader::after,
+            .loader::before { content: ''; box-sizing: border-box; width: 48px; height: 48px; border-radius: 50%; background: #FFF; position: absolute; left: 0; top: 0; animation: animloader 2s linear infinite; }
+            .loader::after { animation-delay: 1s; }
+            @keyframes animloader {
+              0% { transform: scale(0); opacity: 1; }
+              100% { transform: scale(1); opacity: 0; }
+            }
             [x-cloak] { display: none !important; }
         </style>
     </head>
