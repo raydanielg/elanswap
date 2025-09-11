@@ -5,24 +5,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
-        <title>@yield('meta_title', 'ElanSwap Tanzania — Badilisha Vituo vya Kazi kwa Urahisi')</title>
-        <meta name="title" content="@yield('meta_title', 'ElanSwap Tanzania — Badilisha Vituo vya Kazi kwa Urahisi')">
-        <meta name="description" content="@yield('meta_description', 'ElanSwap Tanzania ni mfumo wa kisasa unaosaidia wafanyakazi kubadilisha vituo vya kazi kwa urahisi. Sio mfumo wa serikali, bali unarahisisha huduma kwa weledi, kasi na uwazi.')">
-        <link rel="canonical" href="{{ url()->current() }}" />
-
-        <!-- Open Graph / Facebook -->
-        <meta property="og:type" content="website">
-        <meta property="og:site_name" content="ElanSwap Tanzania">
-        <meta property="og:url" content="{{ url()->current() }}">
-        <meta property="og:title" content="@yield('meta_title', 'ElanSwap Tanzania — Badilisha Vituo vya Kazi kwa Urahisi')">
-        <meta property="og:description" content="@yield('meta_description', 'ElanSwap Tanzania ni mfumo wa kisasa unaosaidia wafanyakazi kubadilisha vituo vya kazi kwa urahisi. Sio mfumo wa serikali, bali unarahisisha huduma kwa weledi, kasi na uwazi.')">
-        <meta property="og:image" content="{{ asset('public/og-image.png') }}">
-
-        <!-- Twitter -->
-        <meta name="twitter:card" content="summary_large_image">
-        <meta name="twitter:title" content="@yield('meta_title', 'ElanSwap Tanzania — Badilisha Vituo vya Kazi kwa Urahisi')">
-        <meta name="twitter:description" content="@yield('meta_description', 'ElanSwap Tanzania ni mfumo wa kisasa unaosaidia wafanyakazi kubadilisha vituo vya kazi kwa urahisi. Sio mfumo wa serikali, bali unarahisisha huduma kwa weledi, kasi na uwazi.')">
-        <meta name="twitter:image" content="{{ asset('public/og-image.png') }}">
+        <title>{{ config('app.name', 'ElanSwap') }}</title>
 
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
@@ -58,35 +41,6 @@
             }
             [x-cloak] { display: none !important; }
         </style>
-        <!-- JSON-LD Schema -->
-        <script type="application/ld+json">
-        {
-          "@context": "https://schema.org",
-          "@type": "WebSite",
-          "name": "ElanSwap Tanzania",
-          "url": "{{ url('/') }}",
-          "potentialAction": {
-            "@type": "SearchAction",
-            "target": "{{ url('/track') }}?tracking_id={search_term_string}",
-            "query-input": "required name=search_term_string"
-          }
-        }
-        </script>
-        <script type="application/ld+json">
-        {
-          "@context": "https://schema.org",
-          "@type": "Organization",
-          "name": "ElanSwap Tanzania",
-          "url": "{{ url('/') }}",
-          "logo": "{{ asset('logo.png') }}",
-          "sameAs": [
-            "https://facebook.com/",
-            "https://instagram.com/",
-            "https://www.linkedin.com/"
-          ]
-        }
-        </script>
-        @stack('head')
     </head>
     <body class="font-sans antialiased bg-gray-50 text-gray-900 h-full">
         <!-- Global Page Loader: visible by default, hidden after load via JS -->
@@ -99,7 +53,16 @@
             <!-- Page Content -->
             <main class="flex-grow bg-gradient-to-b from-white to-blue-50">
                 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                    {{ $slot ?? '' }}
+                    @isset($header)
+                        <div class="mb-8">
+                            <h1 class="text-3xl font-bold text-gray-900">{{ $header }}</h1>
+                        </div>
+                    @endisset
+                    @hasSection('content')
+                        @yield('content')
+                    @else
+                        {{ $slot ?? '' }}
+                    @endif
                 </div>
             </main>
 

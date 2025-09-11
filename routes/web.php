@@ -25,7 +25,6 @@ use App\Http\Controllers\ProfileCompletionController;
 use App\Http\Controllers\PaymentController;
 use App\Models\Feature;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\URL;
 
 // Serve the exported Next.js frontend as the public homepage (permanent)
 Route::permanentRedirect('/', '/site/')->name('home.public');
@@ -95,96 +94,6 @@ Route::middleware('installer')->group(function () {
     Route::get('/install', [InstallController::class, 'index'])->name('installer.index');
     Route::post('/install', [InstallController::class, 'store'])->name('installer.store');
 });
-
-// robots.txt
-Route::get('/robots.txt', function () {
-    $lines = [
-        'User-agent: *',
-        'Allow: /',
-        'Sitemap: ' . URL::to('/sitemap.xml'),
-    ];
-    return response(implode("\n", $lines), 200, ['Content-Type' => 'text/plain']);
-})->name('robots');
-
-// sitemap.xml
-Route::get('/sitemap.xml', function () {
-    $now = now()->toAtomString();
-
-    // Static pages (public Next.js export under /site/ and key app pages)
-    $staticPaths = [
-        URL::to('/'),
-        URL::to('/site/about/'),
-        URL::to('/site/regions/'),
-        URL::to('/site/features/'),
-        URL::to('/site/contact/'),
-        URL::to('/site/categories/'),
-        URL::to('/site/privacy/'),
-        URL::to('/site/terms/'),
-        URL::to('/site/help/'),
-        URL::to('/landing'),
-    ];
-
-    // Dynamic: Regions -> Destinations pages
-    $regionUrls = [];
-    try {
-        $regions = \App\Models\Region::orderBy('name')->get(['id','updated_at']);
-        foreach ($regions as $r) {
-            $regionUrls[] = [
-                'loc' => URL::to('/destinations/' . $r->id),
-                'lastmod' => optional($r->updated_at)->toAtomString() ?: $now,
-                'changefreq' => 'weekly',
-                'priority' => '0.8',
-            ];
-        }
-    } catch (\Throwable $e) {}
-
-    // Dynamic: Blog posts if table exists
-    $postUrls = [];
-    try {
-        if (\Illuminate\Support\Facades\Schema::hasTable('posts')) {
-            $posts = \Illuminate\Support\Facades\DB::table('posts')->select('slug','updated_at')->orderByDesc('updated_at')->limit(500)->get();
-            foreach ($posts as $p) {
-                $postUrls[] = [
-                    'loc' => URL::to('/blog/' . $p->slug),
-                    'lastmod' => optional(\Illuminate\Support\Carbon::parse($p->updated_at))->toAtomString() ?: $now,
-                    'changefreq' => 'weekly',
-                    'priority' => '0.7',
-                ];
-            }
-        }
-    } catch (\Throwable $e) {}
-
-    $xml = [];
-    $xml[] = '<?xml version="1.0" encoding="UTF-8"?>';
-    $xml[] = '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">';
-    foreach ($staticPaths as $loc) {
-        $xml[] = '  <url>';
-        $xml[] = '    <loc>' . e($loc) . '</loc>';
-        $xml[] = '    <lastmod>' . $now . '</lastmod>';
-        $xml[] = '    <changefreq>monthly</changefreq>';
-        $xml[] = '    <priority>0.6</priority>';
-        $xml[] = '  </url>';
-    }
-    foreach ($regionUrls as $u) {
-        $xml[] = '  <url>';
-        $xml[] = '    <loc>' . e($u['loc']) . '</loc>';
-        $xml[] = '    <lastmod>' . $u['lastmod'] . '</lastmod>';
-        $xml[] = '    <changefreq>' . $u['changefreq'] . '</changefreq>';
-        $xml[] = '    <priority>' . $u['priority'] . '</priority>';
-        $xml[] = '  </url>';
-    }
-    foreach ($postUrls as $u) {
-        $xml[] = '  <url>';
-        $xml[] = '    <loc>' . e($u['loc']) . '</loc>';
-        $xml[] = '    <lastmod>' . $u['lastmod'] . '</lastmod>';
-        $xml[] = '    <changefreq>' . $u['changefreq'] . '</changefreq>';
-        $xml[] = '    <priority>' . $u['priority'] . '</priority>';
-        $xml[] = '  </url>';
-    }
-    $xml[] = '</urlset>';
-
-    return response(implode("\n", $xml), 200, ['Content-Type' => 'application/xml']);
-})->name('sitemap');
 
 // Stations within a region that have applications (from_station)
 Route::get('/api/regions/{region}/stations-with-apps', function (Region $region) {
