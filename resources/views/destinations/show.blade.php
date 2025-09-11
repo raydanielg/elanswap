@@ -24,7 +24,7 @@
                         <th class="px-6 py-3 text-left text-xs font-semibold tracking-wide text-gray-600 uppercase">Applicant From</th>
                         <th class="px-6 py-3 text-left text-xs font-semibold tracking-wide text-gray-600 uppercase">Applicant To</th>
                         <th class="px-6 py-3 text-left text-xs font-semibold tracking-wide text-gray-600 uppercase">Sector</th>
-                        <th class="px-6 py-3 text-left text-xs font-semibold tracking-wide text-gray-600 uppercase">Masomo</th>
+                        <th class="px-6 py-3 text-left text-xs font-semibold tracking-wide text-gray-600 uppercase">Ubobezi</th>
                         <th class="px-6 py-3 text-right text-xs font-semibold tracking-wide text-gray-600 uppercase">Actions</th>
                     </tr>
                 </thead>
