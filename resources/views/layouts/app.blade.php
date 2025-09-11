@@ -104,7 +104,7 @@
                             <h1 class="text-3xl font-bold text-gray-900">{{ $header }}</h1>
                         </div>
                     @endisset
-                    @hasSection('content')
+                    @if (View::hasSection('content'))
                         @yield('content')
                     @else
                         {{ $slot ?? '' }}
