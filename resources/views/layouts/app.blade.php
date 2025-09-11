@@ -29,9 +29,20 @@
                 --primary-900: #0c4a6e;
                 --primary-950: #082f49;
             }
+            /* Global page loader styles */
+            #page-loader { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: center; justify-content: center; background: rgba(12,74,110,.72); backdrop-filter: blur(2px); }
+            .loader { width: 48px; height: 48px; border: 5px solid #FFF; border-radius: 50%; display: inline-block; box-sizing: border-box; position: relative; animation: pulse 1s linear infinite; }
+            .loader:after { content: ''; position: absolute; width: 48px; height: 48px; border: 5px solid #FFF; border-radius: 50%; display: inline-block; box-sizing: border-box; left: 50%; top: 50%; transform: translate(-50%, -50%); animation: scaleUp 1s linear infinite; }
+            @keyframes scaleUp { 0% { transform: translate(-50%, -50%) scale(0) } 60%, 100% { transform: translate(-50%, -50%) scale(1) } }
+            @keyframes pulse { 0%, 60%, 100% { transform: scale(1) } 80% { transform: scale(1.2) } }
+            [x-cloak] { display: none !important; }
         </style>
     </head>
     <body class="font-sans antialiased bg-gray-50 text-gray-900 h-full">
+        <!-- Global Page Loader: visible by default, hidden after load via JS -->
+        <div id="page-loader"><span class="loader" aria-label="Loading"></span></div>
+        <noscript><style>#page-loader{display:none}</style></noscript>
+
         <div class="min-h-screen flex flex-col">
             @include('layouts.navigation')
 
@@ -60,5 +71,33 @@
         @include('partials.payment-required-modal')
 
         @stack('scripts')
+        <script>
+            (function(){
+                const loader = document.getElementById('page-loader');
+                function hideLoader(){ if (loader) loader.style.display = 'none'; }
+                function showLoader(){ if (loader) loader.style.display = 'flex'; }
+                // Hide on full load
+                window.addEventListener('load', hideLoader);
+                // Show on same-origin navigations
+                document.addEventListener('click', function(e){
+                    const a = e.target.closest('a');
+                    if (!a) return;
+                    const href = a.getAttribute('href');
+                    const target = a.getAttribute('target');
+                    const download = a.hasAttribute('download');
+                    if (!href || href.startsWith('#') || href.startsWith('javascript:') || download || (target && target !== '_self')) return;
+                    try {
+                        const url = new URL(href, window.location.origin);
+                        if (url.origin === window.location.origin) {
+                            showLoader();
+                        }
+                    } catch(_) { /* ignore */ }
+                });
+                // Forms
+                document.addEventListener('submit', function(e){ showLoader(); });
+                // Page show (back cache) ensure hidden
+                window.addEventListener('pageshow', function(e){ if (e.persisted) hideLoader(); });
+            })();
+        </script>
     </body>
 </html>
