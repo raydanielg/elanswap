@@ -32,7 +32,7 @@
                             <td class="px-6 py-3 text-sm md:text-base text-gray-800">{{ ($apps->currentPage() - 1) * $apps->perPage() + $i + 1 }}</td>
                             <td class="px-6 py-3 text-sm md:text-base text-gray-800">
                                 <div class="font-medium text-gray-900">{{ $app->user->name ?? '—' }}</div>
-                                @php($sector = strtolower((string) optional(optional($app->user)->category)->name))
+                                <?php $sector = strtolower((string) optional(optional($app->user)->category)->name); ?>
                                 <div class="mt-1 flex flex-wrap items-center gap-1">
                                     @if($app->user?->category?->name)
                                         <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-blue-50 text-blue-700">{{ $app->user->category->name }}</span>
@@ -103,7 +103,7 @@
                                                         <div>Name: {{ auth()->user()->name ?? '—' }}</div>
                                                         <div>Station: {{ auth()->user()->station->name ?? '—' }}</div>
                                                         <div>District: {{ auth()->user()->district->name ?? '—' }}</div>
-                                                        @php($meSector = strtolower((string) optional(optional(auth()->user())->category)->name))
+                                                        <?php $meSector = strtolower((string) optional(optional(auth()->user())->category)->name); ?>
                                                         <div class="mt-1">Sector:
                                                             @if(auth()->user()?->category?->name)
                                                                 <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-50 text-blue-700">{{ auth()->user()->category->name }}</span>
@@ -135,7 +135,7 @@
                                                         <div>Station: {{ $app->user->station->name ?? '—' }}</div>
                                                         <div>District: {{ $app->user->district->name ?? '—' }}</div>
                                                         <div class="mt-1 text-gray-600">Route: {{ $app->fromRegion->name ?? '—' }} → {{ $app->toRegion->name ?? '—' }}</div>
-                                                        @php($tSector = strtolower((string) optional(optional($app->user)->category)->name))
+                                                        <?php $tSector = strtolower((string) optional(optional($app->user)->category)->name); ?>
                                                         <div class="mt-1">Sector:
                                                             @if($app->user?->category?->name)
                                                                 <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-50 text-blue-700">{{ $app->user->category->name }}</span>
