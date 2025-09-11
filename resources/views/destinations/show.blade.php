@@ -18,6 +18,7 @@
                     <tr>
                         <th class="px-6 py-3 text-left text-xs font-semibold tracking-wide text-gray-600 uppercase">No</th>
                         <th class="px-6 py-3 text-left text-xs font-semibold tracking-wide text-gray-600 uppercase">Applicant</th>
+                        <th class="px-6 py-3 text-left text-xs font-semibold tracking-wide text-gray-600 uppercase">Sector</th>
                         <th class="px-6 py-3 text-left text-xs font-semibold tracking-wide text-gray-600 uppercase">From</th>
                         <th class="px-6 py-3 text-left text-xs font-semibold tracking-wide text-gray-600 uppercase">To</th>
                         <th class="px-6 py-3 text-right text-xs font-semibold tracking-wide text-gray-600 uppercase">Actions</th>
@@ -28,6 +29,31 @@
                         <tr class="hover:bg-gray-50">
                             <td class="px-6 py-3 text-sm md:text-base text-gray-800">{{ ($apps->currentPage() - 1) * $apps->perPage() + $i + 1 }}</td>
                             <td class="px-6 py-3 text-sm md:text-base text-gray-800 whitespace-nowrap">{{ $app->user->name ?? '—' }}</td>
+                            <td class="px-6 py-3 text-sm md:text-base text-gray-800 whitespace-nowrap">
+                                @php($sector = strtolower((string) optional(optional($app->user)->category)->name))
+                                @if($app->user?->category?->name)
+                                    <div class="inline-flex items-center gap-1">
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-50 text-blue-700">{{ $app->user->category->name }}</span>
+                                        @if($app->user?->qualification_level)
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-50 text-purple-700">{{ ucwords($app->user->qualification_level) }}</span>
+                                        @endif
+                                    </div>
+                                @endif
+                                <div class="mt-1 text-xs text-gray-700">
+                                    @if($sector === 'elimu')
+                                        @if($app->user?->edu_subject_one)
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200">{{ $app->user->edu_subject_one }}</span>
+                                        @endif
+                                        @if($app->user?->edu_subject_two)
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200">{{ $app->user->edu_subject_two }}</span>
+                                        @endif
+                                    @elseif($sector === 'afya')
+                                        @if($app->user?->health_department)
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 ring-1 ring-rose-200">{{ $app->user->health_department }}</span>
+                                        @endif
+                                    @endif
+                                </div>
+                            </td>
                             <td class="px-6 py-3 text-sm md:text-base text-gray-800 whitespace-nowrap">{{ $app->fromRegion->name ?? '—' }}</td>
                             <td class="px-6 py-3 text-sm md:text-base text-gray-800 whitespace-nowrap">{{ $app->toRegion->name ?? '—' }}</td>
                             <td class="px-6 py-3 text-sm md:text-base min-w-[220px]">
@@ -75,6 +101,31 @@
                                                         <div>Name: {{ auth()->user()->name ?? '—' }}</div>
                                                         <div>Station: {{ auth()->user()->station->name ?? '—' }}</div>
                                                         <div>District: {{ auth()->user()->district->name ?? '—' }}</div>
+                                                        @php($meSector = strtolower((string) optional(optional(auth()->user())->category)->name))
+                                                        <div class="mt-1">Sector:
+                                                            @if(auth()->user()?->category?->name)
+                                                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-50 text-blue-700">{{ auth()->user()->category->name }}</span>
+                                                            @else
+                                                                —
+                                                            @endif
+                                                            @if(auth()->user()?->qualification_level)
+                                                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-50 text-purple-700">{{ ucwords(auth()->user()->qualification_level) }}</span>
+                                                            @endif
+                                                        </div>
+                                                        <div class="mt-1">
+                                                            @if($meSector === 'elimu')
+                                                                @if(auth()->user()?->edu_subject_one)
+                                                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200">{{ auth()->user()->edu_subject_one }}</span>
+                                                                @endif
+                                                                @if(auth()->user()?->edu_subject_two)
+                                                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200">{{ auth()->user()->edu_subject_two }}</span>
+                                                                @endif
+                                                            @elseif($meSector === 'afya')
+                                                                @if(auth()->user()?->health_department)
+                                                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 ring-1 ring-rose-200">{{ auth()->user()->health_department }}</span>
+                                                                @endif
+                                                            @endif
+                                                        </div>
                                                     </div>
                                                     <div class="p-3 rounded-md border bg-gray-50">
                                                         <div class="font-semibold text-gray-800 mb-1">Target Application</div>
@@ -82,6 +133,31 @@
                                                         <div>Station: {{ $app->user->station->name ?? '—' }}</div>
                                                         <div>District: {{ $app->user->district->name ?? '—' }}</div>
                                                         <div class="mt-1 text-gray-600">Route: {{ $app->fromRegion->name ?? '—' }} → {{ $app->toRegion->name ?? '—' }}</div>
+                                                        @php($tSector = strtolower((string) optional(optional($app->user)->category)->name))
+                                                        <div class="mt-1">Sector:
+                                                            @if($app->user?->category?->name)
+                                                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-50 text-blue-700">{{ $app->user->category->name }}</span>
+                                                            @else
+                                                                —
+                                                            @endif
+                                                            @if($app->user?->qualification_level)
+                                                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-50 text-purple-700">{{ ucwords($app->user->qualification_level) }}</span>
+                                                            @endif
+                                                        </div>
+                                                        <div class="mt-1">
+                                                            @if($tSector === 'elimu')
+                                                                @if($app->user?->edu_subject_one)
+                                                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200">{{ $app->user->edu_subject_one }}</span>
+                                                                @endif
+                                                                @if($app->user?->edu_subject_two)
+                                                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200">{{ $app->user->edu_subject_two }}</span>
+                                                                @endif
+                                                            @elseif($tSector === 'afya')
+                                                                @if($app->user?->health_department)
+                                                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 ring-1 ring-rose-200">{{ $app->user->health_department }}</span>
+                                                                @endif
+                                                            @endif
+                                                        </div>
                                                     </div>
                                                 </div>
                                                 <form method="POST" action="{{ route('exchange-requests.store') }}" class="space-y-2 exchange-form">
@@ -106,7 +182,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" class="px-4 py-6 text-center text-sm text-gray-500">No applications found for this destination.</td>
+                            <td colspan="6" class="px-4 py-6 text-center text-sm text-gray-500">No applications found for this destination.</td>
                         </tr>
                     @endforelse
                 </tbody>

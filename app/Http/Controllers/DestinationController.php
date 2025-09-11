@@ -24,7 +24,7 @@ class DestinationController extends Controller
     {
         // List applications where destination is this region
         $apps = Application::query()
-            ->with(['user', 'fromRegion', 'toRegion'])
+            ->with(['user.category', 'fromRegion', 'toRegion'])
             ->where('to_region_id', $region->id)
             ->latest('id')
             ->paginate(10)
