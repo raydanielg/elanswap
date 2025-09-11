@@ -31,6 +31,7 @@
                         <th class="px-4 py-2 text-left text-xs font-semibold text-gray-600 uppercase">ID</th>
                         <th class="px-4 py-2 text-left text-xs font-semibold text-gray-600 uppercase">Code</th>
                         <th class="px-4 py-2 text-left text-xs font-semibold text-gray-600 uppercase">Applicant</th>
+                        <th class="px-4 py-2 text-left text-xs font-semibold text-gray-600 uppercase">Sector</th>
                         <th class="px-4 py-2 text-left text-xs font-semibold text-gray-600 uppercase">From Region</th>
                         <th class="px-4 py-2 text-left text-xs font-semibold text-gray-600 uppercase">To Region</th>
                         <th class="px-4 py-2 text-left text-xs font-semibold text-gray-600 uppercase">Status</th>
@@ -40,7 +41,7 @@
                 </thead>
                 <tbody id="apps-tbody" class="divide-y divide-gray-100">
                     <tr>
-                        <td colspan="8" class="px-4 py-6 text-center text-sm text-gray-500">Loading...</td>
+                        <td colspan="9" class="px-4 py-6 text-center text-sm text-gray-500">Loading...</td>
                     </tr>
                 </tbody>
             </table>
@@ -134,7 +135,7 @@
 
     function renderRows(items){
         if(!items || items.length === 0){
-            tbody.innerHTML = '<tr><td colspan="8" class="px-4 py-6 text-center text-sm text-gray-500">No applications found</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="9" class="px-4 py-6 text-center text-sm text-gray-500">No applications found</td></tr>';
             return;
         }
         tbody.innerHTML = items.map(i => `
@@ -146,6 +147,17 @@
                     </button>` : ''}
                 </td>
                 <td class="px-4 py-2 text-sm text-gray-700">${escapeHtml(i.user || '')}</td>
+                <td class="px-4 py-2 text-sm">
+                    ${i.sector?.name ? `
+                        <div class="flex flex-col">
+                            <div class="inline-flex items-center gap-1">
+                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-50 text-blue-700">${escapeHtml(i.sector.name)}</span>
+                                ${i.sector.qualification ? `<span class=\"inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-50 text-purple-700\">${escapeHtml(i.sector.qualification)}</span>` : ''}
+                            </div>
+                            ${i.sector.details ? `<div class=\"mt-1 text-xs text-gray-700\">${escapeHtml(i.sector.details)}</div>` : ''}
+                        </div>
+                    ` : ''}
+                </td>
                 <td class="px-4 py-2 text-sm text-gray-700">${escapeHtml(i.from || '')}</td>
                 <td class="px-4 py-2 text-sm text-gray-700">${escapeHtml(i.to || '')}</td>
                 <td class="px-4 py-2 text-sm">
@@ -177,7 +189,7 @@
     }
 
     async function fetchData(){
-        tbody.innerHTML = '<tr><td colspan="7" class="px-4 py-6 text-center text-sm text-gray-500">Loading...</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9" class="px-4 py-6 text-center text-sm text-gray-500">Loading...</td></tr>';
         try{
             const params = new URLSearchParams({ q, page, per_page: 10 });
             const res = await fetch(`{{ route('applications.search') }}?${params.toString()}`, {
@@ -203,7 +215,7 @@
             nextBtn.disabled = page >= lastPage;
         }catch(e){
             console.error(e);
-            tbody.innerHTML = '<tr><td colspan="8" class="px-4 py-6 text-center text-sm text-red-600">Failed to load</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="9" class="px-4 py-6 text-center text-sm text-red-600">Failed to load</td></tr>';
             summary.textContent = '';
             prevBtn.disabled = true;
             nextBtn.disabled = true;

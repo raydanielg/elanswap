@@ -91,7 +91,7 @@ class ApplicationController extends Controller
         $perPage = $perPage > 0 && $perPage <= 100 ? $perPage : 10;
 
         $query = Application::query()
-            ->with(['user','fromRegion','fromDistrict','toRegion','toDistrict'])
+            ->with(['user.category','fromRegion','fromDistrict','toRegion','toDistrict'])
             ->where('user_id', $request->user()->id)
             ->latest();
 
@@ -110,10 +110,30 @@ class ApplicationController extends Controller
         $paginator = $query->paginate($perPage);
 
         $items = $paginator->getCollection()->map(function ($app) {
+            $sectorName = strtolower((string) optional(optional($app->user)->category)->name);
+            $qualification = optional($app->user)->qualification_level;
+            $edu1 = optional($app->user)->edu_subject_one;
+            $edu2 = optional($app->user)->edu_subject_two;
+            $health = optional($app->user)->health_department;
+            $sectorLabel = optional(optional($app->user)->category)->name;
+            $sectorDetails = '';
+            if ($sectorName === 'elimu') {
+                $parts = array_values(array_filter([$edu1, $edu2], fn($v) => !empty($v)));
+                if (!empty($parts)) {
+                    $sectorDetails = implode(' + ', $parts);
+                }
+            } elseif ($sectorName === 'afya') {
+                $sectorDetails = (string) ($health ?? '');
+            }
             return [
                 'id' => $app->id,
                 'code' => $app->code,
                 'user' => optional($app->user)->name ?? '—',
+                'sector' => [
+                    'name' => $sectorLabel,
+                    'qualification' => $qualification,
+                    'details' => $sectorDetails,
+                ],
                 'from' => (string) (optional($app->fromRegion)->name ?? ''),
                 'to' => (string) (optional($app->toRegion)->name ?? ''),
                 'status' => $app->status,
@@ -136,7 +156,7 @@ class ApplicationController extends Controller
     // Page: Show single application
     public function show(Application $application)
     {
-        $application->load(['user','fromRegion','fromDistrict','fromStation','toRegion','toDistrict']);
+        $application->load(['user.category','fromRegion','fromDistrict','fromStation','toRegion','toDistrict']);
 
         // Access control: owner can view; otherwise only a requester with an accepted exchange
         $user = auth()->user();

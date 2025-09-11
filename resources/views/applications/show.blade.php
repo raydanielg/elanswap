@@ -27,6 +27,47 @@
                     <div class="font-medium text-gray-900">{{ optional($application->user)->phone }}</div>
                 </div>
             </div>
+            @php($sectorName = strtolower((string) optional(optional($application->user)->category)->name))
+            @if($sectorName === 'elimu' || $sectorName === 'afya')
+                <div class="mt-3 grid sm:grid-cols-2 gap-4 text-sm">
+                    <div>
+                        <div class="text-gray-500">Sector</div>
+                        <div class="mt-1 inline-flex items-center gap-1">
+                            @if($application->user?->category?->name)
+                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-50 text-blue-700">{{ $application->user->category->name }}</span>
+                            @endif
+                            @if($application->user?->qualification_level)
+                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-50 text-purple-700">{{ ucwords($application->user->qualification_level) }}</span>
+                            @endif
+                        </div>
+                    </div>
+                    <div class="sm:col-span-2">
+                        @if($sectorName === 'elimu')
+                            <div class="text-gray-500">Masomo (Elimu)</div>
+                            <div class="mt-1 flex flex-wrap gap-2">
+                                @if($application->user?->edu_subject_one)
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200">{{ $application->user->edu_subject_one }}</span>
+                                @endif
+                                @if($application->user?->edu_subject_two)
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200">{{ $application->user->edu_subject_two }}</span>
+                                @endif
+                                @if(!($application->user?->edu_subject_one || $application->user?->edu_subject_two))
+                                    <span class="text-gray-500">—</span>
+                                @endif
+                            </div>
+                        @elseif($sectorName === 'afya')
+                            <div class="text-gray-500">Idara / Utengo (Afya)</div>
+                            <div class="mt-1">
+                                @if($application->user?->health_department)
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-rose-50 text-rose-700 ring-1 ring-rose-200">{{ $application->user->health_department }}</span>
+                                @else
+                                    <span class="text-gray-500">—</span>
+                                @endif
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            @endif
         </div>
         <div class="p-4">
             <h2 class="text-sm font-semibold text-gray-700 mb-3">From (Current)</h2>
