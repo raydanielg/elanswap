@@ -35,6 +35,11 @@ class User extends Authenticatable
         'is_banned',
         'banned_at',
         'ban_reason',
+        // sector-specific profile fields
+        'qualification_level', // degree|diploma
+        'edu_subject_one',     // for Elimu
+        'edu_subject_two',     // for Elimu
+        'health_department',   // for Afya
     ];
 
     protected $casts = [
@@ -139,7 +144,7 @@ class User extends Authenticatable
      */
     public function hasCompletedProfile()
     {
-        return !empty($this->name) &&
+        $baseComplete = !empty($this->name) &&
                !empty($this->phone) &&
                !empty($this->email) &&
                !empty($this->password) &&
@@ -147,6 +152,21 @@ class User extends Authenticatable
                !empty($this->district_id) &&
                !empty($this->category_id) &&
                !empty($this->station_id);
+
+        if (!$baseComplete) return false;
+
+        // Additional requirements based on sector
+        $sector = strtolower((string) ($this->category?->name));
+        if ($sector === 'elimu') {
+            return !empty($this->qualification_level) &&
+                   !empty($this->edu_subject_one) &&
+                   !empty($this->edu_subject_two);
+        }
+        if ($sector === 'afya') {
+            return !empty($this->qualification_level) &&
+                   !empty($this->health_department);
+        }
+        return $baseComplete;
     }
 
     /**
@@ -157,15 +177,20 @@ class User extends Authenticatable
     public function getProfileCompletionPercentage()
     {
         $fields = ['name', 'phone', 'email', 'password', 'region_id', 'district_id', 'category_id', 'station_id'];
+        $sector = strtolower((string) ($this->category?->name));
+        if ($sector === 'elimu') {
+            $fields = array_merge($fields, ['qualification_level', 'edu_subject_one', 'edu_subject_two']);
+        } elseif ($sector === 'afya') {
+            $fields = array_merge($fields, ['qualification_level', 'health_department']);
+        }
+
         $completed = 0;
-        
         foreach ($fields as $field) {
             if (!empty($this->$field)) {
                 $completed++;
             }
         }
-        
-        return round(($completed / count($fields)) * 100);
+        return round(($completed / max(count($fields), 1)) * 100);
     }
 
     /**
@@ -184,7 +209,21 @@ class User extends Authenticatable
             'category_id' => 'Category (Sekta)',
             'station_id' => 'Work Station (Kituo cha Kazi)',
         ];
-        
+        // Add sector-specific required fields
+        $sector = strtolower((string) ($this->category?->name));
+        if ($sector === 'elimu') {
+            $fields = array_merge($fields, [
+                'qualification_level' => 'Ngazi ya Elimu (Degree/Diploma)',
+                'edu_subject_one' => 'Somo la Kwanza (Elimu)',
+                'edu_subject_two' => 'Somo la Pili (Elimu)',
+            ]);
+        } elseif ($sector === 'afya') {
+            $fields = array_merge($fields, [
+                'qualification_level' => 'Ngazi ya Elimu (Degree/Diploma)',
+                'health_department' => 'Idara/Utengo (Afya)',
+            ]);
+        }
+
         $missing = [];
         
         foreach ($fields as $field => $label) {

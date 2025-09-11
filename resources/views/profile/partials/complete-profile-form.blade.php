@@ -40,6 +40,32 @@
                         </template>
                     </select>
                 </div>
+                <!-- Qualification Level -->
+                <div x-show="category_id" x-cloak>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Ngazi ya Elimu</label>
+                    <select name="qualification_level" x-model="qualification_level" class="w-full border rounded-lg px-3 py-2">
+                        <option value="">-- Chagua Ngazi --</option>
+                        <option value="degree">Degree</option>
+                        <option value="diploma">Diploma</option>
+                    </select>
+                    <p class="text-xs text-gray-500 mt-1">Chagua kama una Degree au Diploma.</p>
+                </div>
+                <!-- Elimu specific: Subjects -->
+                <div x-show="sectorName === 'elimu'" x-cloak class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Somo la Kwanza</label>
+                        <input type="text" name="edu_subject_one" x-model="edu_subject_one" class="w-full border rounded-lg px-3 py-2" placeholder="Mfano: Hisabati">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Somo la Pili</label>
+                        <input type="text" name="edu_subject_two" x-model="edu_subject_two" class="w-full border rounded-lg px-3 py-2" placeholder="Mfano: Fizikia">
+                    </div>
+                </div>
+                <!-- Afya specific: Department -->
+                <div x-show="sectorName === 'afya'" x-cloak>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Idara / Utengo (Afya)</label>
+                    <input type="text" name="health_department" x-model="health_department" class="w-full border rounded-lg px-3 py-2" placeholder="Mfano: Uuguzi, Maabara, Dawa">
+                </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Kituo cha Kazi (Andika jina)</label>
                     <input type="text" name="station_name" x-model="station_name" class="w-full border rounded-lg px-3 py-2" :disabled="!district_id" placeholder="Mfano: Shule ya Msingi Nyamagana">
@@ -69,15 +95,46 @@
             region_id: null,
             district_id: null,
             category_id: null,
+            qualification_level: '',
+            edu_subject_one: '',
+            edu_subject_two: '',
+            health_department: '',
             station_name: '',
             error: '',
+            get sectorName() {
+                const cat = this.categories.find(c => c.id === this.category_id);
+                return (cat && cat.name ? cat.name.toLowerCase() : '');
+            },
             get progress() {
-                let fields = [this.region_id, this.district_id, this.category_id, this.station_name && this.station_name.trim().length > 2];
+                let fields = [this.region_id, this.district_id, this.category_id];
+                // base station name
+                fields.push(this.station_name && this.station_name.trim().length > 2);
+                // sector-specific
+                if (this.category_id) {
+                    fields.push(this.qualification_level);
+                    if (this.sectorName === 'elimu') {
+                        fields.push(this.edu_subject_one && this.edu_subject_one.trim().length > 1);
+                        fields.push(this.edu_subject_two && this.edu_subject_two.trim().length > 1);
+                    } else if (this.sectorName === 'afya') {
+                        fields.push(this.health_department && this.health_department.trim().length > 1);
+                    }
+                }
                 const filled = fields.filter(v => !!v).length;
                 return Math.round((filled / fields.length) * 100);
             },
             get canSubmit() {
-                return !!(this.region_id && this.district_id && this.category_id && this.station_name && this.station_name.trim().length > 2);
+                if (!(this.region_id && this.district_id && this.category_id && this.station_name && this.station_name.trim().length > 2)) {
+                    return false;
+                }
+                // sector rules
+                if (!this.qualification_level) return false;
+                if (this.sectorName === 'elimu') {
+                    return !!(this.edu_subject_one && this.edu_subject_one.trim().length > 1 && this.edu_subject_two && this.edu_subject_two.trim().length > 1);
+                }
+                if (this.sectorName === 'afya') {
+                    return !!(this.health_department && this.health_department.trim().length > 1);
+                }
+                return true;
             },
             init() {
                 this.loadRegions();

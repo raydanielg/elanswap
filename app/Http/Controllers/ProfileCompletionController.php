@@ -26,7 +26,13 @@ class ProfileCompletionController extends Controller
 
     public function categories()
     {
-        return response()->json(Category::where('is_active', true)->orderBy('name')->get(['id','name']));
+        // Only return two sectors: Elimu and Afya
+        return response()->json(
+            Category::where('is_active', true)
+                ->whereIn('name', ['Elimu','Afya'])
+                ->orderBy('name')
+                ->get(['id','name'])
+        );
     }
 
     public function stations(Request $request)
@@ -49,9 +55,32 @@ class ProfileCompletionController extends Controller
             'district_id' => 'required|exists:districts,id',
             'category_id' => 'required|exists:categories,id',
             'station_name' => 'required|string|min:3',
+            // sector-specific
+            'qualification_level' => 'nullable|in:degree,diploma',
+            'edu_subject_one' => 'nullable|string|min:2',
+            'edu_subject_two' => 'nullable|string|min:2',
+            'health_department' => 'nullable|string|min:2',
         ]);
 
         $user = Auth::user();
+
+        // Determine sector name for conditional requirements
+        $category = Category::findOrFail((int) $validated['category_id']);
+        $sector = strtolower($category->name);
+
+        // Enforce sector-specific required fields
+        if ($sector === 'elimu') {
+            $request->validate([
+                'qualification_level' => 'required|in:degree,diploma',
+                'edu_subject_one' => 'required|string|min:2',
+                'edu_subject_two' => 'required|string|min:2',
+            ]);
+        } elseif ($sector === 'afya') {
+            $request->validate([
+                'qualification_level' => 'required|in:degree,diploma',
+                'health_department' => 'required|string|min:2',
+            ]);
+        }
 
         // Create or reuse station within the chosen district/category
         $station = Station::firstOrCreate([
@@ -64,6 +93,11 @@ class ProfileCompletionController extends Controller
         $user->district_id = (int) $validated['district_id'];
         $user->category_id = (int) $validated['category_id'];
         $user->station_id = $station->id;
+        // save sector-specific
+        $user->qualification_level = $request->string('qualification_level');
+        $user->edu_subject_one = $request->string('edu_subject_one');
+        $user->edu_subject_two = $request->string('edu_subject_two');
+        $user->health_department = $request->string('health_department');
         $user->save();
 
         return redirect()->route('dashboard')->with('status', 'Profile updated successfully');
