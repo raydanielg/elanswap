@@ -18,6 +18,7 @@ use App\Http\Controllers\ApplicationController;
 use App\Http\Controllers\DestinationController;
 use App\Http\Controllers\ExchangeRequestController;
 use App\Http\Controllers\BlogController;
+use App\Http\Controllers\AnnouncementFeedbackController;
 use App\Http\Controllers\Admin\BlogPostController as AdminBlogPostController;
 use App\Http\Controllers\Admin\ExchangeRequestController as AdminExchangeRequestController;
 use App\Http\Controllers\ProfileCompletionController;
@@ -260,6 +261,8 @@ Route::middleware(['auth', \App\Http\Middleware\EnsureProfileCompleted::class])-
     Route::get('/profile/categories', [ProfileCompletionController::class, 'categories'])->name('profile.categories');
     Route::get('/profile/stations', [ProfileCompletionController::class, 'stations'])->name('profile.stations');
     Route::post('/profile/complete', [ProfileCompletionController::class, 'store'])->name('profile.complete.store');
+    // Announcements feedback (like/dislike)
+    Route::post('/announcements/feedback', [AnnouncementFeedbackController::class, 'store'])->name('announcements.feedback');
 });
 
 // App features require completed profile; payment only for selected actions

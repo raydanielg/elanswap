@@ -59,6 +59,8 @@
                     $__ann_latest = optional($__announcements->max('updated_at'))?->timestamp ?? 0;
                     $__user_id = auth()->id();
                 @endphp
+                @php($__ann_latest_id = $__announcements->max('id'))
+                <script>window.__ANN_LATEST_ID = @json($__ann_latest_id);</script>
                 <div class="relative" x-data="annc({ count: {{ $__ann_count }}, latest: {{ $__ann_latest }}, userId: {{ $__user_id ?? '0' }} })">
                     <button @click="toggle()" class="relative p-2 rounded-full text-blue-200 hover:text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
                         <span class="sr-only">View announcements</span>
@@ -69,6 +71,49 @@
                         <span x-show="unreadCount > 0" x-text="unreadCount"
                               class="absolute -top-1 -right-1 sm:-top-2 sm:-right-2 min-w-[14px] h-[14px] sm:min-w-[18px] sm:h-[18px] px-1 text-[10px] sm:text-[11px] leading-[14px] sm:leading-[18px] text-black bg-yellow-400 rounded-full text-center font-semibold"></span>
                     </button>
+                    <!-- Desktop Centered Modal -->
+                    <div x-show="open" x-transition.opacity class="fixed inset-0 bg-black/50 z-40 hidden md:block" @click="markRead()"></div>
+                    <div x-show="open" x-transition class="fixed inset-0 z-50 hidden md:flex items-center justify-center" aria-modal="true" role="dialog">
+                        <div class="w-full max-w-md bg-white rounded-lg shadow-xl ring-1 ring-black/10 overflow-hidden" @click.stop>
+                            <div class="px-5 py-4 border-b flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <svg class="w-5 h-5 text-primary-700" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a7 7 0 00-7 7v3.586l-1.707 1.707A1 1 0 004 16h16a1 1 0 00.707-1.707L19 12.586V9a7 7 0 00-7-7zm0 20a3 3 0 003-3H9a3 3 0 003 3z"/></svg>
+                                    <span class="text-sm font-semibold text-gray-800">Notifications</span>
+                                </div>
+                                <button @click="markRead()" class="text-sm text-primary-600 hover:underline">Close</button>
+                            </div>
+                            <div class="p-5 space-y-3">
+                                <div class="flex items-center gap-2 text-sm text-gray-800">
+                                    <svg class="w-5 h-5 text-green-600" viewBox="0 0 24 24" fill="currentColor"><path d="M12 22a10 10 0 1110-10 10.011 10.011 0 01-10 10zm-1-6l7-7-1.414-1.414L11 13.172l-3.586-3.586L6 11z"/></svg>
+                                    <span>Notifications updated</span>
+                                </div>
+                                <div class="max-h-64 overflow-auto border rounded">
+                                    @forelse($__announcements as $item)
+                                        <div class="p-3 border-b last:border-b-0">
+                                            <div class="text-sm font-medium text-gray-900">{{ $item->title }}</div>
+                                            <div class="text-sm text-gray-600">{{ $item->description }}</div>
+                                        </div>
+                                    @empty
+                                        <div class="p-4 text-center text-sm text-gray-500">No announcements</div>
+                                    @endforelse
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <div class="text-xs text-gray-500">How do you feel about the latest update?</div>
+                                    <div class="flex items-center gap-2">
+                                        <button @click="react('like')" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-md bg-green-50 text-green-700 ring-1 ring-green-200 hover:bg-green-100 text-sm">
+                                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M2 21h4V9H2v12zM22 9c0-1.103-.897-2-2-2h-5.586l.293-1.293.007-.053c0-.256-.098-.512-.293-.707l-1-1-4.707 4.707A.996.996 0 008 8v12h10a2 2 0 001.789-1.106l2-4A2 2 0 0022 14v-5z"/></svg>
+                                            Like
+                                        </button>
+                                        <button @click="react('dislike')" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-md bg-rose-50 text-rose-700 ring-1 ring-rose-200 hover:bg-rose-100 text-sm">
+                                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M22 3h-4v12h4V3zM2 15c0 1.103.897 2 2 2h5.586l-.293 1.293-.007.053c0 .256.098.512.293.707l1 1 4.707-4.707A.996.996 0 0016 15V3H6a2 2 0 00-1.789 1.106l-2 4A2 2 0 002 9v6z"/></svg>
+                                            Dislike
+                                        </button>
+                                    </div>
+                                </div>
+                                <div x-show="toast" x-transition.opacity class="text-center text-xs text-green-700 bg-green-50 ring-1 ring-green-200 rounded px-3 py-2">Thanks! Feedback saved.</div>
+                            </div>
+                        </div>
+                    </div>
                     <!-- Mobile Modal Overlay (centered) -->
                     <div x-show="open" x-transition.opacity class="fixed inset-0 bg-black/50 z-40 md:hidden" @click="markRead()"></div>
                     <div x-show="open" x-transition class="fixed inset-0 z-50 flex items-center justify-center md:hidden">
@@ -303,6 +348,7 @@
         return {
             open: false,
             unreadCount: hasUnread ? count : 0,
+            toast: false,
             toggle() {
                 this.open = !this.open;
                 if (!this.open) this.markRead();
@@ -313,6 +359,23 @@
                     this.unreadCount = 0;
                 }
                 this.open = false;
+            },
+            async react(type) {
+                try {
+                    const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                    // Use the most recent feature id if available (server rendered)
+                    const featureId = (window.__ANN_LATEST_ID || null);
+                    const res = await fetch("{{ route('announcements.feedback') }}", {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': token, 'Accept': 'application/json' },
+                        credentials: 'same-origin',
+                        body: JSON.stringify({ reaction: type, feature_id: featureId })
+                    });
+                    if (res.ok) {
+                        this.toast = true;
+                        setTimeout(()=> this.toast = false, 2000);
+                    }
+                } catch (e) { /* ignore */ }
             }
         }
     }
