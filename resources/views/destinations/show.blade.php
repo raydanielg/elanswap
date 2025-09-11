@@ -32,7 +32,6 @@
                             <td class="px-6 py-3 text-sm md:text-base text-gray-800">{{ ($apps->currentPage() - 1) * $apps->perPage() + $i + 1 }}</td>
                             <td class="px-6 py-3 text-sm md:text-base text-gray-800">
                                 <div class="font-medium text-gray-900">{{ $app->user->name ?? '—' }}</div>
-                                <?php $sector = strtolower((string) optional(optional($app->user)->category)->name); ?>
                                 <div class="mt-1 flex flex-wrap items-center gap-1">
                                     @if($app->user?->category?->name)
                                         <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-blue-50 text-blue-700">{{ $app->user->category->name }}</span>
@@ -40,14 +39,14 @@
                                     @if($app->user?->qualification_level)
                                         <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-purple-50 text-purple-700">{{ ucwords($app->user->qualification_level) }}</span>
                                     @endif
-                                    @if($sector === 'elimu')
+                                    @if(strtolower((string) optional(optional($app->user)->category)->name) === 'elimu')
                                         @if($app->user?->edu_subject_one)
                                             <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200">{{ $app->user->edu_subject_one }}</span>
                                         @endif
                                         @if($app->user?->edu_subject_two)
                                             <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200">{{ $app->user->edu_subject_two }}</span>
                                         @endif
-                                    @elseif($sector === 'afya')
+                                    @elseif(strtolower((string) optional(optional($app->user)->category)->name) === 'afya')
                                         @if($app->user?->health_department)
                                             <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] bg-rose-50 text-rose-700 ring-1 ring-rose-200">{{ $app->user->health_department }}</span>
                                         @endif
@@ -58,7 +57,9 @@
                             <td class="px-6 py-3 text-sm md:text-base text-gray-800 whitespace-nowrap">{{ $app->toRegion->name ?? '—' }}</td>
                             <td class="px-6 py-3 text-sm md:text-base min-w-[220px]">
                                 <div class="flex items-center justify-end gap-3">
-                                    @php $req = $requestedMap[$app->id] ?? null; @endphp
+                                    @php
+                                        $req = $requestedMap[$app->id] ?? null;
+                                    @endphp
                                     @if(auth()->id() === ($app->user_id ?? null))
                                         <button type="button" class="inline-flex items-center px-3 py-1.5 bg-gray-100 text-gray-500 rounded cursor-not-allowed" disabled>
                                             Your application
@@ -103,7 +104,6 @@
                                                         <div>Name: {{ auth()->user()->name ?? '—' }}</div>
                                                         <div>Station: {{ auth()->user()->station->name ?? '—' }}</div>
                                                         <div>District: {{ auth()->user()->district->name ?? '—' }}</div>
-                                                        <?php $meSector = strtolower((string) optional(optional(auth()->user())->category)->name); ?>
                                                         <div class="mt-1">Sector:
                                                             @if(auth()->user()?->category?->name)
                                                                 <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-50 text-blue-700">{{ auth()->user()->category->name }}</span>
@@ -115,14 +115,14 @@
                                                             @endif
                                                         </div>
                                                         <div class="mt-1">
-                                                            @if($meSector === 'elimu')
+                                                            @if(strtolower((string) optional(optional(auth()->user())->category)->name) === 'elimu')
                                                                 @if(auth()->user()?->edu_subject_one)
                                                                     <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200">{{ auth()->user()->edu_subject_one }}</span>
                                                                 @endif
                                                                 @if(auth()->user()?->edu_subject_two)
                                                                     <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200">{{ auth()->user()->edu_subject_two }}</span>
                                                                 @endif
-                                                            @elseif($meSector === 'afya')
+                                                            @elseif(strtolower((string) optional(optional(auth()->user())->category)->name) === 'afya')
                                                                 @if(auth()->user()?->health_department)
                                                                     <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 ring-1 ring-rose-200">{{ auth()->user()->health_department }}</span>
                                                                 @endif
@@ -135,7 +135,6 @@
                                                         <div>Station: {{ $app->user->station->name ?? '—' }}</div>
                                                         <div>District: {{ $app->user->district->name ?? '—' }}</div>
                                                         <div class="mt-1 text-gray-600">Route: {{ $app->fromRegion->name ?? '—' }} → {{ $app->toRegion->name ?? '—' }}</div>
-                                                        <?php $tSector = strtolower((string) optional(optional($app->user)->category)->name); ?>
                                                         <div class="mt-1">Sector:
                                                             @if($app->user?->category?->name)
                                                                 <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-50 text-blue-700">{{ $app->user->category->name }}</span>
@@ -147,14 +146,14 @@
                                                             @endif
                                                         </div>
                                                         <div class="mt-1">
-                                                            @if($tSector === 'elimu')
+                                                            @if(strtolower((string) optional(optional($app->user)->category)->name) === 'elimu')
                                                                 @if($app->user?->edu_subject_one)
                                                                     <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200">{{ $app->user->edu_subject_one }}</span>
                                                                 @endif
                                                                 @if($app->user?->edu_subject_two)
                                                                     <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200">{{ $app->user->edu_subject_two }}</span>
                                                                 @endif
-                                                            @elseif($tSector === 'afya')
+                                                            @elseif(strtolower((string) optional(optional($app->user)->category)->name) === 'afya')
                                                                 @if($app->user?->health_department)
                                                                     <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 ring-1 ring-rose-200">{{ $app->user->health_department }}</span>
                                                                 @endif
