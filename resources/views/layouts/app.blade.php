@@ -99,16 +99,7 @@
             <!-- Page Content -->
             <main class="flex-grow bg-gradient-to-b from-white to-blue-50">
                 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                    @isset($header)
-                        <div class="mb-8">
-                            <h1 class="text-3xl font-bold text-gray-900">{{ $header }}</h1>
-                        </div>
-                    @endisset
-                    @if (View::hasSection('content'))
-                        @yield('content')
-                    @else
-                        {{ $slot ?? '' }}
-                    @endif
+                    {{ $slot ?? '' }}
                 </div>
             </main>
 
